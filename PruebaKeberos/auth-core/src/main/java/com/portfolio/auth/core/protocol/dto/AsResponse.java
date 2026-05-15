@@ -1,5 +1,7 @@
 package com.portfolio.auth.core.protocol.dto;
 
+import com.portfolio.auth.core.protocol.ProtocolMessage;
+
 import java.time.Instant;
 
 /**
@@ -15,5 +17,5 @@ public record AsResponse(
         String ticketGrantingServerId,
         String clientTgsSessionKey,
         TicketTgs ticketTgs
-) {
+) implements ProtocolMessage {
 }

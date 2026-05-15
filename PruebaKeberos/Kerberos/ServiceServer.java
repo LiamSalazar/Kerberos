@@ -1,17 +1,26 @@
 package Kerberos;
 
+import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.replay.InMemoryReplayCache;
+import com.portfolio.auth.core.replay.ReplayCache;
+
 import javax.crypto.SealedObject;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 
 import Seguridad.Conexiones;
 import Seguridad.Comunicacion;
 
 public class ServiceServer {
+    private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
+    private static final ReplayCache REPLAY_CACHE = new InMemoryReplayCache();
 
     public final String servicio = "--------- ACCESO CONCEDIDO A MELODYFINDER --------- KERBEROS SECURITY EXITOSO ---------";
 
@@ -33,7 +42,7 @@ public class ServiceServer {
                 "-    CLIENTE/SERVIDOR: PARA OBTENER UN SERVICIO  -\n" +
                 "--------------------------------------------------");
 
-        final int puertoServer = 2002;
+        final int puertoServer = CONFIG.serviceServerPort();
         var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
 
         try (java.net.ServerSocket serverSocket = new java.net.ServerSocket(puertoServer)) {
@@ -43,7 +52,7 @@ public class ServiceServer {
                 pool.submit(() -> {
                     try (java.net.Socket sc = s) {
                         ServiceServer serviceServer = new ServiceServer();
-                        serviceServer.setClave_servidor("contraseñaServidor"); // igual que antes
+                        serviceServer.setClave_servidor(CONFIG.legacyServiceSecret());
 
                         java.io.InputStream in = sc.getInputStream();
                         java.io.OutputStream out = sc.getOutputStream();
@@ -62,6 +71,8 @@ public class ServiceServer {
 
                         if (esClienteValido) {
                             serviceServer.responderPeticionServicioCliente(out);
+                        } else {
+                            System.out.println("[Service] Peticion rechazada por identidad, expiracion, skew o replay.");
                         }
 
                     } catch (Exception e) {
@@ -110,9 +121,13 @@ public class ServiceServer {
         this.setClientAuthentication(autentificadorCliente);
         this.setTimestamp5(autentificadorCliente.getTimeStamp_ClientAuthentication());
 
-        System.out.printf("Peticion recibida desde el cliente: %s\n", peticionServicio);
-        System.out.printf("TicketServicio descifrado : %s\n Autentificador del Cliente Descifrado\n", peticionServicio,
-                autentificadorCliente);
+        System.out.printf("Peticion de servicio recibida. Campos: %s\n", peticionServicio.keySet());
+        System.out.printf("Ticket de servicio validable para cliente %s, expira %s\n",
+                ticket_servicio.getId_cliente(),
+                ticket_servicio.getTiempo_vida_ticket());
+        System.out.printf("Autenticador cliente recibido: id=%s, timestamp=%s\n",
+                autentificadorCliente.getId_cliente(),
+                autentificadorCliente.getTimeStamp_ClientAuthentication());
 
     }
 
@@ -126,7 +141,7 @@ public class ServiceServer {
 
         System.out.printf("\nEl servicio ha sido otorgado al cliente");
 
-        System.out.printf("Respuesta enviada: %s", respuestaServicio_cifrada);
+        System.out.printf("Respuesta de servicio enviada. Campos: %s", respuestaServicio.keySet());
     }
 
     public HashMap<String, Object> responderServicio() throws Exception {
@@ -142,15 +157,48 @@ public class ServiceServer {
     private boolean validarClienteConTicket(TicketGrantingServer.Ticket_servicio ticket_servicio,
             Client.ClientAuthentication autentificadorCliente) {
 
-        boolean esClienteValido;
-
-        esClienteValido = (ticket_servicio.getId_cliente().equals(autentificadorCliente.getId_cliente()))
+        boolean esClienteValido = (ticket_servicio.getId_cliente().equals(autentificadorCliente.getId_cliente()))
 
                 && (ticket_servicio.getIp_cliente().equals(autentificadorCliente.getIp_cliente()))
 
-                && ticket_servicio.getTiempo_vida_ticket().isAfter(LocalDateTime.now());
+                && ticket_servicio.getTiempo_vida_ticket().isAfter(LocalDateTime.now())
+
+                && dentroDeSkewPermitido(autentificadorCliente.getTimeStamp_ClientAuthentication())
+
+                && registrarAutenticadorSiNoFueUsado(ticket_servicio, autentificadorCliente);
 
         return esClienteValido;
+    }
+
+    private boolean registrarAutenticadorSiNoFueUsado(TicketGrantingServer.Ticket_servicio ticket_servicio,
+            Client.ClientAuthentication autentificadorCliente) {
+        Instant autenticadorEmitido = toInstant(autentificadorCliente.getTimeStamp_ClientAuthentication());
+        Instant ticketExpira = toInstant(ticket_servicio.getTiempo_vida_ticket());
+        Instant replayExpira = min(ticketExpira, autenticadorEmitido.plus(CONFIG.replayWindow()));
+
+        String replayKey = "service:"
+                + ticket_servicio.getId_servidor()
+                + ":"
+                + autentificadorCliente.getId_cliente()
+                + ":"
+                + autentificadorCliente.getIp_cliente()
+                + ":"
+                + autentificadorCliente.getTimeStamp_ClientAuthentication();
+
+        return REPLAY_CACHE.registerIfAbsent(replayKey, replayExpira);
+    }
+
+    private static boolean dentroDeSkewPermitido(LocalDateTime timestamp) {
+        Duration diferencia = Duration.between(toInstant(timestamp), Instant.now()).abs();
+        return diferencia.compareTo(CONFIG.allowedClockSkew()) <= 0;
+    }
+
+    private static Instant min(Instant first, Instant second) {
+        return first.isBefore(second) ? first : second;
+    }
+
+    private static Instant toInstant(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
     public String getClave_servidor() {

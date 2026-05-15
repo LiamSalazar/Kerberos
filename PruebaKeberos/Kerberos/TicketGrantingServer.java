@@ -1,5 +1,9 @@
 package Kerberos;
 
+import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.replay.InMemoryReplayCache;
+import com.portfolio.auth.core.replay.ReplayCache;
+
 import javax.crypto.SealedObject;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,7 +11,10 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 
 import Seguridad.Conexiones;
@@ -15,6 +22,9 @@ import Seguridad.Comunicacion;
 import static Kerberos.AESUtils.encriptarObjeto;
 
 public class TicketGrantingServer {
+    private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
+    private static final ReplayCache REPLAY_CACHE = new InMemoryReplayCache();
+
     private String id_servidor;
     private String id_cliente;
     private InetAddress address_cliente;
@@ -34,7 +44,7 @@ public class TicketGrantingServer {
                 "-    QUE CONCEDE UN SERVICIO                     -\n" +
                 "--------------------------------------------------");
 
-        final int puertoServer = 2001;
+        final int puertoServer = CONFIG.ticketGrantingServerPort();
         var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
 
         try (java.net.ServerSocket serverSocket = new java.net.ServerSocket(puertoServer)) {
@@ -51,17 +61,14 @@ public class TicketGrantingServer {
                         // Tus métodos: leen estado y responden
                         TGS.recibirPeticionTicketDesdeCliente(in); // setea autificación y ticket_tgs
 
-                        // (Opcional) Validación como ya haces:
-                        try {
-                            var a = TGS.getAutificacionCliente();
-                            var t = TGS.getTicket_tgs();
-                            boolean ok = a.getIp_cliente().equals(t.getIp_cliente())
-                                    && a.getId_cliente().equals(t.getId_cliente());
-                            System.out.printf("\n¿Coinciden datos cliente/ticket TGS? %s\n", ok ? "SI" : "NO");
-                        } catch (Throwable ignore) {
-                        }
+                        boolean ok = TGS.validarClienteConTicketYReplay();
+                        System.out.printf("\n¿Peticion TGS valida y no repetida? %s\n", ok ? "SI" : "NO");
 
-                        TGS.enviarRespuestaTicketAlCliente(out);
+                        if (ok) {
+                            TGS.enviarRespuestaTicketAlCliente(out);
+                        } else {
+                            System.out.println("[TGS] Peticion rechazada por identidad, expiracion, skew o replay.");
+                        }
 
                     } catch (Exception e) {
                         System.err.println("[TGS] Error en handler: " + e.getMessage());
@@ -92,20 +99,26 @@ public class TicketGrantingServer {
 
         HashMap<String, Object> peticion = (HashMap<String, Object>) Comunicacion.recibirObjeto(inputStream);
 
-        System.out.printf("Solicitud recibida: %s \n\n", peticion);
+        System.out.printf("Solicitud TGS recibida. Campos: %s \n\n", peticion.keySet());
 
         Client.ClientAuthentication autenticacionCliente = (Client.ClientAuthentication) AESUtils
-                .desencriptarObjeto((SealedObject) peticion.get("[Autentificador-c]"), "contraseña_C-TGS");
+                .desencriptarObjeto((SealedObject) peticion.get("[Autentificador-c]"),
+                        CONFIG.legacyClientTgsSessionKey());
 
         this.setAutificacionCliente(autenticacionCliente);
 
         AuthenticationServer.Ticket_TGS ticket_tgs = (AuthenticationServer.Ticket_TGS) AESUtils
-                .desencriptarObjeto((SealedObject) peticion.get("[Ticket-tgs]"), "contraseñaTGS");
+                .desencriptarObjeto((SealedObject) peticion.get("[Ticket-tgs]"),
+                        CONFIG.legacyTicketGrantingServerSecret());
 
         this.setTicket_tgs(ticket_tgs);
 
-        System.out.printf("Ticket TGS descifrado: %s \n\n", ticket_tgs);
-        System.out.printf("Autenticacion Cliente descifrada: %s \n\n", autenticacionCliente);
+        System.out.printf("Ticket TGS validable para cliente %s, expira %s \n\n",
+                ticket_tgs.getId_cliente(),
+                ticket_tgs.getTiempo_vida_ticket());
+        System.out.printf("Autenticador cliente recibido: id=%s, timestamp=%s \n\n",
+                autenticacionCliente.getId_cliente(),
+                autenticacionCliente.getTimeStamp_ClientAuthentication());
 
         this.setId_cliente(autenticacionCliente.getId_cliente());
         this.setAddress_cliente(autenticacionCliente.getAddress_cliente());
@@ -121,8 +134,7 @@ public class TicketGrantingServer {
 
         Comunicacion.enviarObjeto(outputStream, respuestaCifrada);
 
-        System.out.printf("\nRespuesta sin cifrar: %s", respuestaTicket);
-        System.out.printf("\nRespuesta cifrada a enviar: %s", respuestaCifrada);
+        System.out.printf("\nRespuesta TGS enviada. Campos: %s", respuestaTicket.keySet());
     }
 
     public void setId_servidor(String id_servidor) {
@@ -140,8 +152,8 @@ public class TicketGrantingServer {
     public HashMap<String, Object> crearRespuestaTicket() throws Exception {
         HashMap<String, Object> respuestaSolicitud = new HashMap<>();
 
-        Ticket_servicio ticket_servidor = new Ticket_servicio("contraseñaClienteServidor", id_cliente, address_cliente,
-                id_servidor, 5);
+        Ticket_servicio ticket_servidor = new Ticket_servicio(CONFIG.legacyClientServiceSessionKey(), id_cliente,
+                address_cliente, id_servidor, Math.max(1, CONFIG.ticketLifetime().toMinutes()));
 
         respuestaSolicitud.put("[K-c_v]", ticket_servidor.getClave_cliente_servidor());
 
@@ -149,13 +161,57 @@ public class TicketGrantingServer {
         respuestaSolicitud.put("[TimeStamp-4]", ticket_servidor.getCreacion_ticket());
         respuestaSolicitud.put("[TiempoVida-4]", ticket_servidor.getTiempo_vida_ticket());
 
-        SealedObject ticket_servidor_cifrado = encriptarObjeto(ticket_servidor, "contraseñaServidor");
+        SealedObject ticket_servidor_cifrado = encriptarObjeto(ticket_servidor, CONFIG.legacyServiceSecret());
 
         respuestaSolicitud.put("[Ticket-v]", ticket_servidor_cifrado);
 
-        System.out.printf("\n[Ticket-v] cifrado y descifrado-> %s -> %s \n", ticket_servidor, ticket_servidor_cifrado);
+        System.out.printf("\n[Ticket-v] emitido para servicio %s y cliente %s\n", id_servidor, id_cliente);
 
         return respuestaSolicitud;
+    }
+
+    private boolean validarClienteConTicketYReplay() {
+        if (autificacionCliente == null || ticket_tgs == null) {
+            return false;
+        }
+
+        boolean identidadValida = autificacionCliente.getIp_cliente().equals(ticket_tgs.getIp_cliente())
+                && autificacionCliente.getId_cliente().equals(ticket_tgs.getId_cliente());
+        boolean ticketVigente = ticket_tgs.getTiempo_vida_ticket().isAfter(LocalDateTime.now());
+        boolean timestampAceptable = dentroDeSkewPermitido(autificacionCliente.getTimeStamp_ClientAuthentication());
+        boolean noReplay = registrarAutenticadorSiNoFueUsado();
+
+        return identidadValida && ticketVigente && timestampAceptable && noReplay;
+    }
+
+    private boolean registrarAutenticadorSiNoFueUsado() {
+        Instant autenticadorEmitido = toInstant(autificacionCliente.getTimeStamp_ClientAuthentication());
+        Instant ticketExpira = toInstant(ticket_tgs.getTiempo_vida_ticket());
+        Instant replayExpira = min(ticketExpira, autenticadorEmitido.plus(CONFIG.replayWindow()));
+
+        String replayKey = "tgs:"
+                + ticket_tgs.getId_TicketGrantingServer()
+                + ":"
+                + autificacionCliente.getId_cliente()
+                + ":"
+                + autificacionCliente.getIp_cliente()
+                + ":"
+                + autificacionCliente.getTimeStamp_ClientAuthentication();
+
+        return REPLAY_CACHE.registerIfAbsent(replayKey, replayExpira);
+    }
+
+    private static boolean dentroDeSkewPermitido(LocalDateTime timestamp) {
+        Duration diferencia = Duration.between(toInstant(timestamp), Instant.now()).abs();
+        return diferencia.compareTo(CONFIG.allowedClockSkew()) <= 0;
+    }
+
+    private static Instant min(Instant first, Instant second) {
+        return first.isBefore(second) ? first : second;
+    }
+
+    private static Instant toInstant(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
     public static class Ticket_servicio implements Serializable {
@@ -179,7 +235,7 @@ public class TicketGrantingServer {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("Ticket_servicio{");
-            sb.append("clave_cliente_servidor=").append(clave_cliente_servidor);
+            sb.append("clave_cliente_servidor=<redacted>");
             sb.append(", id_cliente='").append(id_cliente).append('\'');
             sb.append(", address_cliente=").append(address_cliente);
             sb.append(", creacion_ticket=").append(creacion_ticket);

@@ -1,5 +1,7 @@
 package com.portfolio.auth.core.protocol.dto;
 
+import com.portfolio.auth.core.protocol.ProtocolMessage;
+
 import java.time.Instant;
 
 /**
@@ -9,9 +11,11 @@ import java.time.Instant;
 public record TgsRequest(
         String version,
         String requestId,
-        String serviceId,
         Instant issuedAt,
+        String clientId,
+        String serviceId,
+        String ticketGrantingServerId,
         TicketTgs ticketTgs,
         ClientAuthenticator clientAuthenticator
-) {
+) implements ProtocolMessage {
 }

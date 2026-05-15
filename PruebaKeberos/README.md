@@ -1,104 +1,47 @@
-# Kerberos-Inspired Authentication Prototype
+# Kerberos-Inspired Distributed Authentication Demo
 
-A Java portfolio project that explores a Kerberos-style authentication flow,
-then incrementally refactors it into a cleaner, more modular design.
+Proyecto Java de portafolio que implementa desde cero un flujo de autenticacion
+distribuida inspirado en Kerberos 4 y lo migra gradualmente hacia una
+arquitectura modular mas clara, testeable y documentada.
 
-This repository contains two realities at the same time:
+Este repositorio no es MIT Kerberos oficial y no debe presentarse como un
+sistema listo para produccion critica. Es una pieza de ingenieria aplicada para
+mostrar arquitectura distribuida, diseno de protocolo, refactorizacion,
+seguridad aplicada, pruebas y ejecucion local reproducible.
 
-1. a runnable legacy demo under `Kerberos/` and `Seguridad/`
-2. an in-progress modular redesign under `auth-*`
+## Estado Actual
 
-It is intentionally documented as both a working prototype and a migration
-exercise in protocol design, transport refactoring, and security hardening.
+El proyecto tiene dos capas que conviven:
 
-> Important note
->
-> This is not an official MIT Kerberos implementation.
-> It is a learning and engineering project inspired by Kerberos-style exchanges.
-
-## What this project is
-
-This project models the classic three-stage authentication flow:
-
-- Client -> Authentication Server (AS)
-- Client -> Ticket Granting Server (TGS)
-- Client -> Service Server
-
-The current runnable path demonstrates ticket issuance, service ticket exchange,
-and service access with symmetric cryptography and Java sockets.
-
-The newer `auth-*` modules are being introduced to separate concerns more
-cleanly:
-
-- `auth-core`: protocol DTOs and shared domain contracts
-- `auth-transport`: transport adapters and compatibility layers
-- `auth-crypto`: future cryptographic abstractions
-- `auth-as`, `auth-tgs`, `auth-service`: future runtime services
-- `auth-client-sdk`: future client-facing integration layer
-- `docs`: architecture and security documentation
-
-## Why this project exists
-
-This repository exists for three reasons:
-
-1. to understand how ticket-based authentication systems work end to end
-2. to practice turning a classroom-style prototype into a more serious codebase
-3. to show engineering judgment, not just implementation speed
-
-The interesting part is not only "making the demo work".
-It is also documenting tradeoffs, identifying real security weaknesses, and
-migrating the code in small, reviewable steps without breaking the existing
-flow.
-
-## Architecture
-
-### Current repository shape
-
-| Area | Role | Status |
+| Area | Rol | Estado |
 | --- | --- | --- |
-| `Kerberos/` | Runnable legacy prototype with AS, TGS, Service, Client | Working demo |
-| `Seguridad/` | Legacy socket and crypto helpers | Working demo |
-| `auth-core/` | Typed protocol contracts | Active migration |
-| `auth-transport/` | Transport abstraction and legacy bridge | Active migration |
-| `auth-crypto/` | Crypto module | Planned |
-| `auth-as/`, `auth-tgs/`, `auth-service/` | Modular service runtimes | Planned |
-| `auth-client-sdk/` | Future client SDK | Planned |
-| `docs/` | Architecture and security notes | Active |
+| `Kerberos/` | Demo legacy funcional con AS, TGS, Service y Client | Ruta principal ejecutable |
+| `Seguridad/` | Helpers legacy de sockets, serializacion y utilidades | Usado por la demo |
+| `auth-core/` | DTOs del protocolo, configuracion y replay cache | Migracion activa |
+| `auth-transport/` | Transporte Java Object y mappers legacy | Migracion activa |
+| `auth-crypto/` | Base moderna AES-GCM con envelope | Preparado, no integrado al legacy |
+| `auth-as/`, `auth-tgs/`, `auth-service/` | Modulos runtime futuros | Estructura Maven creada |
+| `auth-client-sdk/` | SDK cliente futuro | Estructura Maven creada |
+| `docs/` | Documentacion tecnica | Activa |
 
-### Runtime view
+La demo legacy sigue funcionando localmente sin Docker. Docker queda
+explicitamente como trabajo futuro para la fase final de despliegue.
 
-```mermaid
-flowchart LR
-    C["Client"] --> AS["Authentication Server (AS)"]
-    AS --> C
-    C --> TGS["Ticket Granting Server (TGS)"]
-    TGS --> C
-    C --> S["Service Server"]
-    S --> C
-```
+## Por Que Existe
 
-### Migration strategy
+El objetivo no es vender un producto de seguridad, sino mostrar una evolucion
+realista de un prototipo:
 
-The project is being refactored from:
+- flujo distribuido AS -> TGS -> Service -> Client;
+- contratos tipados que reemplazan progresivamente `HashMap<String,Object>`;
+- mappers que conectan los DTOs nuevos con el runtime legacy;
+- replay cache inicial para rechazar autenticadores reutilizados;
+- base AES-GCM preparada sin romper el cifrado legacy existente;
+- documentacion honesta de riesgos, limites y roadmap.
 
-- untyped `HashMap<String, Object>` messages
-- Java object serialization over sockets
-- tightly coupled runtime classes
+## Arquitectura
 
-toward:
-
-- typed DTOs in `auth-core`
-- explicit transport adapters in `auth-transport`
-- isolated service modules
-- better security boundaries and better documentation
-
-The first migration step already started in the Client -> AS exchange, where
-`AsRequest` now exists as a typed DTO and is bridged back into the legacy
-payload format for compatibility.
-
-## Protocol flow
-
-The current functional flow follows this sequence:
+Vista simplificada del flujo actual:
 
 ```mermaid
 sequenceDiagram
@@ -107,184 +50,215 @@ sequenceDiagram
     participant TGS as Ticket Granting Server
     participant S as Service Server
 
-    C->>AS: AS-REQ (clientId, tgsId, timestamp)
-    AS-->>C: AS-REP (client-TGS session key, Ticket-tgs)
-    C->>TGS: TGS-REQ (Ticket-tgs, authenticator, serviceId)
-    TGS-->>C: TGS-REP (client-service session key, Ticket-v)
-    C->>S: AP-REQ (Ticket-v, authenticator)
-    S-->>C: AP-REP (timestamp + 1, service granted)
+    C->>AS: AS-REQ (legacy map + AsRequest bridge)
+    AS-->>C: AS-REP (legacy encrypted response)
+    C->>TGS: TGS-REQ (legacy ticket + authenticator)
+    TGS-->>C: TGS-REP (legacy encrypted service ticket)
+    C->>S: Service-REQ (legacy ticket + authenticator)
+    S-->>C: Service-REP (legacy encrypted service response)
 ```
 
-### Step-by-step
+La migracion modular vive en:
 
-1. The client asks the AS for a ticket-granting ticket.
-2. The AS returns a client-TGS session key plus a TGS ticket.
-3. The client presents that ticket to the TGS to request access to a service.
-4. The TGS returns a client-service session key plus a service ticket.
-5. The client presents the service ticket and an authenticator to the service.
-6. The service validates the request and returns a success response.
+- `auth-core`: `AsRequest`, `AsResponse`, `TgsRequest`, `TgsResponse`,
+  `ServiceRequest`, `ServiceResponse`, `TicketTgs`, `TicketService`,
+  `ClientAuthenticator`, `ErrorResponse`, `AuthConfig`, `ReplayCache`.
+- `auth-transport`: `JavaObjectTransport` y mappers `Legacy*Mapper`.
+- `auth-crypto`: `CryptoEnvelope`, `AeadCryptoService`,
+  `AesGcmCryptoService`.
 
-## Improvements over the original prototype
+## Mejoras Sobre El Prototipo Original
 
-This repository no longer presents the prototype as "done".
-Instead, it shows an engineering path from a working demo to a better system.
+- Monorepo Maven con modulos separados.
+- DTOs tipados del protocolo en `auth-core`.
+- Mappers legacy para AS, TGS y Service.
+- Pruebas unitarias para mappers, replay cache y AES-GCM.
+- Replay cache en memoria integrada de forma minima en TGS y Service.
+- Configuracion centralizada con defaults compatibles para demo local.
+- Logs legacy reducidos para no imprimir claves, tickets descifrados completos
+  ni respuestas con secretos de sesion.
+- Documentacion ejecutable para correr sin Docker.
 
-Current improvements include:
+## Requisitos
 
-- a Maven-based monorepo layout for modular growth
-- typed protocol DTOs in `auth-core`
-- a transport compatibility layer in `auth-transport`
-- the first incremental migration of the Client -> AS request path
-- unit tests for the new transport mapping layer
-- a documented security hardening roadmap in
-  [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
-- clearer separation between legacy runtime code and migration targets
+Consulta tambien [requirements.txt](requirements.txt).
 
-Just as important, the project now documents what is still wrong instead of
-hiding it.
+- Java 17 o superior recomendado. Este entorno se verifico con Java/Javac 19.
+- Maven 3.9+ recomendado para ejecutar los modulos `auth-*`.
+- Git.
+- Windows, Linux o macOS con terminal.
+- Docker no es requisito en esta fase.
 
-## How to run
+Verificacion rapida:
 
-### Prerequisites
-
-- Java 17 or newer
-- `javac` and `java` available on your PATH
-- Maven if you want to run the modular tests in `auth-*`
-
-### Option A: run the current legacy demo
-
-This is the main runnable path today.
-
-From the repository root in PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force build\classes | Out-Null
-$sources = Get-ChildItem Kerberos,Seguridad,auth-core\src\main\java,auth-transport\src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName }
-javac -d build\classes $sources
+```bash
+java -version
+javac -version
+mvn -version
+git --version
 ```
 
-Start each server in its own terminal:
+## Clonar Y Entrar Al Proyecto
 
-```powershell
+```bash
+git clone <repo-url>
+cd PruebaKeberos
+```
+
+Si el repositorio fue clonado con otro nombre, entra a la carpeta que contiene
+este `README.md` y el `pom.xml` raiz.
+
+## Compilar Con Maven
+
+Maven valida la migracion modular, no reemplaza todavia la demo legacy:
+
+```bash
+mvn -q -DskipTests compile
+mvn test
+```
+
+En este entorno local esos comandos fueron intentados, pero `mvn` no estaba en
+el PATH. El proyecto conserva comandos `javac` para ejecutar la demo sin Docker.
+
+## Ejecutar Pruebas
+
+Cuando Maven este instalado:
+
+```bash
+mvn test
+```
+
+Las pruebas cubren:
+
+- mappers legacy de AS/TGS/Service;
+- transporte Java Object basico;
+- replay cache en memoria;
+- cifrado/descifrado AES-GCM preparado para la migracion.
+
+## Ejecutar La Demo Legacy Sin Docker
+
+### Windows CMD
+
+Desde la raiz del proyecto:
+
+```cmd
+if not exist build\classes mkdir build\classes
+(for /r Kerberos %f in (*.java) do @echo %f) > sources.txt
+(for /r Seguridad %f in (*.java) do @echo %f) >> sources.txt
+(for /r auth-core\src\main\java %f in (*.java) do @echo %f) >> sources.txt
+(for /r auth-transport\src\main\java %f in (*.java) do @echo %f) >> sources.txt
+(for /r auth-crypto\src\main\java %f in (*.java) do @echo %f) >> sources.txt
+javac -d build\classes @sources.txt
+```
+
+Abre cuatro terminales separadas en este orden:
+
+```cmd
 java -cp build\classes Kerberos.AuthenticationServer
 ```
 
-```powershell
+```cmd
 java -cp build\classes Kerberos.TicketGrantingServer
 ```
 
-```powershell
+```cmd
 java -cp build\classes Kerberos.ServiceServer
 ```
 
-Then run the client:
-
-```powershell
+```cmd
 java -cp build\classes Kerberos.Client
 ```
 
-If everything is working, the client should complete the AS -> TGS -> Service
-flow and print the granted service message.
-
-### Optional demo commands
-
-Run concurrent clients:
+### PowerShell
 
 ```powershell
-java -cp build\classes Kerberos.ClientRunner
+New-Item -ItemType Directory -Force build\classes | Out-Null
+$sources = Get-ChildItem Kerberos,Seguridad,auth-core\src\main\java,auth-transport\src\main\java,auth-crypto\src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName }
+javac -d build\classes $sources
 ```
 
-Run the malicious test client:
+Luego ejecuta los mismos cuatro procesos con `java -cp build\classes ...`.
 
-```powershell
-java -cp build\classes Kerberos.ClientePruebaMaliciosaAuto
-```
-
-That tester can replay, corrupt, and flood requests against the running
-services, which is useful for discussing both the current weaknesses and the
-planned hardening work.
-
-### Option B: run the modular tests
-
-If Maven is installed, you can run the tests for the migration modules:
+### Linux/macOS
 
 ```bash
-mvn -pl auth-core,auth-transport test
+mkdir -p build/classes
+find Kerberos Seguridad auth-core/src/main/java auth-transport/src/main/java auth-crypto/src/main/java -name "*.java" > sources.txt
+javac -d build/classes @sources.txt
 ```
 
-This does not launch the full legacy demo.
-It validates the new typed contracts and the compatibility layer that bridges
-them into the current runtime flow.
+Terminales separadas:
 
-## Demo
+```bash
+java -cp build/classes Kerberos.AuthenticationServer
+```
 
-The repository supports a strong demo narrative for GitHub, internships, and
-technical interviews:
+```bash
+java -cp build/classes Kerberos.TicketGrantingServer
+```
 
-1. show the AS -> TGS -> Service exchange working end to end
-2. explain how tickets and authenticators move through the system
-3. point out the current prototype weaknesses honestly
-4. show the modular redesign in `auth-core` and `auth-transport`
-5. explain how the migration keeps the working flow alive while improving the
-   design
+```bash
+java -cp build/classes Kerberos.ServiceServer
+```
 
-Good live demo paths:
+```bash
+java -cp build/classes Kerberos.Client
+```
 
-- `Kerberos.Client` for the happy path
-- `Kerberos.ClientRunner` for concurrent clients
-- `Kerberos.ClientePruebaMaliciosaAuto` for replay/corruption/flood scenarios
+## Configuracion Local
 
-## Limitations
+`AuthConfig` centraliza valores de demo con defaults compatibles. Se pueden
+sobrescribir con variables de entorno:
 
-This project is intentionally honest about its current state.
+- `AUTH_AS_PORT`, `AUTH_TGS_PORT`, `AUTH_SERVICE_PORT`
+- `AUTH_DEMO_CLIENT_ID`, `AUTH_DEMO_TGS_ID`, `AUTH_DEMO_SERVICE_ID`
+- `AUTH_LEGACY_CLIENT_SECRET`
+- `AUTH_LEGACY_CLIENT_TGS_KEY`
+- `AUTH_LEGACY_TGS_SECRET`
+- `AUTH_LEGACY_CLIENT_SERVICE_KEY`
+- `AUTH_LEGACY_SERVICE_SECRET`
+- `AUTH_TICKET_TTL_MINUTES`
+- `AUTH_ALLOWED_SKEW_SECONDS`
+- `AUTH_REPLAY_WINDOW_SECONDS`
 
-The runnable legacy path still has important limitations:
+Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
 
-- Java object serialization is still used over sockets
-- the legacy flow still contains hardcoded secrets
-- the current crypto path still needs the AES-CBC to AES-GCM migration
-- replay defense is not yet fully implemented
-- the modular `auth-*` services are not yet the main runtime path
-- the repository is not production-ready
+## Como Revisar La Migracion Modular
 
-This is best described as:
+- DTOs: `auth-core/src/main/java/com/portfolio/auth/core/protocol/dto`
+- Configuracion: `auth-core/src/main/java/com/portfolio/auth/core/config`
+- Replay cache: `auth-core/src/main/java/com/portfolio/auth/core/replay`
+- Mappers: `auth-transport/src/main/java/com/portfolio/auth/transport/legacy`
+- AES-GCM: `auth-crypto/src/main/java/com/portfolio/auth/crypto`
+- Pruebas: `auth-*/src/test/java`
 
-- a serious learning project
-- a protocol and systems design exercise
-- a portfolio project with active refactoring
+## Limitaciones Actuales
 
-It should not be described as:
+- El runtime principal todavia usa sockets y serializacion Java.
+- `AESUtils` legacy sigue usando AES/CBC por compatibilidad; no se cambio el IV
+  porque el formato actual no transporta IV por mensaje.
+- AES-GCM existe en `auth-crypto`, pero no cifra aun los tickets legacy.
+- Replay cache es local en memoria por proceso.
+- Los modulos `auth-as`, `auth-tgs`, `auth-service` y `auth-client-sdk` aun no
+  reemplazan al runtime legacy.
+- No hay Docker en esta fase.
+- No es production-ready.
 
-- production-grade authentication infrastructure
-- an enterprise-ready security platform
-- an official Kerberos distribution
+## Roadmap
 
-## Future work
+1. Integrar completamente replay cache y validacion de clock skew en DTOs
+   versionados.
+2. Migrar tickets y respuestas a `CryptoEnvelope` + AES-GCM.
+3. Reemplazar gradualmente `ObjectInputStream/ObjectOutputStream`.
+4. Externalizar configuracion con archivo local opcional y variables de entorno.
+5. Agregar pruebas de integracion AS -> TGS -> Service.
+6. Convertir `auth-as`, `auth-tgs`, `auth-service` y `auth-client-sdk` en
+   runtimes modulares reales.
+7. Introducir Docker y Docker Compose solo en una fase posterior de despliegue.
 
-The next major steps are already identified:
+Mas detalle:
 
-- finish moving message contracts from legacy maps to typed DTOs
-- expand the migration from `AsRequest` to the rest of the protocol
-- move crypto concerns into `auth-crypto`
-- replace Java serialization with safer transport formats
-- externalize secrets and runtime configuration
-- migrate from AES-CBC to AES-GCM
-- add replay cache and time-skew validation
-- turn `auth-as`, `auth-tgs`, and `auth-service` into real modular runtimes
-
-For the current hardening plan, see:
-
+- [docs/execution-guide.md](docs/execution-guide.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/protocol-flow.md](docs/protocol-flow.md)
 - [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
-
-## Why this is worth reviewing
-
-For recruiters and internship reviewers, this project shows more than a toy
-implementation:
-
-- protocol-level thinking
-- incremental refactoring in a live codebase
-- honesty about security debt
-- architecture evolution from prototype to modules
-- willingness to document tradeoffs, not just features
-
-That combination is the real point of the repository.

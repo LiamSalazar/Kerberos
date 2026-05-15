@@ -1,5 +1,6 @@
 package com.portfolio.auth.core.protocol.dto;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
@@ -14,5 +15,5 @@ public record TicketService(
         String clientAddress,
         String serviceId,
         String clientServiceSessionKey
-) {
+) implements Serializable {
 }

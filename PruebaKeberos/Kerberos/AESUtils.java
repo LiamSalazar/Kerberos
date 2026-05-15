@@ -1,5 +1,7 @@
 package Kerberos;
 
+import com.portfolio.auth.core.config.AuthConfig;
+
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
@@ -14,7 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
 public class AESUtils {
-    static String salt = "12345678";
+    static String salt = AuthConfig.fromEnvironment().legacyPbkdf2Salt();
     static String ObjectsCipherAlg = "AES/CBC/PKCS5Padding";
 
     public static SecretKey getKeyFromPassword(String password, String salt)

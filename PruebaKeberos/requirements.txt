@@ -1,0 +1,30 @@
+# This is not a Python dependency file.
+# It is an environment requirements checklist for running the Java project locally.
+# Docker is not required for the current version.
+
+# Java
+# Recommended: Java 17 or newer.
+# Verify:
+#   java -version
+#   javac -version
+
+# Maven
+# Recommended: Maven 3.9 or newer for compiling and testing the auth-* modules.
+# Verify:
+#   mvn -version
+
+# Git
+# Required for cloning and reviewing repository history.
+# Verify:
+#   git --version
+
+# Operating system
+# Tested/recommended local execution targets:
+#   Windows 10/11 with CMD or PowerShell
+#   Linux/macOS with bash-compatible shell
+
+# Notes
+# Do not run: pip install -r requirements.txt
+# This file is only a checklist for the local Java environment.
+# Docker is not required for the current phase.
+# Docker and Docker Compose are planned as future deployment work.

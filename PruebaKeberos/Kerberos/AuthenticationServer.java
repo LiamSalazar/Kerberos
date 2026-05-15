@@ -1,6 +1,7 @@
 package Kerberos;
 
 import com.portfolio.auth.core.protocol.dto.AsRequest;
+import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.transport.javaio.JavaObjectTransport;
 import com.portfolio.auth.transport.legacy.LegacyAsRequestMapper;
 
@@ -20,26 +21,28 @@ import Seguridad.Conexiones;
 import Seguridad.Comunicacion;
 
 public class AuthenticationServer {
+    private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
+
     static final Map<String, String> BDD_usuarios = new HashMap<String, String>() {
         {
-            put("1", "ContraseniaCliente");
+            put(CONFIG.defaultClientId(), CONFIG.legacyClientSecret());
         }
     };
     static final Map<String, String> BDD_TGS = new HashMap<String, String>() {
         {
-            put("1", "ContraseñaTGS");
+            put(CONFIG.defaultTicketGrantingServerId(), CONFIG.legacyTicketGrantingServerSecret());
         }
     };
     static final Map<String, String> BDD_Servidor = new HashMap<String, String>() {
         {
-            put("1", "ContraseñaServidor");
+            put(CONFIG.defaultServiceId(), CONFIG.legacyServiceSecret());
         }
     };
     private String id_cliente;
     private InetAddress address_cliente;
     private String id_TicketGrantingServer;
-    private String clave_Cliente_TicketGrantingServer = "contraseña_C-TGS";
-    private String clave_TicketGrantingServer = "contraseñaTGS";
+    private String clave_Cliente_TicketGrantingServer = CONFIG.legacyClientTgsSessionKey();
+    private String clave_TicketGrantingServer = CONFIG.legacyTicketGrantingServerSecret();
 
     public static void main(String[] args) throws Exception {
         System.out.println(
@@ -54,7 +57,7 @@ public class AuthenticationServer {
                 "-                  PARA OBTENER TGT              -\n" +
                 "--------------------------------------------------");
 
-        final int puertoServer = 2000;
+        final int puertoServer = CONFIG.authenticationServerPort();
         var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
 
         try (java.net.ServerSocket serverSocket = new java.net.ServerSocket(puertoServer)) {
@@ -89,7 +92,7 @@ public class AuthenticationServer {
         System.out.printf("Solicitud recibida: %s \n DTO tipado: %s \n\n", solicitudTGT, request);
 
         this.setAddress_cliente(conexionCliente.getInetAddress());
-        this.setClave_Cliente_TicketGrantingServer("contraseña_C-TGS");
+        this.setClave_Cliente_TicketGrantingServer(CONFIG.legacyClientTgsSessionKey());
         this.setId_cliente(request.clientId());
         this.setId_TicketGrantingServer(request.ticketGrantingServerId());
     }
@@ -125,7 +128,7 @@ public class AuthenticationServer {
     HashMap<String, Object> getRespuestaSolicitudTicket_TGS() throws Exception {
         HashMap<String, Object> respuestaSolicitud = new HashMap<>();
         Ticket_TGS ticket_tgs = new Ticket_TGS(clave_Cliente_TicketGrantingServer, id_cliente, address_cliente,
-                id_TicketGrantingServer, 5);
+                id_TicketGrantingServer, Math.max(1, CONFIG.ticketLifetime().toMinutes()));
 
         respuestaSolicitud.put("[K-c_tgs]", ticket_tgs.getClave_Cliente_TicketGrantingServer());
         respuestaSolicitud.put("[Id-tgs]", ticket_tgs.getId_TicketGrantingServer());
@@ -160,7 +163,7 @@ public class AuthenticationServer {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("Ticket_TGS{");
-            sb.append("clave_Cliente_TicketGrantingServer=").append(clave_Cliente_TicketGrantingServer);
+            sb.append("clave_Cliente_TicketGrantingServer=<redacted>");
             sb.append(", id_cliente='").append(id_cliente).append('\'');
             sb.append(", address_cliente=").append(address_cliente);
             sb.append(", id_TicketGrantingServer='").append(id_TicketGrantingServer).append('\'');

@@ -2,6 +2,7 @@ package Kerberos;
 
 import Seguridad.Comunicacion;
 import Seguridad.Conexiones;
+import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.ProtocolDefaults;
 import com.portfolio.auth.core.protocol.dto.AsRequest;
 import com.portfolio.auth.transport.javaio.JavaObjectTransport;
@@ -18,11 +19,11 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.util.UUID;
 
 @SuppressWarnings("LanguageDetectionInspection")
 public class Client {
+    private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
 
     private final String id_cliente;
     private final InetAddress address_cliente;
@@ -47,23 +48,21 @@ public class Client {
                         "         -------------- CLIENTE ------------\n" +
                         "         -----------------------------------\n");
 
-        Scanner entrada = new Scanner(System.in);
+        String ipCliente = CONFIG.clientHost();
 
-        String ipCliente = "127.0.0.1";
+        String ipAS = CONFIG.authenticationServerHost();
+        int puertoAS = CONFIG.authenticationServerPort();
 
-        String ipAS = "127.0.0.1";
-        int puertoAS = 2000;
+        String ipTGS = CONFIG.ticketGrantingServerHost();
+        int puertoTGS = CONFIG.ticketGrantingServerPort();
 
-        String ipTGS = "127.0.0.1";
-        int puertoTGS = 2001;
-
-        String ipServiceServer = "127.0.0.1";
-        int puertoServiceServer = 2002;
+        String ipServiceServer = CONFIG.serviceServerHost();
+        int puertoServiceServer = CONFIG.serviceServerPort();
 
         System.out.println();
 
-        Client cliente = new Client("1", InetAddress.getByName(ipCliente));
-        cliente.setId_TicketGrantingServer("1");
+        Client cliente = new Client(CONFIG.defaultClientId(), InetAddress.getByName(ipCliente));
+        cliente.setId_TicketGrantingServer(CONFIG.defaultTicketGrantingServerId());
 
         System.out.println("\n" +
                 "--------------------------------------------------\n" +
@@ -87,7 +86,7 @@ public class Client {
                         "-             QUE CONCEDE UN SERVICIO            -\n" +
                         "--------------------------------------------------");
 
-        cliente.setId_Servidor("1");
+        cliente.setId_Servidor(CONFIG.defaultServiceId());
 
         Socket conexionTGS = Conexiones.obtenerConexion(puertoTGS, ipTGS);
         inputStream = conexionTGS.getInputStream();
@@ -126,8 +125,11 @@ public class Client {
         SealedObject respuetaCifrada = (SealedObject) Comunicacion.recibirObjeto(inputStream);
 
         HashMap<String, Object> respuestaDescifrada = (HashMap<String, Object>) AESUtils
-                .desencriptarObjeto(respuetaCifrada, "ContraseniaCliente");
-        System.out.printf("Repuestas recibida desde el AS: %s \n\n", respuestaDescifrada);
+                .desencriptarObjeto(respuetaCifrada, CONFIG.legacyClientSecret());
+        System.out.printf("Respuesta recibida desde el AS. Campos: %s, TGS: %s, expira: %s \n\n",
+                respuestaDescifrada.keySet(),
+                respuestaDescifrada.get("[Id-tgs]"),
+                respuestaDescifrada.get("[TiempoVida-2]"));
 
         this.setClave_Cliente_TicketGrantingServer((String) respuestaDescifrada.get("[K-c_tgs]"));
 
@@ -147,7 +149,10 @@ public class Client {
         HashMap<String, Object> respuesta = (HashMap<String, Object>) AESUtils.desencriptarObjeto(respuestaCifrada,
                 this.getClave_Cliente_TicketGrantingServer());
 
-        System.out.printf("Repuestas recibida: %s \n\n", respuesta);
+        System.out.printf("Respuesta recibida desde el TGS. Campos: %s, servicio: %s, expira: %s \n\n",
+                respuesta.keySet(),
+                respuesta.get("[Id-v]"),
+                respuesta.get("[TiempoVida-4]"));
 
         this.setTicket_servicio((SealedObject) respuesta.get("[Ticket-v]"));
 
@@ -159,17 +164,16 @@ public class Client {
         HashMap<String, Object> peticionServicio = this.generarSolicitudIntercambioServicio();
 
         Comunicacion.enviarObjeto(outputStream, peticionServicio);
-        System.out.printf("Peticion Intercambio Servicio Enviada: %s\n", peticionServicio);
+        System.out.printf("Peticion de servicio enviada. Campos: %s\n", peticionServicio.keySet());
     }
 
     public void recibirServiciodesdeServidor(InputStream inputStream) throws Exception {
         SealedObject respuestaCifrada = (SealedObject) Comunicacion.recibirObjeto(inputStream);
 
-        System.out.printf("respuesta cifrada recibida -> %s", respuestaCifrada);
         HashMap<String, Object> respuestaServicio = (HashMap<String, Object>) AESUtils
                 .desencriptarObjeto(respuestaCifrada, this.getClave_cliente_servidor());
 
-        System.out.printf("\nrespuesta recibida Servicio: ", respuestaServicio);
+        System.out.printf("\nRespuesta recibida desde el servicio. Campos: %s\n", respuestaServicio.keySet());
         String servicioRecibido = (String) respuestaServicio.get("[Servicio]");
 
         System.out.println(servicioRecibido);
@@ -244,8 +248,7 @@ public class Client {
         solicitud.put("[Ticket-v]", ticket_servicio);
         solicitud.put("[Autentificador-c]", autentificadorCifrado);
 
-        System.out.printf("\n[Ticket-v] cifrado y descifrado-> %s -> %s \n", ticket_servicio,
-                AESUtils.desencriptarObjeto(ticket_servicio, "contraseñaServidor"));
+        System.out.printf("\n[Ticket-v] preparado para el servicio %s\n", id_Servidor);
 
         return solicitud;
     }

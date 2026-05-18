@@ -30,6 +30,24 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.portfolio.auth</groupId>
+            <artifactId>auth-as</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.portfolio.auth</groupId>
+            <artifactId>auth-tgs</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.portfolio.auth</groupId>
+            <artifactId>auth-service</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>

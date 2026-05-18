@@ -12,6 +12,8 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - No imprimir secretos, claves, tickets descifrados completos ni payloads sensibles en logs nuevos.
 - Preferir DTOs tipados sobre `HashMap<String,Object>` en codigo nuevo.
 - Mantener mappers legacy cuando sea necesario para no romper el runtime actual.
+- La ruta modular nueva debe permanecer libre de `AESUtils`, `SealedObject` y Java serialization.
+- Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo AS -> TGS -> Service cuando sea viable.
 - Preferir documentacion honesta sobre afirmaciones exageradas.
 - Mantener ejecucion local sin Docker como requisito actual.
 - Dejar Docker y Docker Compose como trabajo futuro hasta que se autorice explicitamente.

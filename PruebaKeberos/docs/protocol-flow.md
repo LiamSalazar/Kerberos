@@ -1,161 +1,134 @@
 # Protocol Flow
 
-Este documento describe el flujo actual y el estado de migracion de cada
-mensaje. El runtime principal sigue usando payloads legacy, pero los DTOs y
-mappers ya preparan la ruta modular.
+Este documento describe la ruta modular actual y separa explicitamente la ruta
+legacy.
+
+## Ruta Modular
+
+Todos los mensajes modulares viajan como JSON dentro de `ProtocolEnvelope`:
+
+- `messageType`
+- `version`
+- `requestId`
+- `issuedAt`
+- `payload`
+
+El payload puede ser un DTO en claro o un `CryptoEnvelope` con ciphertext
+AES-GCM.
 
 ## 1. Client -> AS
 
-Objetivo: pedir un Ticket Granting Ticket.
+Mensaje: `AS_REQUEST`
 
-Payload legacy:
+Payload: `AsRequest`
 
-- `[Id-c]`
-- `[Id-tgs]`
-- `[TimeStamp-1]`
+Contenido principal:
 
-DTO:
+- `clientId`
+- `ticketGrantingServerId`
+- `requestId`
+- `issuedAt`
 
-- `AsRequest`
-
-Mapper:
-
-- `LegacyAsRequestMapper`
-
-Estado: integrado en el flujo legacy. El cliente crea `AsRequest`, lo convierte
-a `HashMap` legacy y el AS lo reconstruye como DTO.
+Estado: modular y JSON. No usa serializacion Java.
 
 ## 2. AS -> Client
 
-Objetivo: entregar clave de sesion cliente-TGS y Ticket TGS.
+Mensaje: `AS_RESPONSE`
 
-Payload legacy:
+Payload externo: `CryptoEnvelope`
 
-- `[K-c_tgs]`
-- `[Id-tgs]`
-- `[TimeStamp-2]`
-- `[TiempoVida-2]`
-- `[Ticket-tgs]`
+Plaintext cifrado para el cliente: `SecureAsResponse`
 
-DTO:
+`SecureAsResponse` contiene:
 
-- `AsResponse`
-- `TicketTgs`
+- clave de sesion cliente-TGS;
+- metadata de expiracion;
+- `ticketTgsEnvelope`.
 
-Mapper:
+`ticketTgsEnvelope` cifra un `TicketTgs` con la clave del TGS.
 
-- `LegacyAsResponseMapper`
-
-Estado: mapper y pruebas implementados. El AS construye un `AsResponse` y un
-`TicketTgs` DTO, pero envia el ticket real como `SealedObject` legacy para no
-romper compatibilidad.
+Estado: AES-GCM real. No usa `AESUtils` ni `SealedObject`.
 
 ## 3. Client -> TGS
 
-Objetivo: pedir ticket para un servicio concreto.
+Mensaje: `TGS_REQUEST`
 
-Payload legacy:
+Payload: `SecureTgsRequest`
 
-- `[Id-v]`
-- `[Ticket-tgs]`
-- `[Autentificador-c]`
+Contenido principal:
 
-DTO:
+- `serviceId`
+- `ticketTgsEnvelope`
+- `clientAuthenticatorEnvelope`
 
-- `TgsRequest`
-- `TicketTgs`
-- `ClientAuthenticator`
+El autenticador es un `ClientAuthenticator` cifrado con la clave de sesion
+cliente-TGS.
 
-Mapper:
-
-- `LegacyTgsRequestMapper`
-
-Estado: integrado parcialmente. El cliente construye `TgsRequest` y baja el
-mensaje a mapa legacy; el ticket y el autenticador siguen viajando como
-`SealedObject`.
+Estado: JSON modular. El TGS descifra ticket y autenticador con AES-GCM.
 
 ## 4. TGS -> Client
 
-Objetivo: entregar clave de sesion cliente-servicio y ticket de servicio.
+Mensaje: `TGS_RESPONSE`
 
-Payload legacy:
+Payload externo: `CryptoEnvelope`
 
-- `[K-c_v]`
-- `[Id-v]`
-- `[TimeStamp-4]`
-- `[TiempoVida-4]`
-- `[Ticket-v]`
+Plaintext cifrado para el cliente: `SecureTgsResponse`
 
-DTO:
+`SecureTgsResponse` contiene:
 
-- `TgsResponse`
-- `TicketService`
+- clave de sesion cliente-servicio;
+- `ticketServiceEnvelope`.
 
-Mapper:
-
-- `LegacyTgsResponseMapper`
-
-Estado: integrado parcialmente. El TGS construye `TgsResponse` y
-`TicketService`, despues baja a mapa legacy y conserva `[Ticket-v]` como
-`SealedObject`.
+`ticketServiceEnvelope` cifra un `TicketService` con la clave del servicio.
 
 ## 5. Client -> Service
 
-Objetivo: presentar ticket de servicio y autenticador.
+Mensaje: `SERVICE_REQUEST`
 
-Payload legacy:
+Payload: `SecureServiceRequest`
 
-- `[Ticket-v]`
-- `[Autentificador-c]`
+Contenido principal:
 
-DTO:
+- `ticketServiceEnvelope`
+- `clientAuthenticatorEnvelope`
 
-- `ServiceRequest`
-- `TicketService`
-- `ClientAuthenticator`
-
-Mapper:
-
-- `LegacyServiceRequestMapper`
-
-Estado: integrado parcialmente. El cliente construye `ServiceRequest` y baja el
-mensaje a mapa legacy; Service todavia valida ticket y autenticador legacy
-descifrados, con replay cache para rechazar reuso basico.
+El autenticador es un `ClientAuthenticator` cifrado con la clave de sesion
+cliente-servicio.
 
 ## 6. Service -> Client
 
-Objetivo: confirmar acceso al servicio.
+Mensaje: `SERVICE_RESPONSE`
 
-Payload legacy:
+Payload externo: `CryptoEnvelope`
 
-- `[TimeStamp-incrementada]`
-- `[Servicio]`
+Plaintext cifrado para el cliente: `ServiceResponse`
 
-DTO:
+El cliente descifra la respuesta con la clave de sesion cliente-servicio.
 
-- `ServiceResponse`
+## Replay Y Errores
 
-Mapper:
+TGS y Service usan `InMemoryReplayCache` para bloquear:
 
-- `LegacyServiceResponseMapper`
+- `requestId` repetidos;
+- autenticadores reutilizados.
 
-Estado: integrado parcialmente. Service construye `ServiceResponse`, lo baja a
-mapa legacy y mantiene la respuesta cifrada con `AESUtils` por compatibilidad.
+Los errores vuelven como `ERROR_RESPONSE` con payload `ErrorResponse`.
 
-## Resumen De Migracion
+## Ruta Legacy
 
-| Mensaje | DTO | Mapper | Integrado al runtime |
-| --- | --- | --- | --- |
-| Client -> AS | Si | Si | Si |
-| AS -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
-| Client -> TGS | Si | Si | Parcial, DTO antes de mapa legacy |
-| TGS -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
-| Client -> Service | Si | Si | Parcial, DTO antes de mapa legacy |
-| Service -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
+La ruta legacy mantiene los payloads historicos:
+
+- `HashMap<String,Object>`
+- `SealedObject`
+- `AESUtils`
+- `ObjectInputStream` / `ObjectOutputStream`
+
+Sus mappers (`Legacy*Mapper`) siguen disponibles para compatibilidad, pero no
+son el contrato principal del runtime modular.
 
 ## Pendiente
 
-- Llevar la validacion interna de TGS y Service a DTOs, no solo a mapas bridge.
-- Migrar tickets cifrados a `CryptoEnvelope`.
-- Agregar `ticketId` real al runtime legacy o moverlo al runtime modular.
-- Reemplazar Java serialization por un formato validable.
+- Ejecutar la suite Maven completa en entorno con Maven.
+- Agregar mas casos de expiracion de tickets.
+- Evaluar reemplazo del codec JSON manual por una biblioteca si se autoriza una
+  dependencia.

@@ -1,20 +1,15 @@
 # Architecture
 
-El proyecto combina una demo legacy funcional con una migracion modular en
-progreso. La prioridad de esta fase es estabilizar sin romper el flujo
-AS -> TGS -> Service -> Client.
+El proyecto mantiene dos rutas ejecutables:
 
-Estado de fase: **Fase 3.5** deja una migracion inicial mas cerrada, todavia
-controlada por la demo legacy y sin afirmar readiness de produccion.
+- **Legacy**: demo historica en `Kerberos/` y `Seguridad/`.
+- **Modular**: runtime nuevo en `auth-as`, `auth-tgs`, `auth-service` y
+  `auth-client-sdk`.
 
-## Arquitectura Legacy
+No es MIT Kerberos oficial y no debe presentarse como listo para produccion
+critica.
 
-La demo original vive en:
-
-- `Kerberos/`
-- `Seguridad/`
-
-Responsabilidades principales:
+## Ruta Legacy
 
 | Clase | Responsabilidad |
 | --- | --- |
@@ -23,89 +18,80 @@ Responsabilidades principales:
 | `Kerberos.ServiceServer` | Valida ticket de servicio y autenticador |
 | `Kerberos.Client` | Ejecuta el flujo completo como cliente |
 | `Kerberos.AESUtils` | Cifrado legacy basado en `SealedObject` |
-| `Seguridad.Comunicacion` | Envio/recepcion con `ObjectInputStream/ObjectOutputStream` |
-| `Seguridad.Conexiones` | Conexion socket simple |
+| `Seguridad.Comunicacion` | `ObjectInputStream` / `ObjectOutputStream` |
 
-Esta capa sigue siendo la ruta ejecutable principal. No debe eliminarse sin una
-migracion completa y probada.
+Esta ruta sigue disponible para comparar comportamiento y para conservar la demo
+original. No se elimino ni se migro a AES-GCM.
 
-## Arquitectura Modular Propuesta
-
-La migracion separa responsabilidades:
+## Ruta Modular
 
 | Modulo | Responsabilidad | Estado |
 | --- | --- | --- |
-| `auth-core` | DTOs, contratos, configuracion, replay cache | Implementado parcialmente |
-| `auth-transport` | Transporte y mappers de compatibilidad legacy | Implementado parcialmente |
-| `auth-crypto` | Servicios criptograficos modernos | Base AES-GCM implementada |
-| `auth-as` | Runtime modular del AS | Pendiente |
-| `auth-tgs` | Runtime modular del TGS | Pendiente |
-| `auth-service` | Runtime modular del servicio protegido | Pendiente |
-| `auth-client-sdk` | API cliente para consumir el protocolo | Pendiente |
-| `docs` | Documentacion tecnica | Activa |
+| `auth-core` | DTOs, `AuthConfig`, `ReplayCache` | Activo |
+| `auth-crypto` | `CryptoEnvelope`, AES-GCM, derivacion de claves | Activo |
+| `auth-transport` | `ProtocolEnvelope`, JSON, TCP, DTOs seguros, mappers legacy | Activo |
+| `auth-as` | `AuthenticationServerApp`, `AuthenticationHandler` | Ejecutable |
+| `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
+| `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
+| `auth-client-sdk` | `AuthClient`, `AuthFlowRunner`, `ClientCli` | Ejecutable |
 
-## Que Esta Implementado
+La ruta modular no usa `Kerberos.AuthenticationServer`,
+`Kerberos.TicketGrantingServer`, `Kerberos.ServiceServer`, `Kerberos.Client`,
+`AESUtils` ni `SealedObject`.
 
-En `auth-core`:
+## Transporte
 
-- DTOs principales del protocolo.
-- `AuthConfig` con defaults de demo y variables de entorno.
-- `ReplayCache` e `InMemoryReplayCache`.
+La ruta modular usa:
 
-En `auth-transport`:
+- `ProtocolEnvelope` con `messageType`, `version`, `requestId`, `issuedAt` y
+  `payload`.
+- `JsonMessageCodec`, un codec JSON acotado a los DTOs del proyecto.
+- `TcpMessageClient` y `TcpMessageServer`, con un mensaje JSON por conexion.
 
-- `JavaObjectTransport`.
-- `LegacyAsRequestMapper`.
-- `LegacyAsResponseMapper`.
-- `LegacyTgsRequestMapper`.
-- `LegacyTgsResponseMapper`.
-- `LegacyServiceRequestMapper`.
-- `LegacyServiceResponseMapper`.
+La comunicacion legacy con serializacion Java sigue existiendo solo para la
+demo historica.
 
-En `auth-crypto`:
+## Criptografia
 
-- `CryptoEnvelope`.
-- `AeadCryptoService`.
-- `AesGcmCryptoService`.
+La ruta modular usa:
 
-En legacy:
+- `AesGcmCryptoService`
+- `CryptoEnvelope`
+- `AesKeyDerivation`
+- `SessionKeys`
+- associated data estable en `SecureAad`
 
-- El AS ya usa `AsRequest` a traves de `LegacyAsRequestMapper`.
-- El cliente crea DTOs para TGS y Service y los baja a mapas legacy con
-  `LegacyTgsRequestMapper` y `LegacyServiceRequestMapper`, conservando tickets
-  y autenticadores como `SealedObject`.
-- AS, TGS y Service construyen DTOs de respuesta y luego usan mappers legacy
-  para mantener compatibilidad con el cliente actual.
-- TGS y Service integran replay cache minima; la marca de replay se registra
-  despues de validar identidad, expiracion y clock skew.
-- Logs sensibles fueron reducidos.
-- Configuracion basica se lee desde `AuthConfig` con defaults compatibles.
+Se cifran con AES-GCM:
 
-## Que Sigue En Migracion
+- `TicketTgs`
+- `TicketService`
+- `ClientAuthenticator`
+- `SecureAsResponse`
+- `SecureTgsResponse`
+- `ServiceResponse`
 
-- Los tickets reales aun viajan como `SealedObject`.
-- Las respuestas AS/TGS/Service aun usan mapas legacy cifrados.
-- Los mappers ya participan en la ruta runtime, pero no reemplazan toda la
-  validacion legacy.
-- AES-GCM esta listo en `auth-crypto`, pero no cifra aun los mensajes legacy.
-- La replay cache usa claves compuestas derivadas del autenticador legacy.
+`AESUtils` permanece sin cambios para que la demo legacy siga funcionando.
 
-## Que Falta
+## Pruebas
 
-- Migrar tickets a DTOs versionados con `ticketId`.
-- Sustituir `ObjectInputStream/ObjectOutputStream`.
-- Integrar `CryptoEnvelope` en AS, TGS y Service.
-- Agregar pruebas de integracion end-to-end.
-- Convertir los modulos runtime `auth-as`, `auth-tgs` y `auth-service` en
-  aplicaciones reales.
-- Externalizar configuracion con archivo local opcional y variables de entorno.
+La suite Maven incluye pruebas para:
 
-## Por Que No Docker Todavia
+- replay cache;
+- configuracion;
+- AES-GCM;
+- codec JSON;
+- cifrado JSON + AES-GCM;
+- mappers legacy;
+- integracion modular AS -> TGS -> Service;
+- replay, servicio inexistente, autenticador invalido y requestId repetido.
 
-Docker seria util para despliegue reproducible, pero en esta fase el objetivo es
-estabilizar funcionalidad local, migracion de protocolo, pruebas y hardening
-minimo. Introducir Docker ahora agregaria superficie operacional antes de cerrar
-la base tecnica.
+En esta sesion `mvn` no estuvo disponible en PATH, por lo que se compilaron
+fuentes y tests con `javac` como verificacion complementaria y se ejecuto un
+smoke modular real.
 
-Docker queda para una fase posterior, cuando existan runtimes modulares y
-pruebas de integracion mas completas.
+## Pendiente
+
+- Ejecutar `mvn test` en un entorno con Maven disponible.
+- Sustituir secretos demo por configuracion local no versionada.
+- Evaluar un JSON parser mantenido si se autoriza una dependencia externa.
+- Agregar Docker, WebSockets o frontend solo en fases futuras autorizadas.

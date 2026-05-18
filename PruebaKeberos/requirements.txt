@@ -30,4 +30,5 @@
 # This file is only a checklist for the local Java environment.
 # Docker is not required for the current phase.
 # Docker and Docker Compose are planned as future deployment work.
-# Phase 3.5 keeps local execution without Docker as the supported path.
+# Current modular runtime still keeps local execution without Docker as the
+# supported path. Docker, WebSockets, and frontend work are future phases.

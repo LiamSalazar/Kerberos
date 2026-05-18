@@ -1,24 +1,26 @@
 package Kerberos;
 
+import Seguridad.Comunicacion;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.protocol.ProtocolDefaults;
+import com.portfolio.auth.core.protocol.dto.TgsResponse;
+import com.portfolio.auth.core.protocol.dto.TicketService;
 import com.portfolio.auth.core.replay.InMemoryReplayCache;
 import com.portfolio.auth.core.replay.ReplayCache;
+import com.portfolio.auth.transport.legacy.LegacyTgsResponseMapper;
 
 import javax.crypto.SealedObject;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.UUID;
 
-import Seguridad.Conexiones;
-import Seguridad.Comunicacion;
 import static Kerberos.AESUtils.encriptarObjeto;
 
 public class TicketGrantingServer {
@@ -30,6 +32,8 @@ public class TicketGrantingServer {
     private InetAddress address_cliente;
     private Client.ClientAuthentication autificacionCliente;
     private AuthenticationServer.Ticket_TGS ticket_tgs;
+    private String currentRequestId = "legacy-tgs-" + UUID.randomUUID();
+    private String currentVersion = ProtocolDefaults.CURRENT_VERSION;
 
     public static void main(String[] args) throws Exception {
         System.out.println(
@@ -58,8 +62,7 @@ public class TicketGrantingServer {
                         java.io.InputStream in = sc.getInputStream();
                         java.io.OutputStream out = sc.getOutputStream();
 
-                        // Tus métodos: leen estado y responden
-                        TGS.recibirPeticionTicketDesdeCliente(in); // setea autificación y ticket_tgs
+                        TGS.recibirPeticionTicketDesdeCliente(in);
 
                         boolean ok = TGS.validarClienteConTicketYReplay();
                         System.out.printf("\n¿Peticion TGS valida y no repetida? %s\n", ok ? "SI" : "NO");
@@ -100,6 +103,12 @@ public class TicketGrantingServer {
         HashMap<String, Object> peticion = (HashMap<String, Object>) Comunicacion.recibirObjeto(inputStream);
 
         System.out.printf("Solicitud TGS recibida. Campos: %s \n\n", peticion.keySet());
+        this.currentRequestId = stringOrDefault(
+                peticion.get("[Request-Id]"),
+                "legacy-tgs-" + UUID.randomUUID());
+        this.currentVersion = stringOrDefault(
+                peticion.get("[Protocol-Version]"),
+                ProtocolDefaults.CURRENT_VERSION);
 
         Client.ClientAuthentication autenticacionCliente = (Client.ClientAuthentication) AESUtils
                 .desencriptarObjeto((SealedObject) peticion.get("[Autentificador-c]"),
@@ -150,24 +159,35 @@ public class TicketGrantingServer {
     }
 
     public HashMap<String, Object> crearRespuestaTicket() throws Exception {
-        HashMap<String, Object> respuestaSolicitud = new HashMap<>();
-
         Ticket_servicio ticket_servidor = new Ticket_servicio(CONFIG.legacyClientServiceSessionKey(), id_cliente,
                 address_cliente, id_servidor, Math.max(1, CONFIG.ticketLifetime().toMinutes()));
 
-        respuestaSolicitud.put("[K-c_v]", ticket_servidor.getClave_cliente_servidor());
-
-        respuestaSolicitud.put("[Id-v]", ticket_servidor.getId_servidor());
-        respuestaSolicitud.put("[TimeStamp-4]", ticket_servidor.getCreacion_ticket());
-        respuestaSolicitud.put("[TiempoVida-4]", ticket_servidor.getTiempo_vida_ticket());
-
         SealedObject ticket_servidor_cifrado = encriptarObjeto(ticket_servidor, CONFIG.legacyServiceSecret());
 
-        respuestaSolicitud.put("[Ticket-v]", ticket_servidor_cifrado);
+        Instant issuedAt = toInstant(ticket_servidor.getCreacion_ticket());
+        Instant expiresAt = toInstant(ticket_servidor.getTiempo_vida_ticket());
+        TicketService ticketDto = new TicketService(
+                currentVersion,
+                "legacy-ticket-service-" + currentRequestId,
+                issuedAt,
+                expiresAt,
+                ticket_servidor.getId_cliente(),
+                ticket_servidor.getIp_cliente(),
+                ticket_servidor.getId_servidor(),
+                ticket_servidor.getClave_cliente_servidor());
+        TgsResponse response = new TgsResponse(
+                currentVersion,
+                currentRequestId,
+                issuedAt,
+                expiresAt,
+                ticket_servidor.getId_cliente(),
+                ticket_servidor.getId_servidor(),
+                ticket_servidor.getClave_cliente_servidor(),
+                ticketDto);
 
         System.out.printf("\n[Ticket-v] emitido para servicio %s y cliente %s\n", id_servidor, id_cliente);
 
-        return respuestaSolicitud;
+        return LegacyTgsResponseMapper.toLegacyMap(response, ticket_servidor_cifrado);
     }
 
     private boolean validarClienteConTicketYReplay() {
@@ -179,9 +199,12 @@ public class TicketGrantingServer {
                 && autificacionCliente.getId_cliente().equals(ticket_tgs.getId_cliente());
         boolean ticketVigente = ticket_tgs.getTiempo_vida_ticket().isAfter(LocalDateTime.now());
         boolean timestampAceptable = dentroDeSkewPermitido(autificacionCliente.getTimeStamp_ClientAuthentication());
-        boolean noReplay = registrarAutenticadorSiNoFueUsado();
 
-        return identidadValida && ticketVigente && timestampAceptable && noReplay;
+        if (!identidadValida || !ticketVigente || !timestampAceptable) {
+            return false;
+        }
+
+        return registrarAutenticadorSiNoFueUsado();
     }
 
     private boolean registrarAutenticadorSiNoFueUsado() {
@@ -212,6 +235,13 @@ public class TicketGrantingServer {
 
     private static Instant toInstant(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+    }
+
+    private static String stringOrDefault(Object value, String defaultValue) {
+        if (value instanceof String stringValue && !stringValue.isBlank()) {
+            return stringValue;
+        }
+        return defaultValue;
     }
 
     public static class Ticket_servicio implements Serializable {

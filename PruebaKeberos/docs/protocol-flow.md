@@ -46,8 +46,9 @@ Mapper:
 
 - `LegacyAsResponseMapper`
 
-Estado: mapper y pruebas implementados. El runtime legacy aun construye y cifra
-el mapa directamente por compatibilidad.
+Estado: mapper y pruebas implementados. El AS construye un `AsResponse` y un
+`TicketTgs` DTO, pero envia el ticket real como `SealedObject` legacy para no
+romper compatibilidad.
 
 ## 3. Client -> TGS
 
@@ -69,8 +70,9 @@ Mapper:
 
 - `LegacyTgsRequestMapper`
 
-Estado: mapper y pruebas implementados. El runtime legacy aun envia
-`SealedObject` para ticket y autenticador.
+Estado: integrado parcialmente. El cliente construye `TgsRequest` y baja el
+mensaje a mapa legacy; el ticket y el autenticador siguen viajando como
+`SealedObject`.
 
 ## 4. TGS -> Client
 
@@ -93,8 +95,9 @@ Mapper:
 
 - `LegacyTgsResponseMapper`
 
-Estado: mapper y pruebas implementados. El runtime legacy aun responde con mapa
-cifrado por compatibilidad.
+Estado: integrado parcialmente. El TGS construye `TgsResponse` y
+`TicketService`, despues baja a mapa legacy y conserva `[Ticket-v]` como
+`SealedObject`.
 
 ## 5. Client -> Service
 
@@ -115,8 +118,9 @@ Mapper:
 
 - `LegacyServiceRequestMapper`
 
-Estado: mapper y pruebas implementados. Service valida el payload legacy y ahora
-usa replay cache para rechazar reuso basico del autenticador.
+Estado: integrado parcialmente. El cliente construye `ServiceRequest` y baja el
+mensaje a mapa legacy; Service todavia valida ticket y autenticador legacy
+descifrados, con replay cache para rechazar reuso basico.
 
 ## 6. Service -> Client
 
@@ -135,23 +139,23 @@ Mapper:
 
 - `LegacyServiceResponseMapper`
 
-Estado: mapper y pruebas implementados. El runtime legacy aun responde con mapa
-cifrado.
+Estado: integrado parcialmente. Service construye `ServiceResponse`, lo baja a
+mapa legacy y mantiene la respuesta cifrada con `AESUtils` por compatibilidad.
 
 ## Resumen De Migracion
 
 | Mensaje | DTO | Mapper | Integrado al runtime |
 | --- | --- | --- | --- |
 | Client -> AS | Si | Si | Si |
-| AS -> Client | Si | Si | Parcial |
-| Client -> TGS | Si | Si | No, solo preparado |
-| TGS -> Client | Si | Si | No, solo preparado |
-| Client -> Service | Si | Si | No, replay cache integrada en validacion |
-| Service -> Client | Si | Si | No, solo preparado |
+| AS -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
+| Client -> TGS | Si | Si | Parcial, DTO antes de mapa legacy |
+| TGS -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
+| Client -> Service | Si | Si | Parcial, DTO antes de mapa legacy |
+| Service -> Client | Si | Si | Parcial, DTO antes de mapa legacy |
 
 ## Pendiente
 
-- Hacer que AS, TGS y Service construyan DTOs primero y mapas legacy despues.
+- Llevar la validacion interna de TGS y Service a DTOs, no solo a mapas bridge.
 - Migrar tickets cifrados a `CryptoEnvelope`.
 - Agregar `ticketId` real al runtime legacy o moverlo al runtime modular.
 - Reemplazar Java serialization por un formato validable.

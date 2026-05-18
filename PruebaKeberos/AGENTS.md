@@ -7,6 +7,7 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - No afirmar que el sistema esta listo para produccion critica.
 - Mantener cambios pequenos, revisables y explicados.
 - Correr `mvn test` cuando Maven este disponible; si falla o `mvn` no existe, documentar el resultado real.
+- Si Maven no esta disponible, usar `javac` solo como verificacion complementaria de la demo local y dejar claro que no reemplaza `mvn test`.
 - Mantener `README.md` y `docs/` sincronizados con los cambios tecnicos.
 - No imprimir secretos, claves, tickets descifrados completos ni payloads sensibles en logs nuevos.
 - Preferir DTOs tipados sobre `HashMap<String,Object>` en codigo nuevo.

@@ -4,6 +4,9 @@ El proyecto combina una demo legacy funcional con una migracion modular en
 progreso. La prioridad de esta fase es estabilizar sin romper el flujo
 AS -> TGS -> Service -> Client.
 
+Estado de fase: **Fase 3.5** deja una migracion inicial mas cerrada, todavia
+controlada por la demo legacy y sin afirmar readiness de produccion.
+
 ## Arquitectura Legacy
 
 La demo original vive en:
@@ -68,7 +71,13 @@ En `auth-crypto`:
 En legacy:
 
 - El AS ya usa `AsRequest` a traves de `LegacyAsRequestMapper`.
-- TGS y Service integran replay cache minima.
+- El cliente crea DTOs para TGS y Service y los baja a mapas legacy con
+  `LegacyTgsRequestMapper` y `LegacyServiceRequestMapper`, conservando tickets
+  y autenticadores como `SealedObject`.
+- AS, TGS y Service construyen DTOs de respuesta y luego usan mappers legacy
+  para mantener compatibilidad con el cliente actual.
+- TGS y Service integran replay cache minima; la marca de replay se registra
+  despues de validar identidad, expiracion y clock skew.
 - Logs sensibles fueron reducidos.
 - Configuracion basica se lee desde `AuthConfig` con defaults compatibles.
 
@@ -76,7 +85,8 @@ En legacy:
 
 - Los tickets reales aun viajan como `SealedObject`.
 - Las respuestas AS/TGS/Service aun usan mapas legacy cifrados.
-- Los mappers ya existen, pero no reemplazan todo el runtime.
+- Los mappers ya participan en la ruta runtime, pero no reemplazan toda la
+  validacion legacy.
 - AES-GCM esta listo en `auth-crypto`, pero no cifra aun los mensajes legacy.
 - La replay cache usa claves compuestas derivadas del autenticador legacy.
 

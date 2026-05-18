@@ -4,6 +4,7 @@ import com.portfolio.auth.core.protocol.dto.ClientAuthenticator;
 import com.portfolio.auth.core.protocol.dto.ServiceRequest;
 import com.portfolio.auth.core.protocol.dto.TicketService;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -58,14 +59,25 @@ public final class LegacyServiceRequestMapper {
             serviceId = ticketService.serviceId();
         }
 
+        Instant issuedAt = LegacyMapperSupport.instantOrNull(legacyPayload, LegacyMapperSupport.ISSUED_AT_KEY);
+        if (issuedAt == null && authenticator != null) {
+            issuedAt = authenticator.issuedAt();
+        }
+
         return new ServiceRequest(
                 LegacyMapperSupport.version(legacyPayload),
                 LegacyMapperSupport.requestId(legacyPayload),
-                LegacyMapperSupport.instantFrom(legacyPayload.get(LegacyMapperSupport.ISSUED_AT_KEY),
-                        LegacyMapperSupport.ISSUED_AT_KEY),
+                requireIssuedAt(issuedAt),
                 clientId,
                 serviceId,
                 ticketService,
                 authenticator);
+    }
+
+    private static Instant requireIssuedAt(Instant issuedAt) {
+        if (issuedAt == null) {
+            throw new IllegalArgumentException("Falta el campo temporal " + LegacyMapperSupport.ISSUED_AT_KEY);
+        }
+        return issuedAt;
     }
 }

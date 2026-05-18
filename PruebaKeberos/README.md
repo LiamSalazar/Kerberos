@@ -11,6 +11,9 @@ seguridad aplicada, pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
+Fase actual: **Fase 3.5: estabilizacion verificable y cierre de migracion
+controlada inicial**.
+
 El proyecto tiene dos capas que conviven:
 
 | Area | Rol | Estado |
@@ -72,8 +75,11 @@ La migracion modular vive en:
 - Monorepo Maven con modulos separados.
 - DTOs tipados del protocolo en `auth-core`.
 - Mappers legacy para AS, TGS y Service.
-- Pruebas unitarias para mappers, replay cache y AES-GCM.
-- Replay cache en memoria integrada de forma minima en TGS y Service.
+- El cliente y las respuestas AS/TGS/Service ya crean DTOs y despues bajan a
+  mapas legacy para preservar compatibilidad.
+- Pruebas unitarias para mappers, replay cache, configuracion y AES-GCM.
+- Replay cache en memoria integrada de forma minima en TGS y Service, con
+  registro atomico por clave.
 - Configuracion centralizada con defaults compatibles para demo local.
 - Logs legacy reducidos para no imprimir claves, tickets descifrados completos
   ni respuestas con secretos de sesion.
@@ -118,7 +124,13 @@ mvn test
 ```
 
 En este entorno local esos comandos fueron intentados, pero `mvn` no estaba en
-el PATH. El proyecto conserva comandos `javac` para ejecutar la demo sin Docker.
+el PATH. Como verificacion complementaria de esta fase, la ruta principal
+`Kerberos/` + `Seguridad/` + `auth-core` + `auth-transport` + `auth-crypto`
+compilo con `javac`, y las pruebas JUnit compilaron con jars locales. Eso no
+sustituye a `mvn test` cuando Maven este disponible.
+
+Tambien se ejecuto un smoke local AS -> TGS -> Service -> Client con puertos
+alternos `2300`, `2301` y `2302`; el cliente recibio el servicio concedido.
 
 ## Ejecutar Pruebas
 
@@ -133,6 +145,7 @@ Las pruebas cubren:
 - mappers legacy de AS/TGS/Service;
 - transporte Java Object basico;
 - replay cache en memoria;
+- configuracion local y overrides por entorno;
 - cifrado/descifrado AES-GCM preparado para la migracion.
 
 ## Ejecutar La Demo Legacy Sin Docker
@@ -241,20 +254,21 @@ Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
 - Replay cache es local en memoria por proceso.
 - Los modulos `auth-as`, `auth-tgs`, `auth-service` y `auth-client-sdk` aun no
   reemplazan al runtime legacy.
+- La migracion runtime es parcial: ya hay bridges DTO -> mapa legacy, pero TGS
+  y Service todavia validan objetos legacy descifrados.
 - No hay Docker en esta fase.
 - No es production-ready.
 
 ## Roadmap
 
-1. Integrar completamente replay cache y validacion de clock skew en DTOs
-   versionados.
+1. Agregar pruebas de integracion sin sockets o con sockets controlados para
+   AS -> TGS -> Service.
 2. Migrar tickets y respuestas a `CryptoEnvelope` + AES-GCM.
 3. Reemplazar gradualmente `ObjectInputStream/ObjectOutputStream`.
 4. Externalizar configuracion con archivo local opcional y variables de entorno.
-5. Agregar pruebas de integracion AS -> TGS -> Service.
-6. Convertir `auth-as`, `auth-tgs`, `auth-service` y `auth-client-sdk` en
+5. Convertir `auth-as`, `auth-tgs`, `auth-service` y `auth-client-sdk` en
    runtimes modulares reales.
-7. Introducir Docker y Docker Compose solo en una fase posterior de despliegue.
+6. Introducir Docker y Docker Compose solo en una fase posterior de despliegue.
 
 Mas detalle:
 

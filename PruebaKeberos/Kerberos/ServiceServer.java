@@ -1,22 +1,22 @@
 package Kerberos;
 
+import Seguridad.Comunicacion;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.protocol.ProtocolDefaults;
+import com.portfolio.auth.core.protocol.dto.ServiceResponse;
 import com.portfolio.auth.core.replay.InMemoryReplayCache;
 import com.portfolio.auth.core.replay.ReplayCache;
+import com.portfolio.auth.transport.legacy.LegacyServiceResponseMapper;
 
 import javax.crypto.SealedObject;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
-
-import Seguridad.Conexiones;
-import Seguridad.Comunicacion;
+import java.util.UUID;
 
 public class ServiceServer {
     private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
@@ -29,6 +29,8 @@ public class ServiceServer {
     private String clave_servidor;
     private TicketGrantingServer.Ticket_servicio ticketServicio;
     private Client.ClientAuthentication clientAuthentication;
+    private String currentRequestId = "legacy-service-" + UUID.randomUUID();
+    private String currentVersion = ProtocolDefaults.CURRENT_VERSION;
 
     public static void main(String[] args) throws Exception {
         System.out.println(
@@ -64,7 +66,8 @@ public class ServiceServer {
 
                         boolean esClienteValido = serviceServer.validarClienteConTicket(ticket_servicio, clientAuth);
                         System.out.printf(
-                                "\n¿Coinciden los datos del cliente con los del ticket servidor? %s \n Datos cliente -> address: %s, id: %s ",
+                                "\n¿Coinciden los datos del cliente con los del ticket servidor? %s \n"
+                                        + "Datos cliente -> address: %s, id: %s ",
                                 esClienteValido ? "SI COINCIDEN" : "NO COINCIDEN",
                                 ticket_servicio.getAddress_cliente(),
                                 clientAuth.getId_cliente());
@@ -103,6 +106,12 @@ public class ServiceServer {
     public void recibirPeticionServicioDesdeCliente(InputStream inputStream) throws Exception {
 
         HashMap<String, Object> peticionServicio = (HashMap<String, Object>) Comunicacion.recibirObjeto(inputStream);
+        this.currentRequestId = stringOrDefault(
+                peticionServicio.get("[Request-Id]"),
+                "legacy-service-" + UUID.randomUUID());
+        this.currentVersion = stringOrDefault(
+                peticionServicio.get("[Protocol-Version]"),
+                ProtocolDefaults.CURRENT_VERSION);
 
         SealedObject ticketServicio_cifrado = (SealedObject) peticionServicio.get("[Ticket-v]");
 
@@ -111,7 +120,6 @@ public class ServiceServer {
 
         this.setTicketServicio(ticket_servicio);
         this.setClave_cliente_servidor(ticket_servicio.getClave_cliente_servidor());
-        ;
 
         SealedObject autentificadorCliente_cifrado = (SealedObject) peticionServicio.get("[Autentificador-c]");
 
@@ -145,29 +153,40 @@ public class ServiceServer {
     }
 
     public HashMap<String, Object> responderServicio() throws Exception {
-        HashMap<String, Object> respuestaSolicitud = new HashMap<>();
+        Instant issuedAt = Instant.now();
+        Instant ticketExpiresAt = toInstant(ticketServicio.getTiempo_vida_ticket());
+        Instant authenticatorIssuedAt = toInstant(timestamp5);
+        ServiceResponse response = new ServiceResponse(
+                currentVersion,
+                currentRequestId,
+                issuedAt,
+                ticketExpiresAt,
+                ticketServicio.getId_cliente(),
+                ticketServicio.getId_servidor(),
+                authenticatorIssuedAt,
+                issuedAt,
+                servicio,
+                true);
 
-        respuestaSolicitud.put("[TimeStamp-incrementada]", timestamp5.plusMinutes(1));
-
-        respuestaSolicitud.put("[Servicio]", servicio);
-
-        return respuestaSolicitud;
+        return LegacyServiceResponseMapper.toLegacyMap(response);
     }
 
     private boolean validarClienteConTicket(TicketGrantingServer.Ticket_servicio ticket_servicio,
             Client.ClientAuthentication autentificadorCliente) {
+        if (ticket_servicio == null || autentificadorCliente == null) {
+            return false;
+        }
 
-        boolean esClienteValido = (ticket_servicio.getId_cliente().equals(autentificadorCliente.getId_cliente()))
-
-                && (ticket_servicio.getIp_cliente().equals(autentificadorCliente.getIp_cliente()))
-
+        boolean esClienteValido = ticket_servicio.getId_cliente().equals(autentificadorCliente.getId_cliente())
+                && ticket_servicio.getIp_cliente().equals(autentificadorCliente.getIp_cliente())
                 && ticket_servicio.getTiempo_vida_ticket().isAfter(LocalDateTime.now())
+                && dentroDeSkewPermitido(autentificadorCliente.getTimeStamp_ClientAuthentication());
 
-                && dentroDeSkewPermitido(autentificadorCliente.getTimeStamp_ClientAuthentication())
+        if (!esClienteValido) {
+            return false;
+        }
 
-                && registrarAutenticadorSiNoFueUsado(ticket_servicio, autentificadorCliente);
-
-        return esClienteValido;
+        return registrarAutenticadorSiNoFueUsado(ticket_servicio, autentificadorCliente);
     }
 
     private boolean registrarAutenticadorSiNoFueUsado(TicketGrantingServer.Ticket_servicio ticket_servicio,
@@ -199,6 +218,13 @@ public class ServiceServer {
 
     private static Instant toInstant(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+    }
+
+    private static String stringOrDefault(Object value, String defaultValue) {
+        if (value instanceof String stringValue && !stringValue.isBlank()) {
+            return stringValue;
+        }
+        return defaultValue;
     }
 
     public String getClave_servidor() {

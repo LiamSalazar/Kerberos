@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.Arrays;
 
 import javax.crypto.KeyGenerator;
@@ -61,6 +62,28 @@ class AesGcmCryptoServiceTest {
 
         assertThrows(GeneralSecurityException.class,
                 () -> service.decrypt(envelope, key, "wrong-aad".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void shouldDefensivelyCopyEnvelopeByteArrays() {
+        byte[] iv = new byte[] { 1, 2, 3 };
+        byte[] ciphertext = new byte[] { 4, 5, 6 };
+        CryptoEnvelope envelope = new CryptoEnvelope(
+                AesGcmCryptoService.ENVELOPE_VERSION,
+                AesGcmCryptoService.ALGORITHM,
+                iv,
+                ciphertext,
+                Instant.parse("2026-05-12T10:00:00Z"));
+
+        iv[0] = 99;
+        ciphertext[0] = 99;
+        byte[] envelopeIv = envelope.iv();
+        byte[] envelopeCiphertext = envelope.ciphertext();
+        envelopeIv[1] = 88;
+        envelopeCiphertext[1] = 88;
+
+        assertArrayEquals(new byte[] { 1, 2, 3 }, envelope.iv());
+        assertArrayEquals(new byte[] { 4, 5, 6 }, envelope.ciphertext());
     }
 
     private static SecretKey generateAesKey() throws Exception {

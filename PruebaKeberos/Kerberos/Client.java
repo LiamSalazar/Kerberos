@@ -5,8 +5,13 @@ import Seguridad.Conexiones;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.ProtocolDefaults;
 import com.portfolio.auth.core.protocol.dto.AsRequest;
+import com.portfolio.auth.core.protocol.dto.ClientAuthenticator;
+import com.portfolio.auth.core.protocol.dto.ServiceRequest;
+import com.portfolio.auth.core.protocol.dto.TgsRequest;
 import com.portfolio.auth.transport.javaio.JavaObjectTransport;
 import com.portfolio.auth.transport.legacy.LegacyAsRequestMapper;
+import com.portfolio.auth.transport.legacy.LegacyServiceRequestMapper;
+import com.portfolio.auth.transport.legacy.LegacyTgsRequestMapper;
 
 import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
@@ -18,6 +23,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -225,32 +231,61 @@ public class Client {
     public HashMap<String, Object> generarSolicitudIntercambioTGS() throws Exception {
 
         ClientAuthentication autentificador_cliente = new ClientAuthentication(id_cliente, address_cliente);
-
-        HashMap<String, Object> solicitud = new HashMap<>();
-        solicitud.put("[Id-v]", id_Servidor);
-        solicitud.put("[Ticket-tgs]", ticket_tgs);
+        Instant issuedAt = toInstant(autentificador_cliente.getTimeStamp_ClientAuthentication());
 
         SecretKey clave_cliente_TGS = (SecretKey) AESUtils.getKeyFromPassword(this.clave_Cliente_TicketGrantingServer);
         SealedObject autentificadorCifrado = AESUtils.encriptarObjeto(autentificador_cliente, clave_cliente_TGS);
-        solicitud.put("[Autentificador-c]", autentificadorCifrado);
 
-        return solicitud;
+        ClientAuthenticator authenticatorDto = new ClientAuthenticator(
+                ProtocolDefaults.CURRENT_VERSION,
+                UUID.randomUUID().toString(),
+                issuedAt,
+                issuedAt.plus(CONFIG.replayWindow()),
+                id_cliente,
+                address_cliente.getHostAddress());
+        TgsRequest request = new TgsRequest(
+                ProtocolDefaults.CURRENT_VERSION,
+                UUID.randomUUID().toString(),
+                issuedAt,
+                id_cliente,
+                id_Servidor,
+                id_TicketGrantingServer,
+                null,
+                authenticatorDto);
+
+        return LegacyTgsRequestMapper.toLegacyMap(request, ticket_tgs, autentificadorCifrado);
     }
 
     public HashMap<String, Object> generarSolicitudIntercambioServicio() throws Exception {
 
         ClientAuthentication autentificador_cliente = new ClientAuthentication(id_cliente, address_cliente);
+        Instant issuedAt = toInstant(autentificador_cliente.getTimeStamp_ClientAuthentication());
         SecretKey clave_cliente_servidor = AESUtils.getKeyFromPassword(this.clave_cliente_servidor);
         SealedObject autentificadorCifrado = AESUtils.encriptarObjeto(autentificador_cliente, clave_cliente_servidor);
 
-        HashMap<String, Object> solicitud = new HashMap<>();
-
-        solicitud.put("[Ticket-v]", ticket_servicio);
-        solicitud.put("[Autentificador-c]", autentificadorCifrado);
+        ClientAuthenticator authenticatorDto = new ClientAuthenticator(
+                ProtocolDefaults.CURRENT_VERSION,
+                UUID.randomUUID().toString(),
+                issuedAt,
+                issuedAt.plus(CONFIG.replayWindow()),
+                id_cliente,
+                address_cliente.getHostAddress());
+        ServiceRequest request = new ServiceRequest(
+                ProtocolDefaults.CURRENT_VERSION,
+                UUID.randomUUID().toString(),
+                issuedAt,
+                id_cliente,
+                id_Servidor,
+                null,
+                authenticatorDto);
 
         System.out.printf("\n[Ticket-v] preparado para el servicio %s\n", id_Servidor);
 
-        return solicitud;
+        return LegacyServiceRequestMapper.toLegacyMap(request, ticket_servicio, autentificadorCifrado);
+    }
+
+    private static Instant toInstant(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
     public void setTicket_tgs(SealedObject ticket_tgs) {

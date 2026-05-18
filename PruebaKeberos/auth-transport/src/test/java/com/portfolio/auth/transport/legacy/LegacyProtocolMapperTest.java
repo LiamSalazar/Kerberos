@@ -63,6 +63,43 @@ class LegacyProtocolMapperTest {
     }
 
     @Test
+    void shouldMapTgsRequestWithLegacyEncryptedTicketAndAuthenticatorPlaceholders() {
+        TgsRequest request = new TgsRequest(
+                ProtocolDefaults.CURRENT_VERSION,
+                "tgs-req-legacy-1",
+                ISSUED_AT,
+                "client-1",
+                "service-1",
+                "tgs-1",
+                null,
+                null);
+
+        HashMap<String, Object> legacy = LegacyTgsRequestMapper.toLegacyMap(
+                request,
+                "legacy-sealed-ticket",
+                "legacy-sealed-authenticator");
+        TgsRequest mapped = LegacyTgsRequestMapper.fromLegacyMap(legacy);
+
+        assertEquals("legacy-sealed-ticket", legacy.get(LegacyTgsRequestMapper.TICKET_TGS_KEY));
+        assertEquals("legacy-sealed-authenticator", legacy.get(LegacyTgsRequestMapper.CLIENT_AUTHENTICATOR_KEY));
+        assertEquals(request, mapped);
+    }
+
+    @Test
+    void shouldRecoverTgsRequestIssuedAtFromTypedAuthenticatorWhenMetadataIsAbsent() {
+        HashMap<String, Object> legacy = new HashMap<>();
+        legacy.put(LegacyTgsRequestMapper.SERVICE_ID_KEY, "service-1");
+        legacy.put(LegacyTgsRequestMapper.TICKET_TGS_KEY, ticketTgs());
+        legacy.put(LegacyTgsRequestMapper.CLIENT_AUTHENTICATOR_KEY, authenticator());
+
+        TgsRequest mapped = LegacyTgsRequestMapper.fromLegacyMap(legacy);
+
+        assertEquals(ISSUED_AT, mapped.issuedAt());
+        assertEquals("client-1", mapped.clientId());
+        assertEquals("tgs-1", mapped.ticketGrantingServerId());
+    }
+
+    @Test
     void shouldMapTgsResponseWithoutDroppingMainFields() {
         TgsResponse response = new TgsResponse(
                 ProtocolDefaults.CURRENT_VERSION,
@@ -99,6 +136,41 @@ class LegacyProtocolMapperTest {
         assertEquals(request.ticketService(), legacy.get(LegacyServiceRequestMapper.TICKET_SERVICE_KEY));
         assertEquals(request.clientAuthenticator(), legacy.get(LegacyServiceRequestMapper.CLIENT_AUTHENTICATOR_KEY));
         assertEquals(request, mapped);
+    }
+
+    @Test
+    void shouldMapServiceRequestWithLegacyEncryptedTicketAndAuthenticatorPlaceholders() {
+        ServiceRequest request = new ServiceRequest(
+                ProtocolDefaults.CURRENT_VERSION,
+                "svc-req-legacy-1",
+                ISSUED_AT,
+                "client-1",
+                "service-1",
+                null,
+                null);
+
+        HashMap<String, Object> legacy = LegacyServiceRequestMapper.toLegacyMap(
+                request,
+                "legacy-sealed-ticket",
+                "legacy-sealed-authenticator");
+        ServiceRequest mapped = LegacyServiceRequestMapper.fromLegacyMap(legacy);
+
+        assertEquals("legacy-sealed-ticket", legacy.get(LegacyServiceRequestMapper.TICKET_SERVICE_KEY));
+        assertEquals("legacy-sealed-authenticator", legacy.get(LegacyServiceRequestMapper.CLIENT_AUTHENTICATOR_KEY));
+        assertEquals(request, mapped);
+    }
+
+    @Test
+    void shouldRecoverServiceRequestIssuedAtFromTypedAuthenticatorWhenMetadataIsAbsent() {
+        HashMap<String, Object> legacy = new HashMap<>();
+        legacy.put(LegacyServiceRequestMapper.TICKET_SERVICE_KEY, ticketService());
+        legacy.put(LegacyServiceRequestMapper.CLIENT_AUTHENTICATOR_KEY, authenticator());
+
+        ServiceRequest mapped = LegacyServiceRequestMapper.fromLegacyMap(legacy);
+
+        assertEquals(ISSUED_AT, mapped.issuedAt());
+        assertEquals("client-1", mapped.clientId());
+        assertEquals("service-1", mapped.serviceId());
     }
 
     @Test

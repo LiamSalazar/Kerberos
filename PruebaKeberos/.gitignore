@@ -1,0 +1,4 @@
+# Phase verification outputs generated locally by javac/smoke checks.
+/build/check/phase35/
+/build/check/phase35-test/
+/build/check/phase35-smoke/

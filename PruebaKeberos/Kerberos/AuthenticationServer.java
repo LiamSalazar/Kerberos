@@ -1,24 +1,28 @@
 package Kerberos;
 
-import com.portfolio.auth.core.protocol.dto.AsRequest;
+import Seguridad.Comunicacion;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.protocol.ProtocolDefaults;
+import com.portfolio.auth.core.protocol.dto.AsRequest;
+import com.portfolio.auth.core.protocol.dto.AsResponse;
+import com.portfolio.auth.core.protocol.dto.TicketTgs;
 import com.portfolio.auth.transport.javaio.JavaObjectTransport;
 import com.portfolio.auth.transport.legacy.LegacyAsRequestMapper;
+import com.portfolio.auth.transport.legacy.LegacyAsResponseMapper;
 
 import javax.crypto.SealedObject;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static Kerberos.AESUtils.encriptarObjeto;
-import Seguridad.Conexiones;
-import Seguridad.Comunicacion;
 
 public class AuthenticationServer {
     private static final AuthConfig CONFIG = AuthConfig.fromEnvironment();
@@ -43,6 +47,7 @@ public class AuthenticationServer {
     private String id_TicketGrantingServer;
     private String clave_Cliente_TicketGrantingServer = CONFIG.legacyClientTgsSessionKey();
     private String clave_TicketGrantingServer = CONFIG.legacyTicketGrantingServerSecret();
+    private AsRequest currentRequest;
 
     public static void main(String[] args) throws Exception {
         System.out.println(
@@ -66,14 +71,12 @@ public class AuthenticationServer {
                 java.net.Socket s = serverSocket.accept();
                 pool.submit(() -> {
                     try (java.net.Socket sc = s) {
-                        // Instancia NUEVA por conexión = estado aislado por cliente
+                        // Instancia nueva por conexion: estado aislado por cliente.
                         AuthenticationServer AS = new AuthenticationServer();
 
-                        java.io.InputStream in = sc.getInputStream();
                         java.io.OutputStream out = sc.getOutputStream();
 
-                        // Reutilizamos tus métodos (sin cambios)
-                        AS.recibirSolicitudTGTdesdeCliente(sc); // ya toma el Socket en tu firma actual
+                        AS.recibirSolicitudTGTdesdeCliente(sc);
                         AS.responderSolicitudTGTalCliente(out);
 
                     } catch (Exception e) {
@@ -91,6 +94,7 @@ public class AuthenticationServer {
 
         System.out.printf("Solicitud recibida: %s \n DTO tipado: %s \n\n", solicitudTGT, request);
 
+        this.currentRequest = request;
         this.setAddress_cliente(conexionCliente.getInetAddress());
         this.setClave_Cliente_TicketGrantingServer(CONFIG.legacyClientTgsSessionKey());
         this.setId_cliente(request.clientId());
@@ -126,20 +130,40 @@ public class AuthenticationServer {
     }
 
     HashMap<String, Object> getRespuestaSolicitudTicket_TGS() throws Exception {
-        HashMap<String, Object> respuestaSolicitud = new HashMap<>();
         Ticket_TGS ticket_tgs = new Ticket_TGS(clave_Cliente_TicketGrantingServer, id_cliente, address_cliente,
                 id_TicketGrantingServer, Math.max(1, CONFIG.ticketLifetime().toMinutes()));
 
-        respuestaSolicitud.put("[K-c_tgs]", ticket_tgs.getClave_Cliente_TicketGrantingServer());
-        respuestaSolicitud.put("[Id-tgs]", ticket_tgs.getId_TicketGrantingServer());
-        respuestaSolicitud.put("[TimeStamp-2]", ticket_tgs.getMomentoCreacion_ticket());
-        respuestaSolicitud.put("[TiempoVida-2]", ticket_tgs.getTiempo_vida_ticket());
-
         SealedObject ticket_tgs_cifrado = encriptarObjeto(ticket_tgs, clave_TicketGrantingServer);
 
-        respuestaSolicitud.put("[Ticket-tgs]", ticket_tgs_cifrado);
+        Instant issuedAt = toInstant(ticket_tgs.getMomentoCreacion_ticket());
+        Instant expiresAt = toInstant(ticket_tgs.getTiempo_vida_ticket());
+        String requestId = currentRequest == null ? "legacy-as-" + UUID.randomUUID() : currentRequest.requestId();
+        String version = currentRequest == null ? ProtocolDefaults.CURRENT_VERSION : currentRequest.version();
 
-        return respuestaSolicitud;
+        TicketTgs ticketDto = new TicketTgs(
+                version,
+                "legacy-ticket-tgs-" + requestId,
+                issuedAt,
+                expiresAt,
+                ticket_tgs.getId_cliente(),
+                ticket_tgs.getIp_cliente(),
+                ticket_tgs.getId_TicketGrantingServer(),
+                ticket_tgs.getClave_Cliente_TicketGrantingServer());
+        AsResponse response = new AsResponse(
+                version,
+                requestId,
+                issuedAt,
+                expiresAt,
+                ticket_tgs.getId_cliente(),
+                ticket_tgs.getId_TicketGrantingServer(),
+                ticket_tgs.getClave_Cliente_TicketGrantingServer(),
+                ticketDto);
+
+        return LegacyAsResponseMapper.toLegacyMap(response, ticket_tgs_cifrado);
+    }
+
+    private static Instant toInstant(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
     public static class Ticket_TGS implements Serializable {

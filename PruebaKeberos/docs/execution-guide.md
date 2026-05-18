@@ -4,6 +4,9 @@ Esta guia documenta como compilar, probar y ejecutar el proyecto localmente sin
 Docker. La ruta funcional principal sigue siendo la demo legacy en `Kerberos/`
 y `Seguridad/`.
 
+Fase documentada: **Fase 3.5: estabilizacion verificable y cierre de migracion
+controlada inicial**.
+
 ## Requisitos
 
 - Java 17 o superior recomendado.
@@ -43,6 +46,9 @@ mvn -q -DskipTests compile
 Este comando compila la arquitectura modular. El codigo legacy vive fuera de los
 modulos Maven y se compila con los comandos `javac` de abajo para la demo.
 
+Resultado real en esta ejecucion de fase: el comando fue intentado y fallo
+porque `mvn` no estaba en el PATH (`CommandNotFoundException` en PowerShell).
+
 ## Ejecutar Pruebas
 
 ```bash
@@ -54,7 +60,17 @@ Pruebas esperadas:
 - mappers legacy en `auth-transport`;
 - transporte Java Object;
 - replay cache en `auth-core`;
+- configuracion basica en `auth-core`;
 - AES-GCM en `auth-crypto`.
+
+Resultado real en esta ejecucion de fase: el comando fue intentado y fallo
+porque `mvn` no estaba en el PATH. Las fuentes principales y las pruebas
+compilaron con `javac` usando Java/Javac 19 y jars JUnit locales, pero eso es
+solo una verificacion complementaria.
+
+Tambien se ejecuto un smoke local AS -> TGS -> Service -> Client con puertos
+alternos `2300`, `2301` y `2302`. El cliente completo el flujo y recibio el
+mensaje de servicio concedido.
 
 ## Compilar Demo Legacy
 
@@ -76,6 +92,14 @@ javac -d build\classes @sources.txt
 New-Item -ItemType Directory -Force build\classes | Out-Null
 $sources = Get-ChildItem Kerberos,Seguridad,auth-core\src\main\java,auth-transport\src\main\java,auth-crypto\src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 javac -d build\classes $sources
+```
+
+Verificacion complementaria usada en Fase 3.5:
+
+```powershell
+New-Item -ItemType Directory -Force build\check\phase35 | Out-Null
+$sources = Get-ChildItem Kerberos,Seguridad,auth-core\src\main\java,auth-transport\src\main\java,auth-crypto\src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName }
+javac -d build\check\phase35 $sources
 ```
 
 ### Linux/macOS

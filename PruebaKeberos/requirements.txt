@@ -12,6 +12,8 @@
 # Recommended: Maven 3.9 or newer for compiling and testing the auth-* modules.
 # Verify:
 #   mvn -version
+# If Maven is unavailable, document the real error and use javac only as a
+# complementary local-demo verification. javac does not replace mvn test.
 
 # Git
 # Required for cloning and reviewing repository history.
@@ -28,3 +30,4 @@
 # This file is only a checklist for the local Java environment.
 # Docker is not required for the current phase.
 # Docker and Docker Compose are planned as future deployment work.
+# Phase 3.5 keeps local execution without Docker as the supported path.

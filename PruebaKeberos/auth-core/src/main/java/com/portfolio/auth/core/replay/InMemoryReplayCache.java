@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Replay cache local en memoria para la demo y pruebas unitarias.
@@ -26,13 +27,21 @@ public final class InMemoryReplayCache implements ReplayCache {
         Objects.requireNonNull(replayKey, "replayKey");
         Objects.requireNonNull(expiresAt, "expiresAt");
 
-        purgeExpired();
         Instant now = Instant.now(clock);
         if (!expiresAt.isAfter(now)) {
             return false;
         }
 
-        return entries.putIfAbsent(replayKey, expiresAt) == null;
+        AtomicBoolean registered = new AtomicBoolean(false);
+        entries.compute(replayKey, (key, existingExpiration) -> {
+            if (existingExpiration == null || !existingExpiration.isAfter(now)) {
+                registered.set(true);
+                return expiresAt;
+            }
+            return existingExpiration;
+        });
+        purgeExpired();
+        return registered.get();
     }
 
     @Override

@@ -31,6 +31,23 @@ public record AuthConfig(
         String legacyServiceSecret,
         String legacyPbkdf2Salt
 ) implements Serializable {
+    public static final String DEFAULT_LOCAL_CLIENT_ID = "1";
+    public static final String DEFAULT_LOCAL_TGS_ID = "1";
+    public static final String DEFAULT_LOCAL_SERVICE_ID = "1";
+    public static final String DEFAULT_LOCAL_HOST = "127.0.0.1";
+    public static final int DEFAULT_LOCAL_AS_PORT = 2000;
+    public static final int DEFAULT_LOCAL_TGS_PORT = 2001;
+    public static final int DEFAULT_LOCAL_SERVICE_PORT = 2002;
+    public static final Duration DEFAULT_LOCAL_TICKET_LIFETIME = Duration.ofMinutes(5);
+    public static final Duration DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW = Duration.ofMinutes(2);
+    public static final Duration DEFAULT_LOCAL_REPLAY_WINDOW = Duration.ofMinutes(5);
+    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_SECRET = "ContraseniaCliente";
+    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY = "contraseña_C-TGS";
+    public static final String DEFAULT_LOCAL_LEGACY_TGS_SECRET = "contraseñaTGS";
+    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY = "contraseñaClienteServidor";
+    public static final String DEFAULT_LOCAL_LEGACY_SERVICE_SECRET = "contraseñaServidor";
+    public static final String DEFAULT_LOCAL_LEGACY_PBKDF2_SALT = "12345678";
+
     public static final String ENV_CLIENT_ID = "AUTH_DEMO_CLIENT_ID";
     public static final String ENV_TGS_ID = "AUTH_DEMO_TGS_ID";
     public static final String ENV_SERVICE_ID = "AUTH_DEMO_SERVICE_ID";
@@ -53,25 +70,25 @@ public record AuthConfig(
 
     public static AuthConfig localDemo() {
         return new AuthConfig(
-                "1",
-                "1",
-                "1",
-                "127.0.0.1",
-                "127.0.0.1",
-                "127.0.0.1",
-                "127.0.0.1",
-                2000,
-                2001,
-                2002,
-                Duration.ofMinutes(5),
-                Duration.ofMinutes(2),
-                Duration.ofMinutes(5),
-                "ContraseniaCliente",
-                "contraseña_C-TGS",
-                "contraseñaTGS",
-                "contraseñaClienteServidor",
-                "contraseñaServidor",
-                "12345678");
+                DEFAULT_LOCAL_CLIENT_ID,
+                DEFAULT_LOCAL_TGS_ID,
+                DEFAULT_LOCAL_SERVICE_ID,
+                DEFAULT_LOCAL_HOST,
+                DEFAULT_LOCAL_HOST,
+                DEFAULT_LOCAL_HOST,
+                DEFAULT_LOCAL_HOST,
+                DEFAULT_LOCAL_AS_PORT,
+                DEFAULT_LOCAL_TGS_PORT,
+                DEFAULT_LOCAL_SERVICE_PORT,
+                DEFAULT_LOCAL_TICKET_LIFETIME,
+                DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW,
+                DEFAULT_LOCAL_REPLAY_WINDOW,
+                DEFAULT_LOCAL_LEGACY_CLIENT_SECRET,
+                DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY,
+                DEFAULT_LOCAL_LEGACY_TGS_SECRET,
+                DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY,
+                DEFAULT_LOCAL_LEGACY_SERVICE_SECRET,
+                DEFAULT_LOCAL_LEGACY_PBKDF2_SALT);
     }
 
     public static AuthConfig fromEnvironment() {

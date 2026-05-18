@@ -38,6 +38,14 @@ final class LegacyMapperSupport {
         throw new IllegalArgumentException("Falta el campo temporal " + key);
     }
 
+    static Instant instantOrNull(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            return null;
+        }
+        return instantFrom(value, key);
+    }
+
     static Instant instantFromAny(Map<String, Object> payload, String primaryKey, String fallbackKey) {
         Object primaryValue = payload.get(primaryKey);
         if (primaryValue != null) {

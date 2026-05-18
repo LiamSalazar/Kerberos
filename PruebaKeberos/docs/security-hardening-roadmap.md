@@ -27,12 +27,18 @@ para produccion critica.
 - `AuthConfig` centraliza ids, puertos, duraciones, skew, replay window y
   secretos legacy de demo.
 - `ReplayCache` e `InMemoryReplayCache` fueron agregados en `auth-core`.
-- TGS y Service integran replay cache minima para autenticadores legacy.
+- `InMemoryReplayCache` registra claves de forma atomica para evitar aceptar dos
+  usos concurrentes de la misma clave.
+- TGS y Service integran replay cache minima para autenticadores legacy y solo
+  registran replay despues de validar identidad, expiracion y clock skew.
+- El cliente y las respuestas AS/TGS/Service crean DTOs y luego usan mappers
+  legacy para preservar el runtime actual.
 - Logs sensibles fueron reducidos para no imprimir claves ni tickets
   descifrados completos.
 - `auth-crypto` incluye `CryptoEnvelope`, `AeadCryptoService` y
   `AesGcmCryptoService`.
-- Se agregaron pruebas unitarias para replay cache, mappers y AES-GCM.
+- Se agregaron pruebas unitarias para replay cache, mappers, configuracion y
+  AES-GCM.
 
 ## AES-GCM
 
@@ -56,6 +62,8 @@ Estado actual:
   autenticador.
 - Service usa una clave compuesta con scope, servicio, cliente, IP y timestamp.
 - La expiracion se limita por ticket o ventana de replay.
+- La cache es local al proceso; reiniciar TGS o Service borra su memoria de
+  replay.
 
 Pendiente:
 
@@ -103,11 +111,13 @@ recomendada:
 ## Prioridad De Correccion
 
 1. Pruebas de integracion para replay en TGS y Service.
-2. Migracion de respuestas AS/TGS/Service a `CryptoEnvelope`.
-3. Reemplazo de `HashMap<String,Object>` por DTOs en runtime.
+2. Migracion de tickets y respuestas AS/TGS/Service a `CryptoEnvelope`.
+3. Reemplazo de la validacion interna basada en `HashMap<String,Object>` por
+   DTOs en runtime.
 4. Sustitucion de Java serialization.
 5. Configuracion externa completa.
-6. Docker Compose para despliegue local reproducible.
+6. Docker Compose para despliegue local reproducible, solo cuando se autorice
+   la fase de despliegue.
 
 ## Docker
 

@@ -1,55 +1,38 @@
-# Kerberos-Inspired Distributed Authentication Demo
+# Kerberos-Inspired Modular Authentication Demo
 
 Proyecto Java de portafolio que implementa desde cero un flujo de autenticacion
-distribuida inspirado en Kerberos 4 y lo migra gradualmente hacia una
-arquitectura modular mas clara, testeable y documentada.
+distribuida inspirado en Kerberos 4, centrado ahora en una arquitectura modular
+propia.
 
 Este repositorio no es MIT Kerberos oficial y no debe presentarse como un
 sistema listo para produccion critica. Es una pieza de ingenieria aplicada para
-mostrar arquitectura distribuida, diseno de protocolo, refactorizacion,
-seguridad aplicada, pruebas y ejecucion local reproducible.
+mostrar arquitectura distribuida, diseno de protocolo, hardening incremental,
+pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fase 8: hardening operativo modular, auditoria verificable y
-eliminacion controlada del legacy bloqueada por verificacion Maven pendiente**.
-
-El proyecto tiene dos capas que conviven:
+Fase actual: **Fase 8.1: ruta modular como version principal y legacy fisico
+retirado**.
 
 | Area | Rol | Estado |
 | --- | --- | --- |
-| `Kerberos/` | Demo legacy funcional con AS, TGS, Service y Client | Referencia historica; no es runtime principal |
-| `Seguridad/` | Helpers legacy de sockets, serializacion y utilidades | Usado solo por la demo legacy |
-| `auth-core/` | DTOs del protocolo, configuracion y replay cache | Compartido por legacy bridge y runtime modular |
-| `auth-transport/` | Mappers legacy, transporte JSON, TCP modular y DTOs seguros | Activo en ruta modular |
-| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion de claves y claves de sesion | Activo en ruta modular |
+| `auth-core/` | DTOs del protocolo, configuracion y replay cache | Activo |
+| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion | Activo |
+| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP, DTOs seguros y adaptadores historicos aislados | Activo |
 | `auth-as/` | Authentication Server modular | Ejecutable |
 | `auth-tgs/` | Ticket Granting Server modular | Ejecutable |
 | `auth-service/` | Servicio protegido modular | Ejecutable |
-| `auth-client-sdk/` | Cliente modular y CLI | Ejecutable |
-| `docs/` | Documentacion tecnica | Activa |
+| `auth-client-sdk/` | Cliente modular, CLI y audit runner | Ejecutable |
+| `docs/` | Documentacion tecnica y auditorias | Activa |
 
-La ruta modular es la ruta principal actual. Ejecuta AS -> TGS -> Service ->
-Client sin Java serialization, sin `SealedObject` y sin `AESUtils`. La demo
-legacy sigue existiendo porque no se pudo cumplir el gate obligatorio de Maven
-para borrarla con seguridad en este entorno.
+Las carpetas historicas `Kerberos/`, `Seguridad/`, `Chat/` y
+`DistribucionClaves/` fueron retiradas del proyecto principal. Su existencia se
+resume en [docs/legacy-summary.md](docs/legacy-summary.md), sin conservarlas
+como ruta ejecutable actual.
 
-## Por Que Existe
+## Arquitectura Modular
 
-El objetivo no es vender un producto de seguridad, sino mostrar una evolucion
-realista de un prototipo:
-
-- flujo distribuido AS -> TGS -> Service -> Client;
-- contratos tipados que reemplazan progresivamente `HashMap<String,Object>`;
-- mappers que conectan los DTOs nuevos con el runtime legacy;
-- replay cache inicial para rechazar autenticadores reutilizados;
-- ruta modular con JSON sobre TCP y AES-GCM real mediante `CryptoEnvelope`;
-- hardening operativo verificable, auditorias reproducibles y documentacion
-  honesta de riesgos, limites y roadmap.
-
-## Arquitectura
-
-Vista simplificada del flujo modular:
+Vista simplificada:
 
 ```mermaid
 sequenceDiagram
@@ -66,310 +49,123 @@ sequenceDiagram
     S-->>C: SERVICE_RESPONSE JSON (CryptoEnvelope<ServiceResponse>)
 ```
 
-La migracion modular vive en:
-
-- `auth-core`: `AsRequest`, `AsResponse`, `TgsRequest`, `TgsResponse`,
-  `ServiceRequest`, `ServiceResponse`, `TicketTgs`, `TicketService`,
-  `ClientAuthenticator`, `ErrorResponse`, `AuthConfig`, `ReplayCache`.
-- `auth-transport`: `JavaObjectTransport`, mappers `Legacy*Mapper`,
-  `ProtocolEnvelope`, `JsonMessageCodec`, `TcpMessageClient`,
-  `TcpMessageServer` y DTOs seguros de la ruta modular.
-- `auth-crypto`: `CryptoEnvelope`, `AeadCryptoService`,
-  `AesGcmCryptoService`, `AesKeyDerivation`, `SessionKeys`.
-
-## Mejoras Sobre El Prototipo Original
-
-- Monorepo Maven con modulos separados.
-- DTOs tipados del protocolo en `auth-core`.
-- Mappers legacy para AS, TGS y Service.
-- Runtime modular real en `auth-as`, `auth-tgs`, `auth-service` y
-  `auth-client-sdk`.
-- Transporte JSON modular sin `ObjectInputStream`, `ObjectOutputStream`,
-  `HashMap` como contrato principal ni `SealedObject`.
-- AES-GCM real en la ruta modular para tickets, autenticadores y respuestas.
-- Los mappers legacy se mantienen separados en `auth-transport/legacy`; el
-  runtime modular no los usa como contrato principal.
-- Pruebas unitarias para mappers, replay cache, configuracion, JSON y AES-GCM.
-- Prueba de integracion Maven para flujo modular completo, replay, servicio
-  inexistente, autenticador invalido y requestId repetido.
-- Replay cache en memoria integrada de forma minima en TGS y Service, con
-  registro atomico por clave.
-- Configuracion centralizada con modo `demo/local` y modo `strict`.
-- Transporte TCP/JSON con timeouts, limite de tamano y validacion opcional del
-  `MessageType` esperado por endpoint.
-- Auditoria reproducible de ejecucion/desempeno con reportes en
-  `docs/audits/latest-run.md` y `docs/audits/latest-run.json`.
-- Scripts Windows para levantar AS, TGS, Service, Client y auditoria sin
-  Docker.
-- GitHub Actions basico para `mvn -q -DskipTests compile` y `mvn test`.
-- Logs legacy reducidos para no imprimir claves, tickets descifrados completos
-  ni respuestas con secretos de sesion.
-- Documentacion ejecutable para correr sin Docker.
+La ruta principal usa DTOs tipados, JSON/TCP, AES-GCM con `CryptoEnvelope`,
+replay cache, configuracion demo/strict y auditoria reproducible.
 
 ## Requisitos
 
 Consulta tambien [requirements.txt](requirements.txt).
 
-- Java 17 o superior recomendado. Este entorno se verifico con Java/Javac 19.
-- Maven 3.9+ recomendado para ejecutar los modulos `auth-*`.
+- Java 17 o superior.
+- Maven 3.9+.
 - Git.
 - Windows, Linux o macOS con terminal.
 - Docker no es requisito en esta fase.
 
-Verificacion rapida:
+## Compilar Y Probar
 
-```bash
-java -version
-javac -version
-mvn -version
-git --version
-```
-
-## Clonar Y Entrar Al Proyecto
-
-```bash
-git clone <repo-url>
-cd PruebaKeberos
-```
-
-Si el repositorio fue clonado con otro nombre, entra a la carpeta que contiene
-este `README.md` y el `pom.xml` raiz.
-
-## Compilar Con Maven
-
-Maven es la validacion principal esperada para los modulos `auth-*`:
+Desde esta carpeta:
 
 ```bash
 mvn -q -DskipTests compile
 mvn test
 ```
 
-En este entorno local esos comandos fueron intentados, pero `mvn` no estaba en
-el PATH. Como verificacion complementaria, las fuentes principales y tests
-compilaron con `javac`, y se ejecuto una auditoria modular real AS -> TGS ->
-Service con puertos alternos `2500`, `2501` y `2502`.
+En la verificacion de Fase 8.1 ambos comandos pasaron usando Maven por ruta
+absoluta del entorno local.
 
-## Ejecutar Pruebas
+## Ejecutar Sin Docker
 
-Cuando Maven este instalado:
-
-```bash
-mvn test
-```
-
-Las pruebas cubren:
-
-- mappers legacy de AS/TGS/Service;
-- transporte Java Object basico;
-- codec JSON modular;
-- cifrado JSON + AES-GCM con `CryptoEnvelope`;
-- replay cache en memoria;
-- configuracion local y overrides por entorno;
-- integracion modular AS -> TGS -> Service;
-- replay, servicio inexistente, cliente inexistente, expiracion de tickets,
-  autenticadores invalidos, requestId repetido, ciphertext alterado, JSON
-  invalido, MessageType incorrecto, servidor no disponible y concurrencia
-  basica.
-
-## Ejecutar Runtime Modular Sin Docker
-
-Con Maven instalado:
-
-```bash
-mvn -q -DskipTests compile
-```
-
-En Windows, puedes usar los scripts:
+En Windows, abre tres terminales para servidores y una para cliente:
 
 ```cmd
 scripts\run-as.bat
+```
+
+```cmd
 scripts\run-tgs.bat
+```
+
+```cmd
 scripts\run-service.bat
+```
+
+```cmd
 scripts\run-client.bat
 ```
 
-Tambien puedes levantar cuatro terminales manualmente en este orden:
+Los scripts compilan con Maven antes de ejecutar las clases modulares.
 
-```bash
-java -cp auth-as/target/classes;auth-core/target/classes;auth-crypto/target/classes;auth-transport/target/classes com.portfolio.auth.as.AuthenticationServerApp
-```
+## Auditoria Modular
 
-```bash
-java -cp auth-tgs/target/classes;auth-core/target/classes;auth-crypto/target/classes;auth-transport/target/classes com.portfolio.auth.tgs.TicketGrantingServerApp
-```
-
-```bash
-java -cp auth-service/target/classes;auth-core/target/classes;auth-crypto/target/classes;auth-transport/target/classes com.portfolio.auth.service.ProtectedServiceApp
-```
-
-```bash
-java -cp auth-client-sdk/target/classes;auth-core/target/classes;auth-crypto/target/classes;auth-transport/target/classes com.portfolio.auth.client.ClientCli
-```
-
-En PowerShell tambien puedes compilar con `javac` para una verificacion local:
-
-```powershell
-New-Item -ItemType Directory -Force build\check\phase8-main | Out-Null
-$roots = 'auth-core\src\main\java','auth-crypto\src\main\java','auth-transport\src\main\java','auth-as\src\main\java','auth-tgs\src\main\java','auth-service\src\main\java','auth-client-sdk\src\main\java'
-$sources = Get-ChildItem $roots -Recurse -Filter *.java | ForEach-Object { $_.FullName }
-javac -encoding UTF-8 -d build\check\phase8-main $sources
-```
-
-Y ejecutar:
-
-```powershell
-$env:AUTH_AS_PORT='2500'; $env:AUTH_TGS_PORT='2501'; $env:AUTH_SERVICE_PORT='2502'
-java -cp build\check\phase8-main com.portfolio.auth.as.AuthenticationServerApp
-java -cp build\check\phase8-main com.portfolio.auth.tgs.TicketGrantingServerApp
-java -cp build\check\phase8-main com.portfolio.auth.service.ProtectedServiceApp
-java -cp build\check\phase8-main com.portfolio.auth.client.ClientCli
-```
-
-Ejecuta cada servidor en una terminal separada antes del cliente.
-
-## Ejecutar La Demo Legacy Sin Docker
-
-### Windows CMD
-
-Desde la raiz del proyecto:
+Con AS, TGS y Service levantados:
 
 ```cmd
-if not exist build\classes mkdir build\classes
-(for /r Kerberos %f in (*.java) do @echo %f) > sources.txt
-(for /r Seguridad %f in (*.java) do @echo %f) >> sources.txt
-(for /r auth-core\src\main\java %f in (*.java) do @echo %f) >> sources.txt
-(for /r auth-transport\src\main\java %f in (*.java) do @echo %f) >> sources.txt
-(for /r auth-crypto\src\main\java %f in (*.java) do @echo %f) >> sources.txt
-javac -d build\classes @sources.txt
+scripts\run-audit.bat --iterations 5
 ```
 
-Abre cuatro terminales separadas en este orden:
+El runner genera evidencia en:
 
-```cmd
-java -cp build\classes Kerberos.AuthenticationServer
-```
+- `docs/audits/latest-run.md`
+- `docs/audits/latest-run.json`
 
-```cmd
-java -cp build\classes Kerberos.TicketGrantingServer
-```
+La auditoria de independencia legacy esta en
+[docs/audits/legacy-dependency-audit.md](docs/audits/legacy-dependency-audit.md).
 
-```cmd
-java -cp build\classes Kerberos.ServiceServer
-```
+## Configuracion
 
-```cmd
-java -cp build\classes Kerberos.Client
-```
+Variables comunes:
 
-### PowerShell
-
-```powershell
-New-Item -ItemType Directory -Force build\classes | Out-Null
-$sources = Get-ChildItem Kerberos,Seguridad,auth-core\src\main\java,auth-transport\src\main\java,auth-crypto\src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName }
-javac -d build\classes $sources
-```
-
-Luego ejecuta los mismos cuatro procesos con `java -cp build\classes ...`.
-
-### Linux/macOS
-
-```bash
-mkdir -p build/classes
-find Kerberos Seguridad auth-core/src/main/java auth-transport/src/main/java auth-crypto/src/main/java -name "*.java" > sources.txt
-javac -d build/classes @sources.txt
-```
-
-Terminales separadas:
-
-```bash
-java -cp build/classes Kerberos.AuthenticationServer
-```
-
-```bash
-java -cp build/classes Kerberos.TicketGrantingServer
-```
-
-```bash
-java -cp build/classes Kerberos.ServiceServer
-```
-
-```bash
-java -cp build/classes Kerberos.Client
-```
-
-## Configuracion Local
-
-`AuthConfig` centraliza valores de demo con defaults compatibles. Se pueden
-sobrescribir con variables de entorno:
-
-- `AUTH_AS_PORT`, `AUTH_TGS_PORT`, `AUTH_SERVICE_PORT`
-- `AUTH_MODE`: `demo`/`local` permite defaults de demo; `strict` exige
-  secretos explicitos y rechaza defaults.
-- `AUTH_DEMO_CLIENT_ID`, `AUTH_DEMO_TGS_ID`, `AUTH_DEMO_SERVICE_ID`
+- `AUTH_MODE`: `demo`, `local` o `strict`.
+- `AUTH_AS_PORT`
+- `AUTH_TGS_PORT`
+- `AUTH_SERVICE_PORT`
+- `AUTH_DEMO_CLIENT_ID`
+- `AUTH_DEMO_TGS_ID`
+- `AUTH_DEMO_SERVICE_ID`
+- `AUTH_TICKET_TTL_MINUTES`
+- `AUTH_ALLOWED_SKEW_SECONDS`
+- `AUTH_REPLAY_WINDOW_SECONDS`
 - `AUTH_LEGACY_CLIENT_SECRET`
 - `AUTH_LEGACY_CLIENT_TGS_KEY`
 - `AUTH_LEGACY_TGS_SECRET`
 - `AUTH_LEGACY_CLIENT_SERVICE_KEY`
 - `AUTH_LEGACY_SERVICE_SECRET`
 - `AUTH_LEGACY_PBKDF2_SALT`
-- `AUTH_TICKET_TTL_MINUTES`
-- `AUTH_ALLOWED_SKEW_SECONDS`
-- `AUTH_REPLAY_WINDOW_SECONDS`
 
-Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
+Los nombres `AUTH_LEGACY_*` permanecen por compatibilidad de configuracion y
+deben renombrarse en una fase posterior.
 
-## Auditoria Modular
+## CI
 
-Con AS, TGS y Service modulares levantados, ejecuta:
+GitHub Actions vive en la raiz Git:
 
-```cmd
-scripts\run-audit.bat --iterations 5
-```
+- `../.github/workflows/maven.yml`
 
-El runner escribe evidencia reproducible en:
+El workflow usa `working-directory: PruebaKeberos` y ejecuta:
 
-- `docs/audits/latest-run.md`
-- `docs/audits/latest-run.json`
-
-La ejecucion registrada en este repositorio uso 3 iteraciones, puertos
-`2500/2501/2502`, 3 exitos y 0 fallos.
-
-## Como Revisar La Migracion Modular
-
-- DTOs: `auth-core/src/main/java/com/portfolio/auth/core/protocol/dto`
-- Configuracion: `auth-core/src/main/java/com/portfolio/auth/core/config`
-- Replay cache: `auth-core/src/main/java/com/portfolio/auth/core/replay`
-- Mappers: `auth-transport/src/main/java/com/portfolio/auth/transport/legacy`
-- AES-GCM: `auth-crypto/src/main/java/com/portfolio/auth/crypto`
-- Pruebas: `auth-*/src/test/java`
+- `mvn -q -DskipTests compile`
+- `mvn test`
 
 ## Limitaciones Actuales
 
-- La ruta modular es la principal, pero la demo legacy aun existe.
-- `Kerberos/` y `Seguridad/` no se eliminaron porque Maven no estuvo disponible
-  para validar los gates obligatorios.
-- La ruta modular usa JSON sobre TCP y AES-GCM; todavia usa secretos de demo
-  por defecto para ejecucion local.
-- `AESUtils` legacy sigue usando AES/CBC por compatibilidad; no se cambio el IV
-  porque el formato actual no transporta IV por mensaje.
-- AES-GCM no se migro al legacy; `AESUtils` sigue solo por compatibilidad.
-- Replay cache es local en memoria por proceso, tambien en la ruta modular.
-- El transporte JSON es un codec acotado a los DTOs del proyecto, no un parser
-  JSON general-purpose.
-- No hay Docker, frontend ni WebSockets en esta fase.
 - No es production-ready.
+- No hay Docker, frontend ni WebSockets.
+- El replay cache es local por proceso.
+- No hay TLS ni autenticacion mutua de transporte.
+- El codec JSON es propio y acotado a los DTOs del proyecto.
+- Persisten adaptadores historicos dentro de `auth-transport` para pruebas y
+  compatibilidad documental, pero no son la ruta principal.
 
 ## Roadmap
 
-1. Ejecutar `mvn test` en un entorno con Maven en PATH y corregir cualquier
-   detalle que aparezca ahi.
-2. Si Maven pasa, eliminar `Kerberos/` y `Seguridad/` del runtime principal y
-   conservar solo una referencia historica documentada.
-3. Separar secretos de demo en un archivo local no versionado o vault simulado.
-4. Endurecer el codec JSON o sustituirlo por una dependencia auditada si se
-   autoriza.
-5. Introducir Docker y Docker Compose solo en una fase posterior de despliegue.
-6. Evaluar WebSockets y frontend solo cuando exista una fase especifica para UI.
+1. Retirar o renombrar adaptadores historicos internos de `auth-transport` si
+   ya no aportan valor.
+2. Renombrar variables `AUTH_LEGACY_*` a nombres modulares.
+3. Evaluar un parser JSON mantenido si se autoriza una dependencia.
+4. Agregar TLS o una capa de transporte autenticada.
+5. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
+6. Evaluar WebSockets y frontend solo cuando exista una fase especifica.
 
 Mas detalle:
 

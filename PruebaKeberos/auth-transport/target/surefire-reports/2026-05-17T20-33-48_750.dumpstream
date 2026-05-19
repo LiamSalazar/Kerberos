@@ -1,5 +1,0 @@
-# Created at 2026-05-17T20:33:51.773
-Boot Manifest-JAR contains absolute paths in classpath 'D:\Kerberos\PruebaKeberos\auth-transport\target\test-classes'
-Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
-'other' has different root
-

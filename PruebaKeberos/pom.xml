@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
 
     <name>auth-monorepo</name>
-    <description>Monorepo base para un sistema de autenticacion inspirado en Kerberos.</description>
+    <description>Monorepo base para un sistema de autenticacion distribuida inspirado en Kerberos 4.</description>
 
     <modules>
         <module>auth-core</module>

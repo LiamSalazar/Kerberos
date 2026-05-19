@@ -1,6 +1,7 @@
 # This is not a Python dependency file.
 # It is an environment requirements checklist for running the Java project locally.
 # Docker is not required for the current version.
+# The current runtime is the modular Java runtime under auth-*.
 
 # Java
 # Recommended: Java 17 or newer.
@@ -42,8 +43,9 @@
 # This file is only a checklist for the local Java environment.
 # Docker is not required for the current phase.
 # Docker and Docker Compose are planned as future deployment work.
-# Current modular runtime still keeps local execution without Docker as the
-# supported path. Docker, WebSockets, and frontend work are future phases.
+# Current modular runtime keeps local execution without Docker as the supported
+# path. Docker, WebSockets, and frontend work are future phases.
 # Phase 8 adds reproducible audit output in docs/audits/latest-run.md and
 # docs/audits/latest-run.json when scripts\run-audit.bat or
 # ModularAuthAuditRunner is executed against running modular services.
+# Phase 8.1 removed the physical legacy demo folders from the main project.

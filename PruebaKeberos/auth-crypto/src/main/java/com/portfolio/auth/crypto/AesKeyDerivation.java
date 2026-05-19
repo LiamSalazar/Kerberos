@@ -10,7 +10,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Derivacion de claves para la ruta modular. No depende de AESUtils legacy.
+ * Derivacion de claves para la ruta modular.
  */
 public final class AesKeyDerivation {
     public static final String KEY_DERIVATION_ALGORITHM = "PBKDF2WithHmacSHA256";

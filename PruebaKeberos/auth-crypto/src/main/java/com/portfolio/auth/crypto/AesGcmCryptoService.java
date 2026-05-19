@@ -11,8 +11,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
 /**
- * Implementacion AEAD con AES-GCM. No reemplaza automaticamente a AESUtils
- * legacy; deja lista la ruta de migracion con IV transportado en envelope.
+ * Implementacion AEAD con AES-GCM para la ruta modular, con IV transportado en
+ * envelope.
  */
 public final class AesGcmCryptoService implements AeadCryptoService {
     public static final String ENVELOPE_VERSION = "crypto-envelope/1";

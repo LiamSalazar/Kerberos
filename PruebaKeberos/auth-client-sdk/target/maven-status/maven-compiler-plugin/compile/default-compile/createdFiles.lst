@@ -1,4 +1,0 @@
-com\portfolio\auth\client\AuthClient.class
-com\portfolio\auth\client\ClientCli.class
-com\portfolio\auth\client\AuthClientException.class
-com\portfolio\auth\client\AuthFlowRunner.class

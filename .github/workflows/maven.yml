@@ -1,0 +1,31 @@
+name: Maven
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: PruebaKeberos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: PruebaKeberos/**/pom.xml
+
+      - name: Compile
+        run: mvn -q -DskipTests compile
+
+      - name: Test
+        run: mvn test

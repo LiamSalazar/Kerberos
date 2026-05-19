@@ -16,8 +16,8 @@ public final class InMemoryPrincipalRepository {
 
     public static InMemoryPrincipalRepository fromConfig(AuthConfig config) {
         return new InMemoryPrincipalRepository(
-                Map.of(config.defaultClientId(), config.legacyClientSecret()),
-                Map.of(config.defaultTicketGrantingServerId(), config.legacyTicketGrantingServerSecret()));
+                Map.of(config.defaultClientId(), config.demoClientSecret()),
+                Map.of(config.defaultTicketGrantingServerId(), config.demoTicketGrantingServerSecret()));
     }
 
     public Optional<String> clientSecret(String clientId) {

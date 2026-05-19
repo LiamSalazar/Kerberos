@@ -1,0 +1,13 @@
+package com.portfolio.auth.gateway;
+
+public enum WebSocketFlowStage {
+    FLOW_STARTED,
+    AS_REQUEST_SENT,
+    AS_RESPONSE_RECEIVED,
+    TGS_REQUEST_SENT,
+    TGS_RESPONSE_RECEIVED,
+    SERVICE_REQUEST_SENT,
+    SERVICE_RESPONSE_RECEIVED,
+    FLOW_SUCCESS,
+    FLOW_ERROR
+}

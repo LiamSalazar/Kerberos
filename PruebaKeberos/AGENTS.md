@@ -17,6 +17,9 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Preferir DTOs tipados sobre `HashMap<String,Object>` en codigo nuevo.
 - La ruta modular nueva debe permanecer libre de dependencias hacia paquetes
   historicos y Java serialization como contrato principal.
+- `auth-websocket-gateway` es una capa separada de integracion; no debe
+  reemplazar ni acoplar WebSockets dentro de `auth-as`, `auth-tgs` o
+  `auth-service`.
 - Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo
   AS -> TGS -> Service cuando sea viable.
 - Mantener `docs/audits/legacy-dependency-audit.md` actualizado cuando se toque
@@ -29,5 +32,5 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Mantener ejecucion local sin Docker como requisito actual.
 - Dejar Docker y Docker Compose como trabajo futuro hasta que se autorice
   explicitamente.
-- No introducir Spring Boot, frontend ni WebSockets salvo que la fase lo pida.
+- No introducir Spring Boot ni frontend salvo que la fase lo pida.
 - Explicar siempre que cambio, como probarlo y que queda pendiente.

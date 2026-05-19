@@ -18,8 +18,8 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En Fase 8.1 ambos comandos pasaron con Maven disponible por ruta absoluta del
-entorno local.
+En Fase 9 + Fase 10 ambos comandos fueron ejecutados con Maven disponible por
+ruta absoluta del entorno local.
 
 ## Ejecutar Runtime Modular Con Scripts
 
@@ -42,6 +42,15 @@ scripts\run-client.bat
 ```
 
 Los scripts ejecutan `mvn -q -DskipTests compile` antes de lanzar la clase Java.
+
+En Linux/macOS:
+
+```bash
+scripts/run-as.sh
+scripts/run-tgs.sh
+scripts/run-service.sh
+scripts/run-client.sh
+```
 
 ## Ejecutar Runtime Modular Manualmente
 
@@ -82,6 +91,45 @@ El runner genera:
 - `docs/audits/latest-run.md`
 - `docs/audits/latest-run.json`
 
+## WebSocket Gateway
+
+El gateway no levanta AS, TGS ni Service por su cuenta. Primero ejecuta los tres
+servidores modulares y luego:
+
+```cmd
+scripts\run-websocket-gateway.bat
+```
+
+En Linux/macOS:
+
+```bash
+scripts/run-websocket-gateway.sh
+```
+
+Por defecto escucha en `127.0.0.1:2800`. Puedes ajustar:
+
+- `AUTH_WS_HOST`
+- `AUTH_WS_PORT`
+
+Prueba manual con una herramienta externa compatible con WebSocket, por ejemplo
+`websocat`:
+
+```bash
+websocat ws://127.0.0.1:2800
+```
+
+Mensaje de entrada:
+
+```json
+{"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
+```
+
+Tambien responde:
+
+```json
+{"type":"PING","requestId":"ping-1"}
+```
+
 ## Configuracion
 
 Variables comunes:
@@ -96,15 +144,16 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
-- `AUTH_LEGACY_CLIENT_SECRET`
-- `AUTH_LEGACY_CLIENT_TGS_KEY`
-- `AUTH_LEGACY_TGS_SECRET`
-- `AUTH_LEGACY_CLIENT_SERVICE_KEY`
-- `AUTH_LEGACY_SERVICE_SECRET`
-- `AUTH_LEGACY_PBKDF2_SALT`
+- `AUTH_DEMO_CLIENT_SECRET`
+- `AUTH_DEMO_CLIENT_TGS_KEY`
+- `AUTH_DEMO_TGS_SECRET`
+- `AUTH_DEMO_CLIENT_SERVICE_KEY`
+- `AUTH_DEMO_SERVICE_SECRET`
+- `AUTH_DEMO_PBKDF2_SALT`
 
 `AUTH_MODE=demo` o `AUTH_MODE=local` permite defaults de demo local.
 `AUTH_MODE=strict` exige secretos explicitos y rechaza defaults.
+`AUTH_LEGACY_*` se conserva solo como alias temporal de compatibilidad.
 
 ## Estado Legacy
 
@@ -113,5 +162,5 @@ para ejecutarla. Ver `docs/legacy-summary.md` para contexto historico.
 
 ## Futuro
 
-Docker, Docker Compose, WebSockets y frontend quedan fuera de esta fase y solo
-deben introducirse cuando se autorice una fase especifica.
+Docker, Docker Compose y frontend quedan fuera de esta fase y solo deben
+introducirse cuando se autorice una fase especifica.

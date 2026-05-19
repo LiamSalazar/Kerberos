@@ -16,8 +16,8 @@ public final class InMemoryServiceRegistry {
 
     public static InMemoryServiceRegistry fromConfig(AuthConfig config) {
         return new InMemoryServiceRegistry(
-                Map.of(config.defaultTicketGrantingServerId(), config.legacyTicketGrantingServerSecret()),
-                Map.of(config.defaultServiceId(), config.legacyServiceSecret()));
+                Map.of(config.defaultTicketGrantingServerId(), config.demoTicketGrantingServerSecret()),
+                Map.of(config.defaultServiceId(), config.demoServiceSecret()));
     }
 
     public Optional<String> ticketGrantingServerSecret(String tgsId) {

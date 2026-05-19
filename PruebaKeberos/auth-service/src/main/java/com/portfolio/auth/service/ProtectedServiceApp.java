@@ -21,7 +21,7 @@ public final class ProtectedServiceApp {
                 ProtectedResource.demo(),
                 new InMemoryReplayCache(),
                 codec,
-                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.legacyPbkdf2Salt()));
+                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.demoPbkdf2Salt()));
         TcpMessageServer server = new TcpMessageServer(
                 config.serviceServerHost(),
                 config.serviceServerPort(),

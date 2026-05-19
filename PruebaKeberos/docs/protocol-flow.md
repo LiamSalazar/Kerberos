@@ -27,6 +27,50 @@ payload no vacio, tamano maximo, timeout de lectura y, cuando se configura,
 7. Service valida replay, ticket, identidad, expiracion y clock skew.
 8. Service responde `SERVICE_RESPONSE` con `CryptoEnvelope<ServiceResponse>`.
 
+## Gateway WebSocket
+
+El gateway WebSocket es una capa externa al flujo principal. Recibe mensajes
+JSON WebSocket y ejecuta el mismo flujo modular mediante `AuthClient`, por lo
+que AS, TGS y Service siguen hablando JSON/TCP.
+
+Entrada minima:
+
+```json
+{
+  "type": "START_AUTH_FLOW",
+  "requestId": "manual-1",
+  "clientId": "1",
+  "serviceId": "1"
+}
+```
+
+Eventos emitidos:
+
+- `FLOW_STARTED`
+- `AS_REQUEST_SENT`
+- `AS_RESPONSE_RECEIVED`
+- `TGS_REQUEST_SENT`
+- `TGS_RESPONSE_RECEIVED`
+- `SERVICE_REQUEST_SENT`
+- `SERVICE_RESPONSE_RECEIVED`
+- `FLOW_SUCCESS`
+- `FLOW_ERROR`
+
+Resultado final:
+
+```json
+{
+  "type": "FLOW_RESULT",
+  "requestId": "manual-1",
+  "success": true,
+  "serviceMessage": "MODULAR AUTH EXITOSO",
+  "asMillis": 1,
+  "tgsMillis": 1,
+  "serviceMillis": 1,
+  "totalMillis": 3
+}
+```
+
 ## Errores Controlados
 
 Los errores vuelven como `ERROR_RESPONSE` con payload `ErrorResponse`.
@@ -46,6 +90,8 @@ Casos cubiertos por pruebas unitarias, de componente o de integracion:
 - `MessageType` incorrecto;
 - servidor no disponible;
 - multiples clientes concurrentes.
+- mensajes WebSocket validos, tipo desconocido, JSON invalido y servicios no
+  disponibles a nivel de gateway.
 
 ## Estado Legacy
 

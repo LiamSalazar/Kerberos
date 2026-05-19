@@ -19,6 +19,7 @@ critica.
 | `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
 | `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
 | `auth-client-sdk` | `AuthClient`, `AuthFlowRunner`, `ClientCli`, audit runner | Ejecutable |
+| `auth-websocket-gateway` | WebSocket Gateway separado sobre `AuthClient` | Ejecutable |
 | `docs` | Documentacion y auditorias | Activo |
 
 ## Flujo Principal
@@ -30,6 +31,31 @@ critica.
 4. TGS devuelve ticket de servicio y clave de sesion cliente-servicio.
 5. Client presenta ticket y autenticador al Service.
 6. Service devuelve `ServiceResponse` cifrado.
+
+## WebSocket Gateway
+
+`auth-websocket-gateway` agrega una capa de integracion para una futura interfaz
+web. No modifica ni reemplaza `auth-as`, `auth-tgs` ni `auth-service`; usa
+`AuthClient` para ejecutar el flujo AS -> TGS -> Service sobre la ruta TCP
+modular.
+
+Mensajes de entrada soportados:
+
+- `START_AUTH_FLOW`
+- `RUN_AUDIT_FLOW`
+- `PING`
+
+Mensajes de salida:
+
+- `GATEWAY_READY`
+- `FLOW_EVENT`
+- `FLOW_RESULT`
+- `ERROR`
+- `PONG`
+
+El gateway emite eventos como `AS_REQUEST_SENT`, `TGS_RESPONSE_RECEIVED`,
+`SERVICE_RESPONSE_RECEIVED` y `FLOW_SUCCESS`, junto con latencias basicas por
+etapa.
 
 ## Transporte
 
@@ -59,14 +85,15 @@ Se cifran con AES-GCM:
 - `AUTH_MODE=demo` o `AUTH_MODE=local`: permite secretos por defecto para demo.
 - `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
 
-Los nombres de variables `AUTH_LEGACY_*` permanecen temporalmente por
-compatibilidad de configuracion y deben renombrarse en una fase posterior.
+Los nombres principales de secretos son `AUTH_DEMO_*`. Los nombres
+`AUTH_LEGACY_*` se aceptan solo como alias temporal de compatibilidad en
+`AuthConfig`.
 
 ## Pruebas Y CI
 
-La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON, mappers
-historicos, transporte seguro JSON + AES-GCM e integracion modular con casos
-negativos.
+La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
+transporte seguro JSON + AES-GCM, integracion modular con casos negativos y
+pruebas unitarias del WebSocket Gateway.
 
 GitHub Actions vive en la raiz del repositorio Git en
 `../.github/workflows/maven.yml` y ejecuta desde `PruebaKeberos`:
@@ -76,7 +103,9 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 ## Pendiente
 
-- Retirar o renombrar adaptadores historicos internos de `auth-transport`.
-- Renombrar variables `AUTH_LEGACY_*`.
-- Evaluar un JSON parser mantenido si se autoriza una dependencia externa.
-- Agregar Docker, WebSockets o frontend solo en fases futuras autorizadas.
+- Retirar aliases `AUTH_LEGACY_*` cuando deje de ser necesaria la compatibilidad.
+- Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
+  acotado.
+- Agregar pruebas WebSocket end-to-end con servicios reales si se decide
+  ampliar la suite de integracion.
+- Agregar Docker o frontend solo en fases futuras autorizadas.

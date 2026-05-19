@@ -20,7 +20,7 @@ class AuthConfigTest {
         assertEquals(AuthConfig.DEFAULT_LOCAL_HOST, config.authenticationServerHost());
         assertEquals(AuthConfig.DEFAULT_LOCAL_AS_PORT, config.authenticationServerPort());
         assertEquals(AuthConfig.DEFAULT_LOCAL_TICKET_LIFETIME, config.ticketLifetime());
-        assertEquals(AuthConfig.DEFAULT_LOCAL_LEGACY_CLIENT_SECRET, config.legacyClientSecret());
+        assertEquals(AuthConfig.DEFAULT_LOCAL_DEMO_CLIENT_SECRET, config.demoClientSecret());
         assertTrue(config.usesDemoSecrets());
     }
 
@@ -57,23 +57,39 @@ class AuthConfigTest {
         IllegalStateException error = assertThrows(IllegalStateException.class,
                 () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT)));
 
-        assertTrue(error.getMessage().contains(AuthConfig.ENV_LEGACY_CLIENT_SECRET));
-        assertTrue(error.getMessage().contains(AuthConfig.ENV_LEGACY_SERVICE_SECRET));
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_DEMO_CLIENT_SECRET));
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_DEMO_SERVICE_SECRET));
     }
 
     @Test
     void shouldAcceptExplicitSecretsInStrictMode() {
         AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
                 Map.entry(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT),
-                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_SECRET, "client-secret-from-env"),
-                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_TGS_KEY, "client-tgs-key-from-env"),
-                Map.entry(AuthConfig.ENV_LEGACY_TGS_SECRET, "tgs-secret-from-env"),
-                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_SERVICE_KEY, "client-service-key-from-env"),
-                Map.entry(AuthConfig.ENV_LEGACY_SERVICE_SECRET, "service-secret-from-env"),
-                Map.entry(AuthConfig.ENV_LEGACY_PBKDF2_SALT, "salt-from-env")));
+                Map.entry(AuthConfig.ENV_DEMO_CLIENT_SECRET, "client-secret-from-env"),
+                Map.entry(AuthConfig.ENV_DEMO_CLIENT_TGS_KEY, "client-tgs-key-from-env"),
+                Map.entry(AuthConfig.ENV_DEMO_TGS_SECRET, "tgs-secret-from-env"),
+                Map.entry(AuthConfig.ENV_DEMO_CLIENT_SERVICE_KEY, "client-service-key-from-env"),
+                Map.entry(AuthConfig.ENV_DEMO_SERVICE_SECRET, "service-secret-from-env"),
+                Map.entry(AuthConfig.ENV_DEMO_PBKDF2_SALT, "salt-from-env")));
 
-        assertEquals("client-secret-from-env", config.legacyClientSecret());
-        assertEquals("service-secret-from-env", config.legacyServiceSecret());
+        assertEquals("client-secret-from-env", config.demoClientSecret());
+        assertEquals("service-secret-from-env", config.demoServiceSecret());
+        assertFalse(config.usesDemoSecrets());
+    }
+
+    @Test
+    void shouldAcceptTemporaryLegacyAliasesForStrictMode() {
+        AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
+                Map.entry(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_SECRET, "client-secret-from-alias"),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_TGS_KEY, "client-tgs-key-from-alias"),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_TGS_SECRET, "tgs-secret-from-alias"),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY, "client-service-key-from-alias"),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_SERVICE_SECRET, "service-secret-from-alias"),
+                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_PBKDF2_SALT, "salt-from-alias")));
+
+        assertEquals("client-secret-from-alias", config.demoClientSecret());
+        assertEquals("service-secret-from-alias", config.demoServiceSecret());
         assertFalse(config.usesDemoSecrets());
     }
 

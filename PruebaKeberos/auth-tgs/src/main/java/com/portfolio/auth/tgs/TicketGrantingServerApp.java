@@ -20,7 +20,7 @@ public final class TicketGrantingServerApp {
                 InMemoryServiceRegistry.fromConfig(config),
                 new InMemoryReplayCache(),
                 codec,
-                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.legacyPbkdf2Salt()));
+                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.demoPbkdf2Salt()));
         TcpMessageServer server = new TcpMessageServer(
                 config.ticketGrantingServerHost(),
                 config.ticketGrantingServerPort(),

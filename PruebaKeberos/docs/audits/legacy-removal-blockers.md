@@ -2,7 +2,8 @@
 
 Fecha: 2026-05-19
 
-Estado final: bloqueadores resueltos en Fase 8.1.
+Estado final: bloqueadores resueltos en Fase 8.1 y seguimiento tecnico cerrado
+en Fase 9.
 
 ## Bloqueadores Previos
 
@@ -23,7 +24,7 @@ Estado final: bloqueadores resueltos en Fase 8.1.
 
 ## Seguimiento
 
-Este archivo queda como registro historico. Los siguientes trabajos deben
-enfocarse en retirar o renombrar adaptadores historicos internos de
-`auth-transport` y variables `AUTH_LEGACY_*`, sin reintroducir codigo legacy
-fisico.
+Este archivo queda como registro historico. En Fase 9 se retiraron los
+adaptadores `auth-transport/javaio` y `auth-transport/legacy`. El seguimiento
+pendiente queda limitado a retirar los alias temporales `AUTH_LEGACY_*` cuando
+ya no sea necesario mantener compatibilidad de configuracion.

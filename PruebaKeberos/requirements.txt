@@ -28,6 +28,15 @@
 #   scripts\run-service.bat
 #   scripts\run-client.bat
 #   scripts\run-audit.bat --iterations 5
+#   scripts\run-websocket-gateway.bat
+#
+# Linux/macOS shell scripts are also available under scripts/:
+#   scripts/run-as.sh
+#   scripts/run-tgs.sh
+#   scripts/run-service.sh
+#   scripts/run-client.sh
+#   scripts/run-audit.sh --iterations 5
+#   scripts/run-websocket-gateway.sh
 
 # Configuration modes
 #   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
@@ -44,8 +53,11 @@
 # Docker is not required for the current phase.
 # Docker and Docker Compose are planned as future deployment work.
 # Current modular runtime keeps local execution without Docker as the supported
-# path. Docker, WebSockets, and frontend work are future phases.
+# path. A separate WebSocket Gateway exists for future web integration.
+# Docker and frontend work are future phases.
 # Phase 8 adds reproducible audit output in docs/audits/latest-run.md and
 # docs/audits/latest-run.json when scripts\run-audit.bat or
 # ModularAuthAuditRunner is executed against running modular services.
 # Phase 8.1 removed the physical legacy demo folders from the main project.
+# Phase 9 removed Java serialization and legacy mapper packages from
+# auth-transport. Phase 10 added auth-websocket-gateway with Java-WebSocket.

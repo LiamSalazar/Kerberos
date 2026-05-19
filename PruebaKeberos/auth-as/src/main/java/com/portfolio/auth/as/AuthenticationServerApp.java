@@ -18,7 +18,7 @@ public final class AuthenticationServerApp {
                 config,
                 InMemoryPrincipalRepository.fromConfig(config),
                 codec,
-                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.legacyPbkdf2Salt()));
+                new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.demoPbkdf2Salt()));
         TcpMessageServer server = new TcpMessageServer(
                 config.authenticationServerHost(),
                 config.authenticationServerPort(),

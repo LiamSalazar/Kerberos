@@ -11,18 +11,18 @@ pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fase 8.1: ruta modular como version principal y legacy fisico
-retirado**.
+Fase actual: **Fase 9 + Fase 10: cierre tecnico modular y WebSocket Gateway**.
 
 | Area | Rol | Estado |
 | --- | --- | --- |
 | `auth-core/` | DTOs del protocolo, configuracion y replay cache | Activo |
 | `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion | Activo |
-| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP, DTOs seguros y adaptadores historicos aislados | Activo |
+| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros | Activo |
 | `auth-as/` | Authentication Server modular | Ejecutable |
 | `auth-tgs/` | Ticket Granting Server modular | Ejecutable |
 | `auth-service/` | Servicio protegido modular | Ejecutable |
 | `auth-client-sdk/` | Cliente modular, CLI y audit runner | Ejecutable |
+| `auth-websocket-gateway/` | Gateway WebSocket separado para futuras integraciones web | Ejecutable |
 | `docs/` | Documentacion tecnica y auditorias | Activa |
 
 Las carpetas historicas `Kerberos/`, `Seguridad/`, `Chat/` y
@@ -52,6 +52,10 @@ sequenceDiagram
 La ruta principal usa DTOs tipados, JSON/TCP, AES-GCM con `CryptoEnvelope`,
 replay cache, configuracion demo/strict y auditoria reproducible.
 
+El WebSocket Gateway no reemplaza AS, TGS ni Service. Expone una capa de
+integracion que recibe mensajes WebSocket y ejecuta el flujo modular existente
+mediante `AuthClient`.
+
 ## Requisitos
 
 Consulta tambien [requirements.txt](requirements.txt).
@@ -71,8 +75,8 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En la verificacion de Fase 8.1 ambos comandos pasaron usando Maven por ruta
-absoluta del entorno local.
+En la verificacion de Fase 9 + Fase 10 ambos comandos pasaron usando Maven por
+ruta absoluta del entorno local.
 
 ## Ejecutar Sin Docker
 
@@ -95,6 +99,40 @@ scripts\run-client.bat
 ```
 
 Los scripts compilan con Maven antes de ejecutar las clases modulares.
+
+En Linux/macOS tambien existen scripts equivalentes:
+
+```bash
+scripts/run-as.sh
+scripts/run-tgs.sh
+scripts/run-service.sh
+scripts/run-client.sh
+```
+
+## WebSocket Gateway
+
+Primero levanta AS, TGS y Service. Despues:
+
+```cmd
+scripts\run-websocket-gateway.bat
+```
+
+En Linux/macOS:
+
+```bash
+scripts/run-websocket-gateway.sh
+```
+
+Por defecto escucha en `127.0.0.1:2800`. Variables:
+
+- `AUTH_WS_HOST`
+- `AUTH_WS_PORT`
+
+Mensaje minimo:
+
+```json
+{"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
+```
 
 ## Auditoria Modular
 
@@ -126,15 +164,16 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
-- `AUTH_LEGACY_CLIENT_SECRET`
-- `AUTH_LEGACY_CLIENT_TGS_KEY`
-- `AUTH_LEGACY_TGS_SECRET`
-- `AUTH_LEGACY_CLIENT_SERVICE_KEY`
-- `AUTH_LEGACY_SERVICE_SECRET`
-- `AUTH_LEGACY_PBKDF2_SALT`
+- `AUTH_DEMO_CLIENT_SECRET`
+- `AUTH_DEMO_CLIENT_TGS_KEY`
+- `AUTH_DEMO_TGS_SECRET`
+- `AUTH_DEMO_CLIENT_SERVICE_KEY`
+- `AUTH_DEMO_SERVICE_SECRET`
+- `AUTH_DEMO_PBKDF2_SALT`
 
-Los nombres `AUTH_LEGACY_*` permanecen por compatibilidad de configuracion y
-deben renombrarse en una fase posterior.
+Los nombres `AUTH_LEGACY_*` permanecen solo como alias temporal de
+compatibilidad en `AuthConfig`; la documentacion y la ruta modular usan
+`AUTH_DEMO_*`.
 
 ## CI
 
@@ -150,22 +189,24 @@ El workflow usa `working-directory: PruebaKeberos` y ejecuta:
 ## Limitaciones Actuales
 
 - No es production-ready.
-- No hay Docker, frontend ni WebSockets.
+- No hay Docker ni frontend.
+- El WebSocket Gateway existe como capa de integracion separada; no sustituye
+  el runtime TCP modular.
 - El replay cache es local por proceso.
 - No hay TLS ni autenticacion mutua de transporte.
 - El codec JSON es propio y acotado a los DTOs del proyecto.
-- Persisten adaptadores historicos dentro de `auth-transport` para pruebas y
-  compatibilidad documental, pero no son la ruta principal.
+- Los alias `AUTH_LEGACY_*` deben retirarse en una fase posterior.
 
 ## Roadmap
 
-1. Retirar o renombrar adaptadores historicos internos de `auth-transport` si
-   ya no aportan valor.
-2. Renombrar variables `AUTH_LEGACY_*` a nombres modulares.
-3. Evaluar un parser JSON mantenido si se autoriza una dependencia.
+1. Retirar aliases `AUTH_LEGACY_*` cuando ya no se necesite compatibilidad.
+2. Agregar pruebas WebSocket end-to-end con servicios reales si se decide
+   ampliar la suite de integracion.
+3. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
+   acotado.
 4. Agregar TLS o una capa de transporte autenticada.
 5. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
-6. Evaluar WebSockets y frontend solo cuando exista una fase especifica.
+6. Crear frontend solo cuando exista una fase especifica.
 
 Mas detalle:
 
@@ -173,3 +214,4 @@ Mas detalle:
 - [docs/architecture.md](docs/architecture.md)
 - [docs/protocol-flow.md](docs/protocol-flow.md)
 - [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
+- [docs/websocket-gateway.md](docs/websocket-gateway.md)

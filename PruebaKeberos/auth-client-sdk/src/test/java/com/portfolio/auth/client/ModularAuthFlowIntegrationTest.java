@@ -186,7 +186,7 @@ class ModularAuthFlowIntegrationTest {
                     servers.config.defaultTicketGrantingServerId(),
                     servers.secureJsonCrypto.encrypt(
                             ticket,
-                            servers.config.legacyTicketGrantingServerSecret(),
+                            servers.config.demoTicketGrantingServerSecret(),
                             SecureAad.ticketTgs()),
                     servers.secureJsonCrypto.encrypt(
                             authenticator,
@@ -336,7 +336,7 @@ class ModularAuthFlowIntegrationTest {
             ClientAuthenticator authenticator) throws Exception {
         CryptoEnvelope ticketEnvelope = servers.secureJsonCrypto.encrypt(
                 ticket,
-                servers.config.legacyServiceSecret(),
+                servers.config.demoServiceSecret(),
                 SecureAad.ticketService());
         CryptoEnvelope authenticatorEnvelope = servers.secureJsonCrypto.encrypt(
                 authenticator,
@@ -387,7 +387,7 @@ class ModularAuthFlowIntegrationTest {
             SecureJsonCrypto secureJsonCrypto = new SecureJsonCrypto(
                     codec,
                     new AesGcmCryptoService(),
-                    config.legacyPbkdf2Salt());
+                    config.demoPbkdf2Salt());
 
             TcpMessageServer asServer = new TcpMessageServer(
                     AuthConfig.DEFAULT_LOCAL_HOST,

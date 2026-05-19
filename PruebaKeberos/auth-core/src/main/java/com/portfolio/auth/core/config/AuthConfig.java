@@ -5,10 +5,10 @@ import java.time.Duration;
 import java.util.Map;
 
 /**
- * Configuracion central para la demo local y la migracion modular.
+ * Configuracion central para la ruta modular local.
  *
- * Los valores por defecto preservan compatibilidad con el flujo legacy. No son
- * secretos de produccion.
+ * Los valores por defecto son secretos de demostracion para ejecucion local.
+ * En modo strict deben reemplazarse por variables de entorno explicitas.
  */
 public record AuthConfig(
         String defaultClientId,
@@ -24,12 +24,12 @@ public record AuthConfig(
         Duration ticketLifetime,
         Duration allowedClockSkew,
         Duration replayWindow,
-        String legacyClientSecret,
-        String legacyClientTgsSessionKey,
-        String legacyTicketGrantingServerSecret,
-        String legacyClientServiceSessionKey,
-        String legacyServiceSecret,
-        String legacyPbkdf2Salt
+        String demoClientSecret,
+        String demoClientTgsSessionKey,
+        String demoTicketGrantingServerSecret,
+        String demoClientServiceSessionKey,
+        String demoServiceSecret,
+        String demoPbkdf2Salt
 ) implements Serializable {
     public static final String DEFAULT_LOCAL_CLIENT_ID = "1";
     public static final String DEFAULT_LOCAL_TGS_ID = "1";
@@ -41,12 +41,12 @@ public record AuthConfig(
     public static final Duration DEFAULT_LOCAL_TICKET_LIFETIME = Duration.ofMinutes(5);
     public static final Duration DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW = Duration.ofMinutes(2);
     public static final Duration DEFAULT_LOCAL_REPLAY_WINDOW = Duration.ofMinutes(5);
-    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_SECRET = "ContraseniaCliente";
-    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY = "contraseña_C-TGS";
-    public static final String DEFAULT_LOCAL_LEGACY_TGS_SECRET = "contraseñaTGS";
-    public static final String DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY = "contraseñaClienteServidor";
-    public static final String DEFAULT_LOCAL_LEGACY_SERVICE_SECRET = "contraseñaServidor";
-    public static final String DEFAULT_LOCAL_LEGACY_PBKDF2_SALT = "12345678";
+    public static final String DEFAULT_LOCAL_DEMO_CLIENT_SECRET = "ContraseniaCliente";
+    public static final String DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY = "contraseña_C-TGS";
+    public static final String DEFAULT_LOCAL_DEMO_TGS_SECRET = "contraseñaTGS";
+    public static final String DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY = "contraseñaClienteServidor";
+    public static final String DEFAULT_LOCAL_DEMO_SERVICE_SECRET = "contraseñaServidor";
+    public static final String DEFAULT_LOCAL_DEMO_PBKDF2_SALT = "12345678";
 
     public static final String MODE_DEMO = "demo";
     public static final String MODE_LOCAL = "local";
@@ -66,12 +66,19 @@ public record AuthConfig(
     public static final String ENV_TICKET_TTL_MINUTES = "AUTH_TICKET_TTL_MINUTES";
     public static final String ENV_ALLOWED_SKEW_SECONDS = "AUTH_ALLOWED_SKEW_SECONDS";
     public static final String ENV_REPLAY_WINDOW_SECONDS = "AUTH_REPLAY_WINDOW_SECONDS";
-    public static final String ENV_LEGACY_CLIENT_SECRET = "AUTH_LEGACY_CLIENT_SECRET";
-    public static final String ENV_LEGACY_CLIENT_TGS_KEY = "AUTH_LEGACY_CLIENT_TGS_KEY";
-    public static final String ENV_LEGACY_TGS_SECRET = "AUTH_LEGACY_TGS_SECRET";
-    public static final String ENV_LEGACY_CLIENT_SERVICE_KEY = "AUTH_LEGACY_CLIENT_SERVICE_KEY";
-    public static final String ENV_LEGACY_SERVICE_SECRET = "AUTH_LEGACY_SERVICE_SECRET";
-    public static final String ENV_LEGACY_PBKDF2_SALT = "AUTH_LEGACY_PBKDF2_SALT";
+    public static final String ENV_DEMO_CLIENT_SECRET = "AUTH_DEMO_CLIENT_SECRET";
+    public static final String ENV_DEMO_CLIENT_TGS_KEY = "AUTH_DEMO_CLIENT_TGS_KEY";
+    public static final String ENV_DEMO_TGS_SECRET = "AUTH_DEMO_TGS_SECRET";
+    public static final String ENV_DEMO_CLIENT_SERVICE_KEY = "AUTH_DEMO_CLIENT_SERVICE_KEY";
+    public static final String ENV_DEMO_SERVICE_SECRET = "AUTH_DEMO_SERVICE_SECRET";
+    public static final String ENV_DEMO_PBKDF2_SALT = "AUTH_DEMO_PBKDF2_SALT";
+
+    public static final String ENV_ALIAS_LEGACY_CLIENT_SECRET = "AUTH_LEGACY_CLIENT_SECRET";
+    public static final String ENV_ALIAS_LEGACY_CLIENT_TGS_KEY = "AUTH_LEGACY_CLIENT_TGS_KEY";
+    public static final String ENV_ALIAS_LEGACY_TGS_SECRET = "AUTH_LEGACY_TGS_SECRET";
+    public static final String ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY = "AUTH_LEGACY_CLIENT_SERVICE_KEY";
+    public static final String ENV_ALIAS_LEGACY_SERVICE_SECRET = "AUTH_LEGACY_SERVICE_SECRET";
+    public static final String ENV_ALIAS_LEGACY_PBKDF2_SALT = "AUTH_LEGACY_PBKDF2_SALT";
 
     public static AuthConfig localDemo() {
         return new AuthConfig(
@@ -88,12 +95,12 @@ public record AuthConfig(
                 DEFAULT_LOCAL_TICKET_LIFETIME,
                 DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW,
                 DEFAULT_LOCAL_REPLAY_WINDOW,
-                DEFAULT_LOCAL_LEGACY_CLIENT_SECRET,
-                DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY,
-                DEFAULT_LOCAL_LEGACY_TGS_SECRET,
-                DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY,
-                DEFAULT_LOCAL_LEGACY_SERVICE_SECRET,
-                DEFAULT_LOCAL_LEGACY_PBKDF2_SALT);
+                DEFAULT_LOCAL_DEMO_CLIENT_SECRET,
+                DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY,
+                DEFAULT_LOCAL_DEMO_TGS_SECRET,
+                DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY,
+                DEFAULT_LOCAL_DEMO_SERVICE_SECRET,
+                DEFAULT_LOCAL_DEMO_PBKDF2_SALT);
     }
 
     public static AuthConfig fromEnvironment() {
@@ -117,12 +124,18 @@ public record AuthConfig(
                 Duration.ofMinutes(longValue(environment, ENV_TICKET_TTL_MINUTES, defaults.ticketLifetime().toMinutes())),
                 Duration.ofSeconds(longValue(environment, ENV_ALLOWED_SKEW_SECONDS, defaults.allowedClockSkew().toSeconds())),
                 Duration.ofSeconds(longValue(environment, ENV_REPLAY_WINDOW_SECONDS, defaults.replayWindow().toSeconds())),
-                value(environment, ENV_LEGACY_CLIENT_SECRET, defaults.legacyClientSecret()),
-                value(environment, ENV_LEGACY_CLIENT_TGS_KEY, defaults.legacyClientTgsSessionKey()),
-                value(environment, ENV_LEGACY_TGS_SECRET, defaults.legacyTicketGrantingServerSecret()),
-                value(environment, ENV_LEGACY_CLIENT_SERVICE_KEY, defaults.legacyClientServiceSessionKey()),
-                value(environment, ENV_LEGACY_SERVICE_SECRET, defaults.legacyServiceSecret()),
-                value(environment, ENV_LEGACY_PBKDF2_SALT, defaults.legacyPbkdf2Salt()));
+                valueWithAlias(environment, ENV_DEMO_CLIENT_SECRET, ENV_ALIAS_LEGACY_CLIENT_SECRET,
+                        defaults.demoClientSecret()),
+                valueWithAlias(environment, ENV_DEMO_CLIENT_TGS_KEY, ENV_ALIAS_LEGACY_CLIENT_TGS_KEY,
+                        defaults.demoClientTgsSessionKey()),
+                valueWithAlias(environment, ENV_DEMO_TGS_SECRET, ENV_ALIAS_LEGACY_TGS_SECRET,
+                        defaults.demoTicketGrantingServerSecret()),
+                valueWithAlias(environment, ENV_DEMO_CLIENT_SERVICE_KEY, ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY,
+                        defaults.demoClientServiceSessionKey()),
+                valueWithAlias(environment, ENV_DEMO_SERVICE_SECRET, ENV_ALIAS_LEGACY_SERVICE_SECRET,
+                        defaults.demoServiceSecret()),
+                valueWithAlias(environment, ENV_DEMO_PBKDF2_SALT, ENV_ALIAS_LEGACY_PBKDF2_SALT,
+                        defaults.demoPbkdf2Salt()));
 
         if (isStrictMode(environment)) {
             validateStrictMode(environment, config);
@@ -144,28 +157,28 @@ public record AuthConfig(
     }
 
     public boolean usesDemoSecrets() {
-        return DEFAULT_LOCAL_LEGACY_CLIENT_SECRET.equals(legacyClientSecret())
-                || DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY.equals(legacyClientTgsSessionKey())
-                || DEFAULT_LOCAL_LEGACY_TGS_SECRET.equals(legacyTicketGrantingServerSecret())
-                || DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY.equals(legacyClientServiceSessionKey())
-                || DEFAULT_LOCAL_LEGACY_SERVICE_SECRET.equals(legacyServiceSecret())
-                || DEFAULT_LOCAL_LEGACY_PBKDF2_SALT.equals(legacyPbkdf2Salt());
+        return DEFAULT_LOCAL_DEMO_CLIENT_SECRET.equals(demoClientSecret())
+                || DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY.equals(demoClientTgsSessionKey())
+                || DEFAULT_LOCAL_DEMO_TGS_SECRET.equals(demoTicketGrantingServerSecret())
+                || DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY.equals(demoClientServiceSessionKey())
+                || DEFAULT_LOCAL_DEMO_SERVICE_SECRET.equals(demoServiceSecret())
+                || DEFAULT_LOCAL_DEMO_PBKDF2_SALT.equals(demoPbkdf2Salt());
     }
 
     private static void validateStrictMode(Map<String, String> environment, AuthConfig config) {
         StringBuilder missing = new StringBuilder();
-        requireSecret(environment, config.legacyClientSecret(), ENV_LEGACY_CLIENT_SECRET,
-                DEFAULT_LOCAL_LEGACY_CLIENT_SECRET, missing);
-        requireSecret(environment, config.legacyClientTgsSessionKey(), ENV_LEGACY_CLIENT_TGS_KEY,
-                DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY, missing);
-        requireSecret(environment, config.legacyTicketGrantingServerSecret(), ENV_LEGACY_TGS_SECRET,
-                DEFAULT_LOCAL_LEGACY_TGS_SECRET, missing);
-        requireSecret(environment, config.legacyClientServiceSessionKey(), ENV_LEGACY_CLIENT_SERVICE_KEY,
-                DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY, missing);
-        requireSecret(environment, config.legacyServiceSecret(), ENV_LEGACY_SERVICE_SECRET,
-                DEFAULT_LOCAL_LEGACY_SERVICE_SECRET, missing);
-        requireSecret(environment, config.legacyPbkdf2Salt(), ENV_LEGACY_PBKDF2_SALT,
-                DEFAULT_LOCAL_LEGACY_PBKDF2_SALT, missing);
+        requireSecret(environment, config.demoClientSecret(), ENV_DEMO_CLIENT_SECRET, ENV_ALIAS_LEGACY_CLIENT_SECRET,
+                DEFAULT_LOCAL_DEMO_CLIENT_SECRET, missing);
+        requireSecret(environment, config.demoClientTgsSessionKey(), ENV_DEMO_CLIENT_TGS_KEY,
+                ENV_ALIAS_LEGACY_CLIENT_TGS_KEY, DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY, missing);
+        requireSecret(environment, config.demoTicketGrantingServerSecret(), ENV_DEMO_TGS_SECRET,
+                ENV_ALIAS_LEGACY_TGS_SECRET, DEFAULT_LOCAL_DEMO_TGS_SECRET, missing);
+        requireSecret(environment, config.demoClientServiceSessionKey(), ENV_DEMO_CLIENT_SERVICE_KEY,
+                ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY, DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY, missing);
+        requireSecret(environment, config.demoServiceSecret(), ENV_DEMO_SERVICE_SECRET, ENV_ALIAS_LEGACY_SERVICE_SECRET,
+                DEFAULT_LOCAL_DEMO_SERVICE_SECRET, missing);
+        requireSecret(environment, config.demoPbkdf2Salt(), ENV_DEMO_PBKDF2_SALT, ENV_ALIAS_LEGACY_PBKDF2_SALT,
+                DEFAULT_LOCAL_DEMO_PBKDF2_SALT, missing);
 
         if (!missing.isEmpty()) {
             throw new IllegalStateException(
@@ -177,14 +190,18 @@ public record AuthConfig(
             Map<String, String> environment,
             String resolvedValue,
             String key,
+            String aliasKey,
             String defaultValue,
             StringBuilder missing) {
         String configured = environment.get(key);
-        if (configured == null || configured.isBlank() || defaultValue.equals(resolvedValue)) {
+        String alias = environment.get(aliasKey);
+        if ((configured == null || configured.isBlank())
+                && (alias == null || alias.isBlank())
+                || defaultValue.equals(resolvedValue)) {
             if (!missing.isEmpty()) {
                 missing.append(", ");
             }
-            missing.append(key);
+            missing.append(key).append(" (alias temporal ").append(aliasKey).append(")");
         }
     }
 
@@ -194,6 +211,22 @@ public record AuthConfig(
             return defaultValue;
         }
         return configured;
+    }
+
+    private static String valueWithAlias(
+            Map<String, String> environment,
+            String key,
+            String aliasKey,
+            String defaultValue) {
+        String configured = environment.get(key);
+        if (configured != null && !configured.isBlank()) {
+            return configured;
+        }
+        String alias = environment.get(aliasKey);
+        if (alias != null && !alias.isBlank()) {
+            return alias;
+        }
+        return defaultValue;
     }
 
     private static int intValue(Map<String, String> environment, String key, int defaultValue) {

@@ -69,7 +69,7 @@ public final class AuthClient {
         this.secureJsonCrypto = new SecureJsonCrypto(
                 codec,
                 new AesGcmCryptoService(),
-                config.legacyPbkdf2Salt());
+                config.demoPbkdf2Salt());
         this.asHost = Objects.requireNonNull(asHost, "asHost");
         this.asPort = asPort;
         this.tgsHost = Objects.requireNonNull(tgsHost, "tgsHost");
@@ -102,7 +102,7 @@ public final class AuthClient {
         CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response, MessageType.AS_RESPONSE);
         return secureJsonCrypto.decrypt(
                 encryptedResponse,
-                config.legacyClientSecret(),
+                config.demoClientSecret(),
                 SecureAad.asResponse(request.requestId()),
                 SecureAsResponse.class);
     }

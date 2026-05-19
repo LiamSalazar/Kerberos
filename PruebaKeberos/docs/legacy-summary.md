@@ -15,6 +15,9 @@ En Fase 8.1 fue reemplazada como ruta principal por los modulos `auth-*`, que
 usan DTOs, JSON/TCP, AES-GCM con `CryptoEnvelope`, replay cache, configuracion
 demo/strict, pruebas Maven y auditoria reproducible.
 
+En Fase 9 se retiraron tambien los adaptadores internos de transporte que
+existian para Java serialization y mappers historicos.
+
 El codigo legacy fisico ya no forma parte del proyecto principal. Este documento
 se conserva solo como referencia historica; no describe una ruta ejecutable
 actual.

@@ -45,7 +45,7 @@ public final class ProtectedServiceHandler implements MessageHandler {
     }
 
     public static Map<String, String> defaultSecrets(AuthConfig config) {
-        return Map.of(config.defaultServiceId(), config.legacyServiceSecret());
+        return Map.of(config.defaultServiceId(), config.demoServiceSecret());
     }
 
     @Override

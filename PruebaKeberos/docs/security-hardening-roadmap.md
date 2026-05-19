@@ -20,8 +20,9 @@ La ruta modular es la ruta principal:
 - agrega `auth-websocket-gateway` como capa separada para futuras integraciones
   web, sin reemplazar la ruta TCP modular.
 
-Las carpetas legacy historicas fueron retiradas en Fase 8.1. El contexto queda
-documentado en `docs/legacy-summary.md`.
+El codigo legacy fisico ya fue retirado del proyecto principal. Fase 9 retiro
+tambien `auth-transport/javaio` y `auth-transport/legacy`. El contexto
+historico queda documentado en `docs/legacy-summary.md`.
 
 ## Riesgos Modulares Abiertos
 

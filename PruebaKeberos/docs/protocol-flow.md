@@ -89,7 +89,7 @@ Casos cubiertos por pruebas unitarias, de componente o de integracion:
 - JSON vacio, truncado, malformado o con payload faltante;
 - `MessageType` incorrecto;
 - servidor no disponible;
-- multiples clientes concurrentes.
+- multiples clientes concurrentes;
 - mensajes WebSocket validos, tipo desconocido, JSON invalido y servicios no
   disponibles a nivel de gateway.
 

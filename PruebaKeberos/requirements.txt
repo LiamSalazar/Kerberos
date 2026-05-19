@@ -13,8 +13,7 @@
 # Recommended: Maven 3.9 or newer for compiling and testing the auth-* modules.
 # Verify:
 #   mvn -version
-# If Maven is unavailable, document the real error and use javac only as a
-# complementary local-demo verification. javac does not replace mvn test.
+# Maven is the source of truth for compile and test verification.
 
 # Git
 # Required for cloning and reviewing repository history.

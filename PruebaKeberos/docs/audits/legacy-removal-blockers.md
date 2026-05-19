@@ -2,25 +2,25 @@
 
 Fecha: 2026-05-19
 
-Estado final: bloqueadores resueltos en Fase 8.1 y seguimiento tecnico cerrado
-en Fase 9.
+Estado final: sin bloqueadores actuales. El retiro fisico legacy quedo resuelto
+y el seguimiento tecnico de Fase 9 tambien quedo cerrado.
 
 ## Bloqueadores Previos
 
-- `mvn` no estaba disponible en el PATH de una sesion anterior.
 - La eliminacion fisica estaba condicionada a compile, tests Maven y auditoria
   textual sin dependencias de paquetes historicos.
+- El seguimiento tecnico posterior exigia retirar `auth-transport/javaio` y
+  `auth-transport/legacy`.
 
 ## Resolucion
 
-- Maven fue ejecutado por ruta absoluta desde la instalacion embebida en
-  NetBeans.
 - `mvn -q -DskipTests compile` paso.
 - `mvn test` paso con 52 tests, 0 failures, 0 errors, 0 skipped.
 - La auditoria textual no encontro imports desde `auth-*` hacia los paquetes
   historicos.
-- Las carpetas `Kerberos/`, `Seguridad/`, `Chat/` y `DistribucionClaves/`
-  fueron retiradas.
+- El codigo legacy fisico fue retirado del proyecto principal.
+- `auth-transport/javaio` y `auth-transport/legacy` fueron retirados.
+- `auth-websocket-gateway` compila y forma parte del reactor Maven.
 
 ## Seguimiento
 

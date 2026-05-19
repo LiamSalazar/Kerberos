@@ -124,5 +124,6 @@ disponibles.
 - No hay frontend en esta fase.
 - El gateway no levanta AS/TGS/Service automaticamente.
 - La prueba actual del gateway es principalmente unitaria/componente; una
-  prueba end-to-end con un cliente WebSocket real queda como mejora futura.
+  prueba end-to-end con un cliente WebSocket real queda como objetivo natural de
+  Fase 11.
 - No hay TLS ni autenticacion mutua en el canal WebSocket.

@@ -1,9 +1,9 @@
 # Architecture
 
-La arquitectura actual esta centrada en la ruta modular `auth-*`. Las carpetas
-legacy historicas fueron retiradas fisicamente en Fase 8.1 despues de validar
-compilacion, pruebas Maven y ausencia de imports desde `auth-*` hacia los
-paquetes historicos.
+La arquitectura actual esta centrada en la ruta modular `auth-*`. El codigo
+legacy fisico ya fue retirado, y Fase 9 elimino tambien los paquetes internos
+`auth-transport/javaio` y `auth-transport/legacy`. Fase 10 agrego
+`auth-websocket-gateway` como capa separada de integracion.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.

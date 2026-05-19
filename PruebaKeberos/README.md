@@ -25,9 +25,8 @@ Fase actual: **Fase 9 + Fase 10: cierre tecnico modular y WebSocket Gateway**.
 | `auth-websocket-gateway/` | Gateway WebSocket separado para futuras integraciones web | Ejecutable |
 | `docs/` | Documentacion tecnica y auditorias | Activa |
 
-Las carpetas historicas `Kerberos/`, `Seguridad/`, `Chat/` y
-`DistribucionClaves/` fueron retiradas del proyecto principal. Su existencia se
-resume en [docs/legacy-summary.md](docs/legacy-summary.md), sin conservarlas
+El codigo legacy fisico fue retirado del proyecto principal. Su existencia se
+resume en [docs/legacy-summary.md](docs/legacy-summary.md), sin conservarlo
 como ruta ejecutable actual.
 
 ## Arquitectura Modular
@@ -75,8 +74,7 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En la verificacion de Fase 9 + Fase 10 ambos comandos pasaron usando Maven por
-ruta absoluta del entorno local.
+En la verificacion de Fase 9 + Fase 10 ambos comandos pasaron.
 
 ## Ejecutar Sin Docker
 

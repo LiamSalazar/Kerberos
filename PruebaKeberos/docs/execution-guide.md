@@ -18,8 +18,7 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En Fase 9 + Fase 10 ambos comandos fueron ejecutados con Maven disponible por
-ruta absoluta del entorno local.
+En Fase 9 + Fase 10 ambos comandos fueron ejecutados y pasaron.
 
 ## Ejecutar Runtime Modular Con Scripts
 

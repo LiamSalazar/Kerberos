@@ -7,10 +7,8 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - La ruta principal es modular y vive en `auth-*`.
 - No reintroducir las carpetas legacy retiradas sin autorizacion explicita.
 - Mantener cambios pequenos, revisables y explicados.
-- Correr `mvn test` cuando Maven este disponible; si falla o `mvn` no existe,
+- Correr `mvn test` cuando se toque codigo o comportamiento; si falla,
   documentar el resultado real.
-- Si Maven no esta disponible en PATH, buscar una ruta absoluta disponible antes
-  de declarar bloqueo.
 - Mantener `README.md` y `docs/` sincronizados con los cambios tecnicos.
 - No imprimir secretos, claves, tickets descifrados completos ni payloads
   sensibles en logs nuevos.

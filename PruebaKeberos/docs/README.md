@@ -10,3 +10,4 @@ Aqui se concentrara la documentacion viva del proyecto:
 - modelo de amenazas
 - guias de demo y despliegue
 - roadmap de endurecimiento de seguridad
+- auditorias reproducibles en `docs/audits/`

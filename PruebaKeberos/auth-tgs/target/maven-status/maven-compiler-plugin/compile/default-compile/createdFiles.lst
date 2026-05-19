@@ -1,0 +1,3 @@
+com\portfolio\auth\tgs\TicketGrantingServerApp.class
+com\portfolio\auth\tgs\TicketGrantingHandler.class
+com\portfolio\auth\tgs\InMemoryServiceRegistry.class

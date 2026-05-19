@@ -1,6 +1,6 @@
 # Execution Guide
 
-Guia para compilar, probar y ejecutar localmente sin Docker.
+Guia para compilar, probar, ejecutar y auditar localmente sin Docker.
 
 ## Requisitos
 
@@ -31,7 +31,30 @@ En esta sesion `mvn` no estaba disponible en PATH y ambos comandos fallaron con
 `CommandNotFoundException`. Se compilo con `javac` como verificacion
 complementaria, pero eso no reemplaza `mvn test`.
 
-## Ejecutar Runtime Modular
+## Ejecutar Runtime Modular Con Scripts
+
+En Windows, abre tres terminales para servidores y una para cliente:
+
+```cmd
+scripts\run-as.bat
+```
+
+```cmd
+scripts\run-tgs.bat
+```
+
+```cmd
+scripts\run-service.bat
+```
+
+```cmd
+scripts\run-client.bat
+```
+
+Los scripts ejecutan `mvn -q -DskipTests compile` antes de lanzar la clase Java.
+Si Maven no esta instalado, fallaran con el error real de entorno.
+
+## Ejecutar Runtime Modular Manualmente
 
 Compila con Maven cuando este disponible:
 
@@ -39,7 +62,7 @@ Compila con Maven cuando este disponible:
 mvn -q -DskipTests compile
 ```
 
-En Windows, abre cuatro terminales:
+En Windows:
 
 ```cmd
 java -cp auth-as\target\classes;auth-core\target\classes;auth-crypto\target\classes;auth-transport\target\classes com.portfolio.auth.as.AuthenticationServerApp
@@ -66,34 +89,45 @@ Orden:
 
 El cliente debe imprimir el mensaje del recurso protegido modular.
 
+## Auditoria Modular
+
+Con AS, TGS y Service modulares levantados:
+
+```cmd
+scripts\run-audit.bat --iterations 5
+```
+
+Variables utiles:
+
+- `AUTH_AUDIT_ITERATIONS`: iteraciones por defecto.
+- `AUTH_AUDIT_OUTPUT_DIR`: carpeta de salida; por defecto `docs/audits`.
+- `AUTH_AS_PORT`, `AUTH_TGS_PORT`, `AUTH_SERVICE_PORT`: puertos a medir.
+
+El runner genera:
+
+- `docs/audits/latest-run.md`
+- `docs/audits/latest-run.json`
+
+La corrida registrada en esta fase uso puertos `2500`, `2501`, `2502` y produjo
+3 exitos, 0 fallos.
+
 ## Verificacion Con javac
 
 Si Maven no esta disponible, puedes compilar la ruta modular asi en PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Force build\check\phase47-main | Out-Null
+New-Item -ItemType Directory -Force build\check\phase8-main | Out-Null
 $roots = 'auth-core\src\main\java','auth-crypto\src\main\java','auth-transport\src\main\java','auth-as\src\main\java','auth-tgs\src\main\java','auth-service\src\main\java','auth-client-sdk\src\main\java'
 $sources = Get-ChildItem $roots -Recurse -Filter *.java | ForEach-Object { $_.FullName }
-javac -d build\check\phase47-main $sources
+javac -encoding UTF-8 -d build\check\phase8-main $sources
 ```
 
-Smoke modular usado en esta fase:
-
-```powershell
-$env:AUTH_AS_PORT='2400'
-$env:AUTH_TGS_PORT='2401'
-$env:AUTH_SERVICE_PORT='2402'
-java -cp build\check\phase47-main com.portfolio.auth.as.AuthenticationServerApp
-java -cp build\check\phase47-main com.portfolio.auth.tgs.TicketGrantingServerApp
-java -cp build\check\phase47-main com.portfolio.auth.service.ProtectedServiceApp
-java -cp build\check\phase47-main com.portfolio.auth.client.ClientCli
-```
-
-Cada servidor va en una terminal separada.
+Esto es solo una verificacion auxiliar. La aceptacion formal sigue siendo Maven.
 
 ## Ejecutar Demo Legacy
 
-La demo legacy sigue viva en `Kerberos/` y `Seguridad/`.
+La demo legacy sigue viva en `Kerberos/` y `Seguridad/`, pero ya no es la ruta
+principal del proyecto.
 
 Compilar con PowerShell:
 
@@ -125,6 +159,7 @@ java -cp build\classes Kerberos.Client
 
 Variables comunes:
 
+- `AUTH_MODE`: `demo`, `local` o `strict`.
 - `AUTH_AS_PORT`
 - `AUTH_TGS_PORT`
 - `AUTH_SERVICE_PORT`
@@ -135,10 +170,14 @@ Variables comunes:
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
 - `AUTH_LEGACY_CLIENT_SECRET`
+- `AUTH_LEGACY_CLIENT_TGS_KEY`
 - `AUTH_LEGACY_TGS_SECRET`
+- `AUTH_LEGACY_CLIENT_SERVICE_KEY`
 - `AUTH_LEGACY_SERVICE_SECRET`
+- `AUTH_LEGACY_PBKDF2_SALT`
 
-Los valores por defecto son solo para demo local.
+`AUTH_MODE=demo` o `AUTH_MODE=local` permite defaults de demo local.
+`AUTH_MODE=strict` exige secretos explicitos y rechaza defaults.
 
 ## Pruebas Esperadas
 
@@ -146,13 +185,14 @@ Los valores por defecto son solo para demo local.
 
 - DTOs y mappers legacy;
 - replay cache;
-- configuracion;
+- configuracion demo/strict;
 - AES-GCM;
 - JSON codec;
 - transporte seguro JSON + AES-GCM;
 - integracion modular con AS, TGS, Service y Client;
-- casos negativos de replay, servicio inexistente, autenticador invalido y
-  requestId repetido.
+- replay, servicio inexistente, cliente inexistente, tickets expirados,
+  autenticadores invalidos, payloads invalidos, servidor no disponible y
+  concurrencia basica.
 
 ## Futuro
 

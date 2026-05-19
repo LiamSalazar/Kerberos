@@ -48,6 +48,11 @@ public record AuthConfig(
     public static final String DEFAULT_LOCAL_LEGACY_SERVICE_SECRET = "contraseñaServidor";
     public static final String DEFAULT_LOCAL_LEGACY_PBKDF2_SALT = "12345678";
 
+    public static final String MODE_DEMO = "demo";
+    public static final String MODE_LOCAL = "local";
+    public static final String MODE_STRICT = "strict";
+
+    public static final String ENV_AUTH_MODE = "AUTH_MODE";
     public static final String ENV_CLIENT_ID = "AUTH_DEMO_CLIENT_ID";
     public static final String ENV_TGS_ID = "AUTH_DEMO_TGS_ID";
     public static final String ENV_SERVICE_ID = "AUTH_DEMO_SERVICE_ID";
@@ -98,7 +103,7 @@ public record AuthConfig(
     public static AuthConfig fromEnvironment(Map<String, String> environment) {
         AuthConfig defaults = localDemo();
 
-        return new AuthConfig(
+        AuthConfig config = new AuthConfig(
                 value(environment, ENV_CLIENT_ID, defaults.defaultClientId()),
                 value(environment, ENV_TGS_ID, defaults.defaultTicketGrantingServerId()),
                 value(environment, ENV_SERVICE_ID, defaults.defaultServiceId()),
@@ -118,6 +123,69 @@ public record AuthConfig(
                 value(environment, ENV_LEGACY_CLIENT_SERVICE_KEY, defaults.legacyClientServiceSessionKey()),
                 value(environment, ENV_LEGACY_SERVICE_SECRET, defaults.legacyServiceSecret()),
                 value(environment, ENV_LEGACY_PBKDF2_SALT, defaults.legacyPbkdf2Salt()));
+
+        if (isStrictMode(environment)) {
+            validateStrictMode(environment, config);
+        }
+        return config;
+    }
+
+    public static boolean isStrictMode(Map<String, String> environment) {
+        return MODE_STRICT.equals(mode(environment));
+    }
+
+    public static String mode(Map<String, String> environment) {
+        String configured = value(environment, ENV_AUTH_MODE, MODE_DEMO).trim().toLowerCase();
+        if (MODE_DEMO.equals(configured) || MODE_LOCAL.equals(configured) || MODE_STRICT.equals(configured)) {
+            return configured;
+        }
+        throw new IllegalArgumentException(
+                ENV_AUTH_MODE + " debe ser '" + MODE_DEMO + "', '" + MODE_LOCAL + "' o '" + MODE_STRICT + "'");
+    }
+
+    public boolean usesDemoSecrets() {
+        return DEFAULT_LOCAL_LEGACY_CLIENT_SECRET.equals(legacyClientSecret())
+                || DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY.equals(legacyClientTgsSessionKey())
+                || DEFAULT_LOCAL_LEGACY_TGS_SECRET.equals(legacyTicketGrantingServerSecret())
+                || DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY.equals(legacyClientServiceSessionKey())
+                || DEFAULT_LOCAL_LEGACY_SERVICE_SECRET.equals(legacyServiceSecret())
+                || DEFAULT_LOCAL_LEGACY_PBKDF2_SALT.equals(legacyPbkdf2Salt());
+    }
+
+    private static void validateStrictMode(Map<String, String> environment, AuthConfig config) {
+        StringBuilder missing = new StringBuilder();
+        requireSecret(environment, config.legacyClientSecret(), ENV_LEGACY_CLIENT_SECRET,
+                DEFAULT_LOCAL_LEGACY_CLIENT_SECRET, missing);
+        requireSecret(environment, config.legacyClientTgsSessionKey(), ENV_LEGACY_CLIENT_TGS_KEY,
+                DEFAULT_LOCAL_LEGACY_CLIENT_TGS_KEY, missing);
+        requireSecret(environment, config.legacyTicketGrantingServerSecret(), ENV_LEGACY_TGS_SECRET,
+                DEFAULT_LOCAL_LEGACY_TGS_SECRET, missing);
+        requireSecret(environment, config.legacyClientServiceSessionKey(), ENV_LEGACY_CLIENT_SERVICE_KEY,
+                DEFAULT_LOCAL_LEGACY_CLIENT_SERVICE_KEY, missing);
+        requireSecret(environment, config.legacyServiceSecret(), ENV_LEGACY_SERVICE_SECRET,
+                DEFAULT_LOCAL_LEGACY_SERVICE_SECRET, missing);
+        requireSecret(environment, config.legacyPbkdf2Salt(), ENV_LEGACY_PBKDF2_SALT,
+                DEFAULT_LOCAL_LEGACY_PBKDF2_SALT, missing);
+
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException(
+                    ENV_AUTH_MODE + "=" + MODE_STRICT + " requiere secretos explicitos no-default: " + missing);
+        }
+    }
+
+    private static void requireSecret(
+            Map<String, String> environment,
+            String resolvedValue,
+            String key,
+            String defaultValue,
+            StringBuilder missing) {
+        String configured = environment.get(key);
+        if (configured == null || configured.isBlank() || defaultValue.equals(resolvedValue)) {
+            if (!missing.isEmpty()) {
+                missing.append(", ");
+            }
+            missing.append(key);
+        }
     }
 
     private static String value(Map<String, String> environment, String key, String defaultValue) {

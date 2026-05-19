@@ -4,6 +4,7 @@ import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.replay.InMemoryReplayCache;
 import com.portfolio.auth.crypto.AesGcmCryptoService;
 import com.portfolio.auth.transport.json.JsonMessageCodec;
+import com.portfolio.auth.transport.protocol.MessageType;
 import com.portfolio.auth.transport.secure.SecureJsonCrypto;
 import com.portfolio.auth.transport.tcp.TcpMessageServer;
 
@@ -25,7 +26,8 @@ public final class ProtectedServiceApp {
                 config.serviceServerHost(),
                 config.serviceServerPort(),
                 codec,
-                handler);
+                handler,
+                MessageType.SERVICE_REQUEST);
 
         server.start();
         Runtime.getRuntime().addShutdownHook(new Thread(server::close));

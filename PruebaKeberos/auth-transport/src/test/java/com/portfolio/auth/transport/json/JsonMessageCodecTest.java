@@ -12,6 +12,7 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JsonMessageCodecTest {
     private final JsonMessageCodec codec = new JsonMessageCodec();
@@ -61,5 +62,109 @@ class JsonMessageCodecTest {
         assertEquals(response.clientTgsSessionKey(), decoded.clientTgsSessionKey());
         assertArrayEquals(ticketEnvelope.iv(), decoded.ticketTgsEnvelope().iv());
         assertArrayEquals(ticketEnvelope.ciphertext(), decoded.ticketTgsEnvelope().ciphertext());
+    }
+
+    @Test
+    void shouldHandleEscapedStringsAndExtraFields() {
+        String json = """
+                {
+                  "messageType": "AS_REQUEST",
+                  "version": "auth-protocol/1",
+                  "requestId": "req-extra",
+                  "issuedAt": "2026-05-18T10:00:00Z",
+                  "extra": "ignored",
+                  "payload": {
+                    "version": "auth-protocol/1",
+                    "requestId": "req-extra",
+                    "clientId": "client-1",
+                    "ticketGrantingServerId": "tgs-1",
+                    "issuedAt": "2026-05-18T10:00:00Z",
+                    "note": "line\\nquote\\\""
+                  }
+                }
+                """;
+
+        ProtocolEnvelope decodedEnvelope = codec.decodeEnvelope(json);
+        AsRequest decodedPayload = codec.decodePayload(decodedEnvelope.payloadJson(), AsRequest.class);
+
+        assertEquals(MessageType.AS_REQUEST, decodedEnvelope.messageType());
+        assertEquals("client-1", decodedPayload.clientId());
+    }
+
+    @Test
+    void shouldRejectMissingPayload() {
+        String json = """
+                {
+                  "messageType": "AS_REQUEST",
+                  "version": "auth-protocol/1",
+                  "requestId": "req-missing",
+                  "issuedAt": "2026-05-18T10:00:00Z"
+                }
+                """;
+
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope(json));
+    }
+
+    @Test
+    void shouldRejectWrongEnvelopeFieldTypes() {
+        String json = """
+                {
+                  "messageType": "AS_REQUEST",
+                  "version": 1,
+                  "requestId": "req-wrong",
+                  "issuedAt": "2026-05-18T10:00:00Z",
+                  "payload": {}
+                }
+                """;
+
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope(json));
+    }
+
+    @Test
+    void shouldRejectUnsupportedMessageType() {
+        String json = """
+                {
+                  "messageType": "BAD_REQUEST",
+                  "version": "auth-protocol/1",
+                  "requestId": "req-bad",
+                  "issuedAt": "2026-05-18T10:00:00Z",
+                  "payload": {}
+                }
+                """;
+
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope(json));
+    }
+
+    @Test
+    void shouldRejectEmptyMalformedAndTruncatedJson() {
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope(""));
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope("{"));
+        assertThrows(IllegalArgumentException.class, () -> codec.decodeEnvelope("{\"messageType\":\"AS_REQUEST\""));
+    }
+
+    @Test
+    void shouldRejectInvalidPayloadForExpectedDto() {
+        String payload = """
+                {
+                  "version": "auth-protocol/1",
+                  "requestId": "req-payload",
+                  "clientId": 1,
+                  "ticketGrantingServerId": "tgs-1",
+                  "issuedAt": "2026-05-18T10:00:00Z"
+                }
+                """;
+
+        assertThrows(IllegalArgumentException.class, () -> codec.decodePayload(payload, AsRequest.class));
+    }
+
+    @Test
+    void shouldRejectInvalidProtocolEnvelopeFields() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ProtocolEnvelope(
+                        MessageType.AS_REQUEST,
+                        ProtocolDefaults.CURRENT_VERSION,
+                        " ",
+                        Instant.parse("2026-05-18T10:00:00Z"),
+                        "{}"));
     }
 }

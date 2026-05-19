@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.portfolio.auth.client.ModularAuthFlowIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.139 s -- in com.portfolio.auth.client.ModularAuthFlowIntegrationTest

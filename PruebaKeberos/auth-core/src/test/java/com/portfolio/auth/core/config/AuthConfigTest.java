@@ -6,6 +6,9 @@ import java.time.Duration;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuthConfigTest {
 
@@ -18,6 +21,7 @@ class AuthConfigTest {
         assertEquals(AuthConfig.DEFAULT_LOCAL_AS_PORT, config.authenticationServerPort());
         assertEquals(AuthConfig.DEFAULT_LOCAL_TICKET_LIFETIME, config.ticketLifetime());
         assertEquals(AuthConfig.DEFAULT_LOCAL_LEGACY_CLIENT_SECRET, config.legacyClientSecret());
+        assertTrue(config.usesDemoSecrets());
     }
 
     @Test
@@ -46,5 +50,38 @@ class AuthConfigTest {
 
         assertEquals(AuthConfig.DEFAULT_LOCAL_AS_PORT, config.authenticationServerPort());
         assertEquals(AuthConfig.DEFAULT_LOCAL_TICKET_LIFETIME, config.ticketLifetime());
+    }
+
+    @Test
+    void shouldRejectDemoSecretsInStrictMode() {
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT)));
+
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_LEGACY_CLIENT_SECRET));
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_LEGACY_SERVICE_SECRET));
+    }
+
+    @Test
+    void shouldAcceptExplicitSecretsInStrictMode() {
+        AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
+                Map.entry(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT),
+                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_SECRET, "client-secret-from-env"),
+                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_TGS_KEY, "client-tgs-key-from-env"),
+                Map.entry(AuthConfig.ENV_LEGACY_TGS_SECRET, "tgs-secret-from-env"),
+                Map.entry(AuthConfig.ENV_LEGACY_CLIENT_SERVICE_KEY, "client-service-key-from-env"),
+                Map.entry(AuthConfig.ENV_LEGACY_SERVICE_SECRET, "service-secret-from-env"),
+                Map.entry(AuthConfig.ENV_LEGACY_PBKDF2_SALT, "salt-from-env")));
+
+        assertEquals("client-secret-from-env", config.legacyClientSecret());
+        assertEquals("service-secret-from-env", config.legacyServiceSecret());
+        assertFalse(config.usesDemoSecrets());
+    }
+
+    @Test
+    void shouldRejectUnknownExecutionMode() {
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, "prod")));
+
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_AUTH_MODE));
     }
 }

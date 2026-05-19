@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-05-19T07:34:38.157359Z",
+  "javaVersion": "19",
+  "operatingSystem": "Windows 11 10.0",
+  "commitHash": "48401e5",
+  "command": "com.portfolio.auth.client.audit.ModularAuthAuditRunner --iterations 3",
+  "ports": {"as": 2500, "tgs": 2501, "service": 2502},
+  "iterations": 3,
+  "successes": 3,
+  "failures": 0,
+  "throughputPerSecond": 2.232361,
+  "latencyMs": {
+    "asExchange": {"min": 50.900, "max": 302.761, "average": 142.694},
+    "tgsExchange": {"min": 94.906, "max": 276.531, "average": 156.855},
+    "serviceExchange": {"min": 79.500, "max": 241.742, "average": 139.462},
+    "total": {"min": 225.307, "max": 821.788, "average": 439.262}
+  },
+  "results": [
+    {"index": 1, "success": true, "asMs": 302.761, "tgsMs": 276.531, "serviceMs": 241.742, "totalMs": 821.788, "error": ""},
+    {"index": 2, "success": true, "asMs": 74.420, "tgsMs": 99.126, "serviceMs": 97.144, "totalMs": 270.692, "error": ""},
+    {"index": 3, "success": true, "asMs": 50.900, "tgsMs": 94.906, "serviceMs": 79.500, "totalMs": 225.307, "error": ""}
+  ]
+}

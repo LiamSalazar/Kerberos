@@ -99,7 +99,7 @@ public final class AuthClient {
                 asHost,
                 asPort,
                 envelope(MessageType.AS_REQUEST, request.requestId(), request));
-        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response);
+        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response, MessageType.AS_RESPONSE);
         return secureJsonCrypto.decrypt(
                 encryptedResponse,
                 config.legacyClientSecret(),
@@ -140,7 +140,7 @@ public final class AuthClient {
                 tgsHost,
                 tgsPort,
                 envelope(MessageType.TGS_REQUEST, request.requestId(), request));
-        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response);
+        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response, MessageType.TGS_RESPONSE);
         return secureJsonCrypto.decrypt(
                 encryptedResponse,
                 asResponse.clientTgsSessionKey(),
@@ -178,7 +178,7 @@ public final class AuthClient {
                 serviceHost,
                 servicePort,
                 envelope(MessageType.SERVICE_REQUEST, request.requestId(), request));
-        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response);
+        CryptoEnvelope encryptedResponse = encryptedPayloadOrThrow(response, MessageType.SERVICE_RESPONSE);
         return secureJsonCrypto.decrypt(
                 encryptedResponse,
                 tgsResponse.clientServiceSessionKey(),
@@ -205,9 +205,21 @@ public final class AuthClient {
                 codec.encodePayload(payload));
     }
 
-    private CryptoEnvelope encryptedPayloadOrThrow(ProtocolEnvelope response) throws AuthClientException {
+    private CryptoEnvelope encryptedPayloadOrThrow(ProtocolEnvelope response, MessageType expectedType)
+            throws AuthClientException {
         if (response.messageType() == MessageType.ERROR_RESPONSE) {
             throw new AuthClientException(codec.decodePayload(response.payloadJson(), ErrorResponse.class));
+        }
+        if (response.messageType() != expectedType) {
+            ErrorResponse error = new ErrorResponse(
+                    ProtocolDefaults.CURRENT_VERSION,
+                    response.requestId(),
+                    Instant.now(),
+                    "auth-client-sdk",
+                    "CLIENT_UNEXPECTED_MESSAGE",
+                    "Tipo de respuesta inesperado: " + response.messageType(),
+                    response.requestId());
+            throw new AuthClientException(error);
         }
         return codec.decodePayload(response.payloadJson(), CryptoEnvelope.class);
     }

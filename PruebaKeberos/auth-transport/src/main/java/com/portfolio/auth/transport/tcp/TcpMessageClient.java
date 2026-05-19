@@ -15,18 +15,33 @@ import java.time.Duration;
 import java.util.Objects;
 
 public final class TcpMessageClient {
+    public static final int DEFAULT_MAX_MESSAGE_BYTES = 64 * 1024;
+
     private final JsonMessageCodec codec;
     private final Duration connectTimeout;
     private final Duration readTimeout;
+    private final int maxMessageBytes;
 
     public TcpMessageClient(JsonMessageCodec codec) {
-        this(codec, Duration.ofSeconds(5), Duration.ofSeconds(5));
+        this(codec, Duration.ofSeconds(5), Duration.ofSeconds(5), DEFAULT_MAX_MESSAGE_BYTES);
     }
 
     public TcpMessageClient(JsonMessageCodec codec, Duration connectTimeout, Duration readTimeout) {
+        this(codec, connectTimeout, readTimeout, DEFAULT_MAX_MESSAGE_BYTES);
+    }
+
+    public TcpMessageClient(
+            JsonMessageCodec codec,
+            Duration connectTimeout,
+            Duration readTimeout,
+            int maxMessageBytes) {
         this.codec = Objects.requireNonNull(codec, "codec");
         this.connectTimeout = Objects.requireNonNull(connectTimeout, "connectTimeout");
         this.readTimeout = Objects.requireNonNull(readTimeout, "readTimeout");
+        if (maxMessageBytes <= 0) {
+            throw new IllegalArgumentException("maxMessageBytes debe ser positivo");
+        }
+        this.maxMessageBytes = maxMessageBytes;
     }
 
     public ProtocolEnvelope send(String host, int port, ProtocolEnvelope request) throws IOException {
@@ -42,11 +57,13 @@ public final class TcpMessageClient {
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
-            writer.write(codec.encode(request));
+            String encodedRequest = codec.encode(request);
+            BoundedLineReader.requireWithinLimit(encodedRequest, maxMessageBytes);
+            writer.write(encodedRequest);
             writer.newLine();
             writer.flush();
 
-            String response = reader.readLine();
+            String response = BoundedLineReader.readLine(reader, maxMessageBytes);
             if (response == null) {
                 throw new IOException("El servidor cerro la conexion sin respuesta");
             }

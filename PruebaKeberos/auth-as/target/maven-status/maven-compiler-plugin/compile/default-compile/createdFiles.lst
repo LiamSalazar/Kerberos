@@ -1,0 +1,3 @@
+com\portfolio\auth\as\AuthenticationServerApp.class
+com\portfolio\auth\as\InMemoryPrincipalRepository.class
+com\portfolio\auth\as\AuthenticationHandler.class

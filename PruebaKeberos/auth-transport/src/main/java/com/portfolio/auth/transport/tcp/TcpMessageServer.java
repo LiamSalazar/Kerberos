@@ -16,6 +16,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -25,10 +26,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TcpMessageServer implements AutoCloseable {
+    public static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(5);
+    public static final int DEFAULT_MAX_MESSAGE_BYTES = 64 * 1024;
+
     private final String host;
     private final int requestedPort;
     private final JsonMessageCodec codec;
     private final MessageHandler handler;
+    private final MessageType expectedRequestType;
+    private final Duration readTimeout;
+    private final int maxMessageBytes;
     private final ExecutorService acceptExecutor;
     private final ExecutorService handlerExecutor;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -36,10 +43,36 @@ public final class TcpMessageServer implements AutoCloseable {
     private ServerSocket serverSocket;
 
     public TcpMessageServer(String host, int port, JsonMessageCodec codec, MessageHandler handler) {
+        this(host, port, codec, handler, null, DEFAULT_READ_TIMEOUT, DEFAULT_MAX_MESSAGE_BYTES);
+    }
+
+    public TcpMessageServer(
+            String host,
+            int port,
+            JsonMessageCodec codec,
+            MessageHandler handler,
+            MessageType expectedRequestType) {
+        this(host, port, codec, handler, expectedRequestType, DEFAULT_READ_TIMEOUT, DEFAULT_MAX_MESSAGE_BYTES);
+    }
+
+    public TcpMessageServer(
+            String host,
+            int port,
+            JsonMessageCodec codec,
+            MessageHandler handler,
+            MessageType expectedRequestType,
+            Duration readTimeout,
+            int maxMessageBytes) {
         this.host = Objects.requireNonNull(host, "host");
         this.requestedPort = port;
         this.codec = Objects.requireNonNull(codec, "codec");
         this.handler = Objects.requireNonNull(handler, "handler");
+        this.expectedRequestType = expectedRequestType;
+        this.readTimeout = Objects.requireNonNull(readTimeout, "readTimeout");
+        if (maxMessageBytes <= 0) {
+            throw new IllegalArgumentException("maxMessageBytes debe ser positivo");
+        }
+        this.maxMessageBytes = maxMessageBytes;
         this.acceptExecutor = Executors.newSingleThreadExecutor();
         this.handlerExecutor = Executors.newCachedThreadPool();
     }
@@ -50,6 +83,7 @@ public final class TcpMessageServer implements AutoCloseable {
         }
 
         serverSocket = new ServerSocket();
+        serverSocket.setReuseAddress(true);
         serverSocket.bind(new InetSocketAddress(host, requestedPort));
         acceptExecutor.submit(this::acceptLoop);
     }
@@ -80,50 +114,71 @@ public final class TcpMessageServer implements AutoCloseable {
                         new InputStreamReader(accepted.getInputStream(), StandardCharsets.UTF_8));
                 BufferedWriter writer = new BufferedWriter(
                         new OutputStreamWriter(accepted.getOutputStream(), StandardCharsets.UTF_8))) {
+            accepted.setSoTimeout(Math.toIntExact(readTimeout.toMillis()));
 
-            String line = reader.readLine();
-            if (line == null || line.isBlank()) {
-                return;
+            String requestId = "tcp-error-" + UUID.randomUUID();
+            try {
+                String line = BoundedLineReader.readLine(reader, maxMessageBytes);
+                if (line == null) {
+                    return;
+                }
+                if (line.isBlank()) {
+                    throw new IllegalArgumentException("JSON vacio");
+                }
+
+                ProtocolEnvelope request = codec.decodeEnvelope(line);
+                requestId = request.requestId();
+                if (expectedRequestType != null && request.messageType() != expectedRequestType) {
+                    write(writer, error(
+                            requestId,
+                            "TRANSPORT_UNEXPECTED_MESSAGE",
+                            "Tipo de mensaje no aceptado por este endpoint"));
+                    return;
+                }
+
+                ProtocolEnvelope response = handler.handle(request);
+                write(writer, response);
+            } catch (Exception e) {
+                write(writer, error(requestId, "TRANSPORT_ERROR", safeMessage(e)));
             }
-
-            ProtocolEnvelope request = codec.decodeEnvelope(line);
-            ProtocolEnvelope response = handler.handle(request);
-            writer.write(codec.encode(response));
-            writer.newLine();
-            writer.flush();
-        } catch (Exception e) {
-            writeError(socket, e);
+        } catch (IOException e) {
+            if (running.get()) {
+                System.err.println("[tcp] Error atendiendo conexion modular: " + e.getMessage());
+            }
         }
     }
 
-    private void writeError(Socket socket, Exception exception) {
-        if (socket.isClosed()) {
-            return;
-        }
+    private void write(BufferedWriter writer, ProtocolEnvelope response) throws IOException {
+        String encoded = codec.encode(response);
+        BoundedLineReader.requireWithinLimit(encoded, maxMessageBytes);
+        writer.write(encoded);
+        writer.newLine();
+        writer.flush();
+    }
 
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
-            String requestId = "tcp-error-" + UUID.randomUUID();
-            ErrorResponse error = new ErrorResponse(
-                    ProtocolDefaults.CURRENT_VERSION,
-                    requestId,
-                    Instant.now(),
-                    "tcp",
-                    "TRANSPORT_ERROR",
-                    exception.getMessage(),
-                    requestId);
-            ProtocolEnvelope envelope = new ProtocolEnvelope(
-                    MessageType.ERROR_RESPONSE,
-                    ProtocolDefaults.CURRENT_VERSION,
-                    requestId,
-                    Instant.now(),
-                    codec.encodePayload(error));
-            writer.write(codec.encode(envelope));
-            writer.newLine();
-            writer.flush();
-        } catch (IOException ignored) {
-            // La conexion ya no puede reportar el fallo.
+    private ProtocolEnvelope error(String requestId, String code, String message) {
+        ErrorResponse error = new ErrorResponse(
+                ProtocolDefaults.CURRENT_VERSION,
+                requestId,
+                Instant.now(),
+                "tcp",
+                code,
+                message,
+                requestId);
+        return new ProtocolEnvelope(
+                MessageType.ERROR_RESPONSE,
+                ProtocolDefaults.CURRENT_VERSION,
+                requestId,
+                Instant.now(),
+                codec.encodePayload(error));
+    }
+
+    private static String safeMessage(Exception exception) {
+        String message = exception.getMessage();
+        if (message == null || message.isBlank()) {
+            return exception.getClass().getSimpleName();
         }
+        return message;
     }
 
     @Override

@@ -44,8 +44,11 @@ public final class JsonMessageCodec {
 
     public ProtocolEnvelope decodeEnvelope(String json) {
         Map<String, Object> fields = object(json);
+        if (!fields.containsKey("payload") || fields.get("payload") == null) {
+            throw new IllegalArgumentException("Falta payload JSON");
+        }
         return new ProtocolEnvelope(
-                MessageType.valueOf(string(fields, "messageType")),
+                messageType(fields),
                 string(fields, "version"),
                 string(fields, "requestId"),
                 instant(fields, "issuedAt"),
@@ -426,6 +429,9 @@ public final class JsonMessageCodec {
     }
 
     private static Map<String, Object> object(String json) {
+        if (json == null || json.isBlank()) {
+            throw new IllegalArgumentException("JSON vacio");
+        }
         Object value = new JsonReader(json).parse();
         if (value instanceof Map<?, ?> map) {
             Map<String, Object> typed = new LinkedHashMap<>();
@@ -475,6 +481,15 @@ public final class JsonMessageCodec {
             return bool;
         }
         throw new IllegalArgumentException("Falta boolean JSON " + key);
+    }
+
+    private static MessageType messageType(Map<String, Object> fields) {
+        String typeName = string(fields, "messageType");
+        try {
+            return MessageType.valueOf(typeName);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("MessageType no soportado: " + typeName, e);
+        }
     }
 
     private static final class JsonReader {
@@ -564,7 +579,11 @@ public final class JsonMessageCodec {
                             throw new IllegalArgumentException("Escape unicode incompleto");
                         }
                         String hex = json.substring(position, position + 4);
-                        value.append((char) Integer.parseInt(hex, 16));
+                        try {
+                            value.append((char) Integer.parseInt(hex, 16));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Escape unicode invalido", e);
+                        }
                         position += 4;
                     }
                     default -> throw new IllegalArgumentException("Escape JSON invalido: " + escaped);
@@ -595,9 +614,13 @@ public final class JsonMessageCodec {
                 throw new IllegalArgumentException("Valor JSON invalido en posicion " + position);
             }
             String number = json.substring(start, position);
-            return number.contains(".") || number.contains("e") || number.contains("E")
-                    ? Double.parseDouble(number)
-                    : Long.parseLong(number);
+            try {
+                return number.contains(".") || number.contains("e") || number.contains("E")
+                        ? Double.parseDouble(number)
+                        : Long.parseLong(number);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Numero JSON invalido en posicion " + start, e);
+            }
         }
 
         private void expect(char expected) {

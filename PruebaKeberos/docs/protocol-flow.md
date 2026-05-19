@@ -1,9 +1,9 @@
 # Protocol Flow
 
-Este documento describe la ruta modular actual y separa explicitamente la ruta
-legacy.
+Este documento describe la ruta modular principal y separa explicitamente la
+ruta legacy conservada.
 
-## Ruta Modular
+## Envelope Modular
 
 Todos los mensajes modulares viajan como JSON dentro de `ProtocolEnvelope`:
 
@@ -13,8 +13,9 @@ Todos los mensajes modulares viajan como JSON dentro de `ProtocolEnvelope`:
 - `issuedAt`
 - `payload`
 
-El payload puede ser un DTO en claro o un `CryptoEnvelope` con ciphertext
-AES-GCM.
+El transporte TCP usa un mensaje JSON por conexion. El servidor modular valida
+payload no vacio, tamano maximo, timeout de lectura y, cuando se configura,
+`MessageType` esperado por endpoint.
 
 ## 1. Client -> AS
 
@@ -45,7 +46,7 @@ Plaintext cifrado para el cliente: `SecureAsResponse`
 - metadata de expiracion;
 - `ticketTgsEnvelope`.
 
-`ticketTgsEnvelope` cifra un `TicketTgs` con la clave del TGS.
+`ticketTgsEnvelope` cifra un `TicketTgs` con el secreto del TGS.
 
 Estado: AES-GCM real. No usa `AESUtils` ni `SealedObject`.
 
@@ -64,7 +65,14 @@ Contenido principal:
 El autenticador es un `ClientAuthenticator` cifrado con la clave de sesion
 cliente-TGS.
 
-Estado: JSON modular. El TGS descifra ticket y autenticador con AES-GCM.
+El TGS valida:
+
+- `requestId` no repetido;
+- servicio registrado;
+- ticket TGS vigente;
+- identidad y direccion de cliente;
+- autenticador vigente y dentro del clock skew;
+- autenticador no reutilizado.
 
 ## 4. TGS -> Client
 
@@ -79,7 +87,7 @@ Plaintext cifrado para el cliente: `SecureTgsResponse`
 - clave de sesion cliente-servicio;
 - `ticketServiceEnvelope`.
 
-`ticketServiceEnvelope` cifra un `TicketService` con la clave del servicio.
+`ticketServiceEnvelope` cifra un `TicketService` con el secreto del servicio.
 
 ## 5. Client -> Service
 
@@ -92,8 +100,14 @@ Contenido principal:
 - `ticketServiceEnvelope`
 - `clientAuthenticatorEnvelope`
 
-El autenticador es un `ClientAuthenticator` cifrado con la clave de sesion
-cliente-servicio.
+El Service valida:
+
+- `requestId` no repetido;
+- servicio registrado;
+- ticket de servicio vigente;
+- identidad y direccion de cliente;
+- autenticador vigente y dentro del clock skew;
+- autenticador no reutilizado.
 
 ## 6. Service -> Client
 
@@ -103,16 +117,28 @@ Payload externo: `CryptoEnvelope`
 
 Plaintext cifrado para el cliente: `ServiceResponse`
 
-El cliente descifra la respuesta con la clave de sesion cliente-servicio.
+El cliente descifra la respuesta con la clave de sesion cliente-servicio y
+verifica que el tipo de respuesta sea el esperado.
 
-## Replay Y Errores
-
-TGS y Service usan `InMemoryReplayCache` para bloquear:
-
-- `requestId` repetidos;
-- autenticadores reutilizados.
+## Errores Controlados
 
 Los errores vuelven como `ERROR_RESPONSE` con payload `ErrorResponse`.
+
+Casos cubiertos por pruebas unitarias, de componente o de integracion:
+
+- flujo completo exitoso;
+- replay y `requestId` repetido;
+- servicio inexistente;
+- cliente inexistente;
+- ticket TGS expirado;
+- ticket de servicio expirado;
+- autenticador expirado o fuera de clock skew;
+- ciphertext y `CryptoEnvelope` alterados;
+- clave incorrecta;
+- JSON vacio, truncado, malformado o con payload faltante;
+- `MessageType` incorrecto;
+- servidor no disponible;
+- multiples clientes concurrentes.
 
 ## Ruta Legacy
 
@@ -123,12 +149,12 @@ La ruta legacy mantiene los payloads historicos:
 - `AESUtils`
 - `ObjectInputStream` / `ObjectOutputStream`
 
-Sus mappers (`Legacy*Mapper`) siguen disponibles para compatibilidad, pero no
-son el contrato principal del runtime modular.
+Sus mappers (`Legacy*Mapper`) siguen disponibles para compatibilidad y pruebas,
+pero no son el contrato principal del runtime modular.
 
 ## Pendiente
 
 - Ejecutar la suite Maven completa en entorno con Maven.
-- Agregar mas casos de expiracion de tickets.
+- Eliminar legacy solo despues de pasar los gates obligatorios.
 - Evaluar reemplazo del codec JSON manual por una biblioteca si se autoriza una
   dependencia.

@@ -20,5 +20,14 @@ public record ProtocolEnvelope(
         Objects.requireNonNull(requestId, "requestId");
         Objects.requireNonNull(issuedAt, "issuedAt");
         Objects.requireNonNull(payloadJson, "payloadJson");
+        if (version.isBlank()) {
+            throw new IllegalArgumentException("version es requerido");
+        }
+        if (requestId.isBlank()) {
+            throw new IllegalArgumentException("requestId es requerido");
+        }
+        if (payloadJson.isBlank()) {
+            throw new IllegalArgumentException("payloadJson es requerido");
+        }
     }
 }

@@ -1,0 +1,2 @@
+com\portfolio\auth\transport\secure\SecureJsonCryptoTest.class
+com\portfolio\auth\transport\json\JsonMessageCodecTest.class

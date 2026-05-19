@@ -20,6 +20,18 @@
 # Verify:
 #   git --version
 
+# Local execution scripts
+# Windows batch scripts are available under scripts/:
+#   scripts\run-as.bat
+#   scripts\run-tgs.bat
+#   scripts\run-service.bat
+#   scripts\run-client.bat
+#   scripts\run-audit.bat --iterations 5
+
+# Configuration modes
+#   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
+#   AUTH_MODE=strict requires explicit secrets and rejects defaults.
+
 # Operating system
 # Tested/recommended local execution targets:
 #   Windows 10/11 with CMD or PowerShell
@@ -32,3 +44,6 @@
 # Docker and Docker Compose are planned as future deployment work.
 # Current modular runtime still keeps local execution without Docker as the
 # supported path. Docker, WebSockets, and frontend work are future phases.
+# Phase 8 adds reproducible audit output in docs/audits/latest-run.md and
+# docs/audits/latest-run.json when scripts\run-audit.bat or
+# ModularAuthAuditRunner is executed against running modular services.

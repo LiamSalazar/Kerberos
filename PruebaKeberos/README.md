@@ -11,15 +11,15 @@ seguridad aplicada, pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fases 4-7: runtime modular, transporte JSON, AES-GCM real e
-integracion automatizada inicial**.
+Fase actual: **Fase 8: hardening operativo modular, auditoria verificable y
+eliminacion controlada del legacy bloqueada por verificacion Maven pendiente**.
 
 El proyecto tiene dos capas que conviven:
 
 | Area | Rol | Estado |
 | --- | --- | --- |
-| `Kerberos/` | Demo legacy funcional con AS, TGS, Service y Client | Referencia historica ejecutable |
-| `Seguridad/` | Helpers legacy de sockets, serializacion y utilidades | Usado por la demo |
+| `Kerberos/` | Demo legacy funcional con AS, TGS, Service y Client | Referencia historica; no es runtime principal |
+| `Seguridad/` | Helpers legacy de sockets, serializacion y utilidades | Usado solo por la demo legacy |
 | `auth-core/` | DTOs del protocolo, configuracion y replay cache | Compartido por legacy bridge y runtime modular |
 | `auth-transport/` | Mappers legacy, transporte JSON, TCP modular y DTOs seguros | Activo en ruta modular |
 | `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion de claves y claves de sesion | Activo en ruta modular |
@@ -29,9 +29,10 @@ El proyecto tiene dos capas que conviven:
 | `auth-client-sdk/` | Cliente modular y CLI | Ejecutable |
 | `docs/` | Documentacion tecnica | Activa |
 
-La ruta modular ya ejecuta AS -> TGS -> Service -> Client sin Java
-serialization, sin `SealedObject` y sin `AESUtils`. La demo legacy sigue
-existiendo y puede ejecutarse localmente sin Docker.
+La ruta modular es la ruta principal actual. Ejecuta AS -> TGS -> Service ->
+Client sin Java serialization, sin `SealedObject` y sin `AESUtils`. La demo
+legacy sigue existiendo porque no se pudo cumplir el gate obligatorio de Maven
+para borrarla con seguridad en este entorno.
 
 ## Por Que Existe
 
@@ -43,7 +44,8 @@ realista de un prototipo:
 - mappers que conectan los DTOs nuevos con el runtime legacy;
 - replay cache inicial para rechazar autenticadores reutilizados;
 - ruta modular con JSON sobre TCP y AES-GCM real mediante `CryptoEnvelope`;
-- documentacion honesta de riesgos, limites y roadmap.
+- hardening operativo verificable, auditorias reproducibles y documentacion
+  honesta de riesgos, limites y roadmap.
 
 ## Arquitectura
 
@@ -85,14 +87,21 @@ La migracion modular vive en:
 - Transporte JSON modular sin `ObjectInputStream`, `ObjectOutputStream`,
   `HashMap` como contrato principal ni `SealedObject`.
 - AES-GCM real en la ruta modular para tickets, autenticadores y respuestas.
-- El cliente y las respuestas AS/TGS/Service ya crean DTOs y despues bajan a
-  mapas legacy para preservar compatibilidad.
+- Los mappers legacy se mantienen separados en `auth-transport/legacy`; el
+  runtime modular no los usa como contrato principal.
 - Pruebas unitarias para mappers, replay cache, configuracion, JSON y AES-GCM.
 - Prueba de integracion Maven para flujo modular completo, replay, servicio
   inexistente, autenticador invalido y requestId repetido.
 - Replay cache en memoria integrada de forma minima en TGS y Service, con
   registro atomico por clave.
-- Configuracion centralizada con defaults compatibles para demo local.
+- Configuracion centralizada con modo `demo/local` y modo `strict`.
+- Transporte TCP/JSON con timeouts, limite de tamano y validacion opcional del
+  `MessageType` esperado por endpoint.
+- Auditoria reproducible de ejecucion/desempeno con reportes en
+  `docs/audits/latest-run.md` y `docs/audits/latest-run.json`.
+- Scripts Windows para levantar AS, TGS, Service, Client y auditoria sin
+  Docker.
+- GitHub Actions basico para `mvn -q -DskipTests compile` y `mvn test`.
 - Logs legacy reducidos para no imprimir claves, tickets descifrados completos
   ni respuestas con secretos de sesion.
 - Documentacion ejecutable para correr sin Docker.
@@ -137,8 +146,8 @@ mvn test
 
 En este entorno local esos comandos fueron intentados, pero `mvn` no estaba en
 el PATH. Como verificacion complementaria, las fuentes principales y tests
-compilaron con `javac`, y se ejecuto un smoke modular AS -> TGS -> Service ->
-Client con puertos alternos `2400`, `2401` y `2402`.
+compilaron con `javac`, y se ejecuto una auditoria modular real AS -> TGS ->
+Service con puertos alternos `2500`, `2501` y `2502`.
 
 ## Ejecutar Pruebas
 
@@ -157,7 +166,10 @@ Las pruebas cubren:
 - replay cache en memoria;
 - configuracion local y overrides por entorno;
 - integracion modular AS -> TGS -> Service;
-- replay, servicio inexistente, autenticador invalido y requestId repetido.
+- replay, servicio inexistente, cliente inexistente, expiracion de tickets,
+  autenticadores invalidos, requestId repetido, ciphertext alterado, JSON
+  invalido, MessageType incorrecto, servidor no disponible y concurrencia
+  basica.
 
 ## Ejecutar Runtime Modular Sin Docker
 
@@ -167,7 +179,16 @@ Con Maven instalado:
 mvn -q -DskipTests compile
 ```
 
-En Windows, levanta cuatro terminales en este orden:
+En Windows, puedes usar los scripts:
+
+```cmd
+scripts\run-as.bat
+scripts\run-tgs.bat
+scripts\run-service.bat
+scripts\run-client.bat
+```
+
+Tambien puedes levantar cuatro terminales manualmente en este orden:
 
 ```bash
 java -cp auth-as/target/classes;auth-core/target/classes;auth-crypto/target/classes;auth-transport/target/classes com.portfolio.auth.as.AuthenticationServerApp
@@ -188,20 +209,20 @@ java -cp auth-client-sdk/target/classes;auth-core/target/classes;auth-crypto/tar
 En PowerShell tambien puedes compilar con `javac` para una verificacion local:
 
 ```powershell
-New-Item -ItemType Directory -Force build\check\phase47-main | Out-Null
+New-Item -ItemType Directory -Force build\check\phase8-main | Out-Null
 $roots = 'auth-core\src\main\java','auth-crypto\src\main\java','auth-transport\src\main\java','auth-as\src\main\java','auth-tgs\src\main\java','auth-service\src\main\java','auth-client-sdk\src\main\java'
 $sources = Get-ChildItem $roots -Recurse -Filter *.java | ForEach-Object { $_.FullName }
-javac -d build\check\phase47-main $sources
+javac -encoding UTF-8 -d build\check\phase8-main $sources
 ```
 
 Y ejecutar:
 
 ```powershell
-$env:AUTH_AS_PORT='2400'; $env:AUTH_TGS_PORT='2401'; $env:AUTH_SERVICE_PORT='2402'
-java -cp build\check\phase47-main com.portfolio.auth.as.AuthenticationServerApp
-java -cp build\check\phase47-main com.portfolio.auth.tgs.TicketGrantingServerApp
-java -cp build\check\phase47-main com.portfolio.auth.service.ProtectedServiceApp
-java -cp build\check\phase47-main com.portfolio.auth.client.ClientCli
+$env:AUTH_AS_PORT='2500'; $env:AUTH_TGS_PORT='2501'; $env:AUTH_SERVICE_PORT='2502'
+java -cp build\check\phase8-main com.portfolio.auth.as.AuthenticationServerApp
+java -cp build\check\phase8-main com.portfolio.auth.tgs.TicketGrantingServerApp
+java -cp build\check\phase8-main com.portfolio.auth.service.ProtectedServiceApp
+java -cp build\check\phase8-main com.portfolio.auth.client.ClientCli
 ```
 
 Ejecuta cada servidor en una terminal separada antes del cliente.
@@ -282,17 +303,36 @@ java -cp build/classes Kerberos.Client
 sobrescribir con variables de entorno:
 
 - `AUTH_AS_PORT`, `AUTH_TGS_PORT`, `AUTH_SERVICE_PORT`
+- `AUTH_MODE`: `demo`/`local` permite defaults de demo; `strict` exige
+  secretos explicitos y rechaza defaults.
 - `AUTH_DEMO_CLIENT_ID`, `AUTH_DEMO_TGS_ID`, `AUTH_DEMO_SERVICE_ID`
 - `AUTH_LEGACY_CLIENT_SECRET`
 - `AUTH_LEGACY_CLIENT_TGS_KEY`
 - `AUTH_LEGACY_TGS_SECRET`
 - `AUTH_LEGACY_CLIENT_SERVICE_KEY`
 - `AUTH_LEGACY_SERVICE_SECRET`
+- `AUTH_LEGACY_PBKDF2_SALT`
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
 
 Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
+
+## Auditoria Modular
+
+Con AS, TGS y Service modulares levantados, ejecuta:
+
+```cmd
+scripts\run-audit.bat --iterations 5
+```
+
+El runner escribe evidencia reproducible en:
+
+- `docs/audits/latest-run.md`
+- `docs/audits/latest-run.json`
+
+La ejecucion registrada en este repositorio uso 3 iteraciones, puertos
+`2500/2501/2502`, 3 exitos y 0 fallos.
 
 ## Como Revisar La Migracion Modular
 
@@ -305,7 +345,9 @@ Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
 
 ## Limitaciones Actuales
 
-- Hay dos rutas ejecutables: la modular nueva y la demo legacy.
+- La ruta modular es la principal, pero la demo legacy aun existe.
+- `Kerberos/` y `Seguridad/` no se eliminaron porque Maven no estuvo disponible
+  para validar los gates obligatorios.
 - La ruta modular usa JSON sobre TCP y AES-GCM; todavia usa secretos de demo
   por defecto para ejecucion local.
 - `AESUtils` legacy sigue usando AES/CBC por compatibilidad; no se cambio el IV
@@ -314,18 +356,18 @@ Los defaults existen solo para demo local y compatibilidad con el flujo legacy.
 - Replay cache es local en memoria por proceso, tambien en la ruta modular.
 - El transporte JSON es un codec acotado a los DTOs del proyecto, no un parser
   JSON general-purpose.
-- No hay Docker en esta fase.
+- No hay Docker, frontend ni WebSockets en esta fase.
 - No es production-ready.
 
 ## Roadmap
 
 1. Ejecutar `mvn test` en un entorno con Maven en PATH y corregir cualquier
    detalle que aparezca ahi.
-2. Separar secretos de demo en un archivo local no versionado o vault simulado.
-3. Endurecer el codec JSON o sustituirlo por una dependencia auditada si se
+2. Si Maven pasa, eliminar `Kerberos/` y `Seguridad/` del runtime principal y
+   conservar solo una referencia historica documentada.
+3. Separar secretos de demo en un archivo local no versionado o vault simulado.
+4. Endurecer el codec JSON o sustituirlo por una dependencia auditada si se
    autoriza.
-4. Agregar mas pruebas de integracion para expiracion de tickets y errores de
-   red.
 5. Introducir Docker y Docker Compose solo en una fase posterior de despliegue.
 6. Evaluar WebSockets y frontend solo cuando exista una fase especifica para UI.
 

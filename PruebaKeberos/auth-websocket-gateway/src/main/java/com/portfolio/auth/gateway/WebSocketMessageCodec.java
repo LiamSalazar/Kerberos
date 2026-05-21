@@ -27,11 +27,19 @@ public final class WebSocketMessageCodec {
     public WebSocketMessage decode(String json) {
         Map<String, Object> fields = object(json);
         WebSocketMessageType type = type(fields);
-        return WebSocketMessage.inbound(
+        return new WebSocketMessage(
                 type,
                 stringOrNull(fields, "requestId"),
                 stringOrNull(fields, "clientId"),
-                stringOrNull(fields, "serviceId"));
+                stringOrNull(fields, "serviceId"),
+                stringOrNull(fields, "stage"),
+                stringOrNull(fields, "message"),
+                boolOrNull(fields, "success"),
+                stringOrNull(fields, "serviceMessage"),
+                longOrNull(fields, "asMillis"),
+                longOrNull(fields, "tgsMillis"),
+                longOrNull(fields, "serviceMillis"),
+                longOrNull(fields, "totalMillis"));
     }
 
     private static void putIfPresent(Map<String, Object> fields, String key, Object value) {
@@ -64,6 +72,28 @@ public final class WebSocketMessageCodec {
         }
         if (value instanceof String string) {
             return string;
+        }
+        throw new IllegalArgumentException("Campo JSON invalido " + key);
+    }
+
+    private static Boolean boolOrNull(Map<String, Object> fields, String key) {
+        Object value = fields.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        throw new IllegalArgumentException("Campo JSON invalido " + key);
+    }
+
+    private static Long longOrNull(Map<String, Object> fields, String key) {
+        Object value = fields.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
         }
         throw new IllegalArgumentException("Campo JSON invalido " + key);
     }

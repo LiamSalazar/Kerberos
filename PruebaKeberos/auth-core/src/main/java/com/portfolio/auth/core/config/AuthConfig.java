@@ -73,13 +73,6 @@ public record AuthConfig(
     public static final String ENV_DEMO_SERVICE_SECRET = "AUTH_DEMO_SERVICE_SECRET";
     public static final String ENV_DEMO_PBKDF2_SALT = "AUTH_DEMO_PBKDF2_SALT";
 
-    public static final String ENV_ALIAS_LEGACY_CLIENT_SECRET = "AUTH_LEGACY_CLIENT_SECRET";
-    public static final String ENV_ALIAS_LEGACY_CLIENT_TGS_KEY = "AUTH_LEGACY_CLIENT_TGS_KEY";
-    public static final String ENV_ALIAS_LEGACY_TGS_SECRET = "AUTH_LEGACY_TGS_SECRET";
-    public static final String ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY = "AUTH_LEGACY_CLIENT_SERVICE_KEY";
-    public static final String ENV_ALIAS_LEGACY_SERVICE_SECRET = "AUTH_LEGACY_SERVICE_SECRET";
-    public static final String ENV_ALIAS_LEGACY_PBKDF2_SALT = "AUTH_LEGACY_PBKDF2_SALT";
-
     public static AuthConfig localDemo() {
         return new AuthConfig(
                 DEFAULT_LOCAL_CLIENT_ID,
@@ -124,18 +117,12 @@ public record AuthConfig(
                 Duration.ofMinutes(longValue(environment, ENV_TICKET_TTL_MINUTES, defaults.ticketLifetime().toMinutes())),
                 Duration.ofSeconds(longValue(environment, ENV_ALLOWED_SKEW_SECONDS, defaults.allowedClockSkew().toSeconds())),
                 Duration.ofSeconds(longValue(environment, ENV_REPLAY_WINDOW_SECONDS, defaults.replayWindow().toSeconds())),
-                valueWithAlias(environment, ENV_DEMO_CLIENT_SECRET, ENV_ALIAS_LEGACY_CLIENT_SECRET,
-                        defaults.demoClientSecret()),
-                valueWithAlias(environment, ENV_DEMO_CLIENT_TGS_KEY, ENV_ALIAS_LEGACY_CLIENT_TGS_KEY,
-                        defaults.demoClientTgsSessionKey()),
-                valueWithAlias(environment, ENV_DEMO_TGS_SECRET, ENV_ALIAS_LEGACY_TGS_SECRET,
-                        defaults.demoTicketGrantingServerSecret()),
-                valueWithAlias(environment, ENV_DEMO_CLIENT_SERVICE_KEY, ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY,
-                        defaults.demoClientServiceSessionKey()),
-                valueWithAlias(environment, ENV_DEMO_SERVICE_SECRET, ENV_ALIAS_LEGACY_SERVICE_SECRET,
-                        defaults.demoServiceSecret()),
-                valueWithAlias(environment, ENV_DEMO_PBKDF2_SALT, ENV_ALIAS_LEGACY_PBKDF2_SALT,
-                        defaults.demoPbkdf2Salt()));
+                value(environment, ENV_DEMO_CLIENT_SECRET, defaults.demoClientSecret()),
+                value(environment, ENV_DEMO_CLIENT_TGS_KEY, defaults.demoClientTgsSessionKey()),
+                value(environment, ENV_DEMO_TGS_SECRET, defaults.demoTicketGrantingServerSecret()),
+                value(environment, ENV_DEMO_CLIENT_SERVICE_KEY, defaults.demoClientServiceSessionKey()),
+                value(environment, ENV_DEMO_SERVICE_SECRET, defaults.demoServiceSecret()),
+                value(environment, ENV_DEMO_PBKDF2_SALT, defaults.demoPbkdf2Salt()));
 
         if (isStrictMode(environment)) {
             validateStrictMode(environment, config);
@@ -167,17 +154,17 @@ public record AuthConfig(
 
     private static void validateStrictMode(Map<String, String> environment, AuthConfig config) {
         StringBuilder missing = new StringBuilder();
-        requireSecret(environment, config.demoClientSecret(), ENV_DEMO_CLIENT_SECRET, ENV_ALIAS_LEGACY_CLIENT_SECRET,
+        requireSecret(environment, config.demoClientSecret(), ENV_DEMO_CLIENT_SECRET,
                 DEFAULT_LOCAL_DEMO_CLIENT_SECRET, missing);
         requireSecret(environment, config.demoClientTgsSessionKey(), ENV_DEMO_CLIENT_TGS_KEY,
-                ENV_ALIAS_LEGACY_CLIENT_TGS_KEY, DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY, missing);
+                DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY, missing);
         requireSecret(environment, config.demoTicketGrantingServerSecret(), ENV_DEMO_TGS_SECRET,
-                ENV_ALIAS_LEGACY_TGS_SECRET, DEFAULT_LOCAL_DEMO_TGS_SECRET, missing);
+                DEFAULT_LOCAL_DEMO_TGS_SECRET, missing);
         requireSecret(environment, config.demoClientServiceSessionKey(), ENV_DEMO_CLIENT_SERVICE_KEY,
-                ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY, DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY, missing);
-        requireSecret(environment, config.demoServiceSecret(), ENV_DEMO_SERVICE_SECRET, ENV_ALIAS_LEGACY_SERVICE_SECRET,
+                DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY, missing);
+        requireSecret(environment, config.demoServiceSecret(), ENV_DEMO_SERVICE_SECRET,
                 DEFAULT_LOCAL_DEMO_SERVICE_SECRET, missing);
-        requireSecret(environment, config.demoPbkdf2Salt(), ENV_DEMO_PBKDF2_SALT, ENV_ALIAS_LEGACY_PBKDF2_SALT,
+        requireSecret(environment, config.demoPbkdf2Salt(), ENV_DEMO_PBKDF2_SALT,
                 DEFAULT_LOCAL_DEMO_PBKDF2_SALT, missing);
 
         if (!missing.isEmpty()) {
@@ -190,18 +177,14 @@ public record AuthConfig(
             Map<String, String> environment,
             String resolvedValue,
             String key,
-            String aliasKey,
             String defaultValue,
             StringBuilder missing) {
         String configured = environment.get(key);
-        String alias = environment.get(aliasKey);
-        if ((configured == null || configured.isBlank())
-                && (alias == null || alias.isBlank())
-                || defaultValue.equals(resolvedValue)) {
+        if (configured == null || configured.isBlank() || defaultValue.equals(resolvedValue)) {
             if (!missing.isEmpty()) {
                 missing.append(", ");
             }
-            missing.append(key).append(" (alias temporal ").append(aliasKey).append(")");
+            missing.append(key);
         }
     }
 
@@ -211,22 +194,6 @@ public record AuthConfig(
             return defaultValue;
         }
         return configured;
-    }
-
-    private static String valueWithAlias(
-            Map<String, String> environment,
-            String key,
-            String aliasKey,
-            String defaultValue) {
-        String configured = environment.get(key);
-        if (configured != null && !configured.isBlank()) {
-            return configured;
-        }
-        String alias = environment.get(aliasKey);
-        if (alias != null && !alias.isBlank()) {
-            return alias;
-        }
-        return defaultValue;
     }
 
     private static int intValue(Map<String, String> environment, String key, int defaultValue) {

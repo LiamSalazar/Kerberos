@@ -33,22 +33,19 @@ historico queda documentado en `docs/legacy-summary.md`.
 - `JsonMessageCodec` es un codec acotado al proyecto, no un parser JSON
   general-purpose auditado.
 - No hay TLS ni autenticacion mutua de transporte.
-- `AUTH_LEGACY_*` existe solo como alias temporal de compatibilidad; los nombres
-  principales son `AUTH_DEMO_*`.
-- El gateway WebSocket tiene pruebas unitarias de mensajes y flujo controlado,
-  pero aun no tiene prueba end-to-end con cliente WebSocket real y servidores
-  modulares levantados en la misma suite.
+- Los nombres de secretos actuales son `AUTH_DEMO_*`; `AUTH_MODE=strict`
+  exige valores explicitos.
+- El gateway WebSocket tiene pruebas unitarias, de componente y E2E real con
+  cliente WebSocket y servidores modulares levantados dentro de Maven.
 
 ## Prioridad Siguiente
 
-1. Retirar aliases `AUTH_LEGACY_*` cuando ya no se necesite compatibilidad.
-2. Agregar pruebas WebSocket end-to-end con servicios reales si se decide
-   ampliar la suite.
-3. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
+1. Conectar un frontend futuro al contrato WebSocket documentado.
+2. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
    fuera de su alcance acotado.
-4. Agregar TLS o una capa de transporte autenticada para la ruta modular.
-5. Docker y Docker Compose solo en una fase futura de despliegue.
-6. Frontend solo en una fase futura especifica.
+3. Agregar TLS o una capa de transporte autenticada para la ruta modular.
+4. Docker y Docker Compose solo en una fase futura de despliegue.
+5. Frontend solo en una fase futura especifica.
 
 ## Dependencia WebSocket
 

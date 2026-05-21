@@ -18,7 +18,8 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En Fase 9 + Fase 10 ambos comandos fueron ejecutados y pasaron.
+En Fase 11 ambos comandos fueron ejecutados y pasaron. Tambien paso el gate
+especifico del gateway: `mvn -pl auth-websocket-gateway -am test`.
 
 ## Ejecutar Runtime Modular Con Scripts
 
@@ -152,7 +153,6 @@ Variables comunes:
 
 `AUTH_MODE=demo` o `AUTH_MODE=local` permite defaults de demo local.
 `AUTH_MODE=strict` exige secretos explicitos y rechaza defaults.
-`AUTH_LEGACY_*` se conserva solo como alias temporal de compatibilidad.
 
 ## Estado Legacy
 

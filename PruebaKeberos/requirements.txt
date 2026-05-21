@@ -60,3 +60,4 @@
 # Phase 8.1 removed the physical legacy demo folders from the main project.
 # Phase 9 removed Java serialization and legacy mapper packages from
 # auth-transport. Phase 10 added auth-websocket-gateway with Java-WebSocket.
+# Phase 11 adds real WebSocket E2E tests and documents the frontend contract.

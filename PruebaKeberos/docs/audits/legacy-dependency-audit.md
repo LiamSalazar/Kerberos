@@ -33,8 +33,9 @@ rg -n "AUTH_LEGACY_|legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObjec
 
 - Compile: paso.
 - Test: paso.
-- Resultado actual de `mvn test`: 52 tests, 0 failures, 0 errors, 0 skipped.
-- `auth-websocket-gateway` forma parte del reactor Maven y sus 11 pruebas pasan.
+- Resultado actual de `mvn test`: 60 tests, 0 failures, 0 errors, 0 skipped.
+- `auth-websocket-gateway` forma parte del reactor Maven y sus 20 pruebas pasan,
+  incluyendo E2E real con cliente WebSocket.
 
 ## Referencias Encontradas
 
@@ -44,9 +45,8 @@ rg -n "AUTH_LEGACY_|legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObjec
   `AESUtils` en la ruta modular.
 - `auth-transport/javaio` y `auth-transport/legacy` no existen en el arbol
   fuente actual.
-- `AUTH_LEGACY_*` existe solo como alias temporal de compatibilidad dentro de
-  `AuthConfig` y documentacion asociada. Los nombres principales son
-  `AUTH_DEMO_*`.
+- No quedan alias `AUTH_LEGACY_*` en `AuthConfig`.
+- Los nombres principales de secretos son `AUTH_DEMO_*`.
 
 ## Referencias Eliminadas
 
@@ -78,6 +78,5 @@ En Fase 9 se retiraron tambien:
 
 El legacy fisico fue eliminado del proyecto principal despues de pasar compile,
 tests Maven y auditoria textual. Fase 9 retiro tambien los adaptadores internos
-que conservaban Java serialization o mappers historicos. El unico resto
-deliberado es el alias temporal `AUTH_LEGACY_*` para compatibilidad de
-configuracion.
+que conservaban Java serialization o mappers historicos. Fase 11 retiro los
+alias `AUTH_LEGACY_*` y valido el gateway con E2E WebSocket real.

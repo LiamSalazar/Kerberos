@@ -78,22 +78,6 @@ class AuthConfigTest {
     }
 
     @Test
-    void shouldAcceptTemporaryLegacyAliasesForStrictMode() {
-        AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
-                Map.entry(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_SECRET, "client-secret-from-alias"),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_TGS_KEY, "client-tgs-key-from-alias"),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_TGS_SECRET, "tgs-secret-from-alias"),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_CLIENT_SERVICE_KEY, "client-service-key-from-alias"),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_SERVICE_SECRET, "service-secret-from-alias"),
-                Map.entry(AuthConfig.ENV_ALIAS_LEGACY_PBKDF2_SALT, "salt-from-alias")));
-
-        assertEquals("client-secret-from-alias", config.demoClientSecret());
-        assertEquals("service-secret-from-alias", config.demoServiceSecret());
-        assertFalse(config.usesDemoSecrets());
-    }
-
-    @Test
     void shouldRejectUnknownExecutionMode() {
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, "prod")));

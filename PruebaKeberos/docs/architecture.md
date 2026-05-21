@@ -85,15 +85,14 @@ Se cifran con AES-GCM:
 - `AUTH_MODE=demo` o `AUTH_MODE=local`: permite secretos por defecto para demo.
 - `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
 
-Los nombres principales de secretos son `AUTH_DEMO_*`. Los nombres
-`AUTH_LEGACY_*` se aceptan solo como alias temporal de compatibilidad en
-`AuthConfig`.
+Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
+`AuthConfig` exige valores explicitos y rechaza los defaults de demo.
 
 ## Pruebas Y CI
 
 La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
-transporte seguro JSON + AES-GCM, integracion modular con casos negativos y
-pruebas unitarias del WebSocket Gateway.
+transporte seguro JSON + AES-GCM, integracion modular con casos negativos,
+pruebas unitarias del WebSocket Gateway y una prueba E2E WebSocket real.
 
 GitHub Actions vive en la raiz del repositorio Git en
 `../.github/workflows/maven.yml` y ejecuta desde `PruebaKeberos`:
@@ -103,9 +102,7 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 ## Pendiente
 
-- Retirar aliases `AUTH_LEGACY_*` cuando deje de ser necesaria la compatibilidad.
 - Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
   acotado.
-- Agregar pruebas WebSocket end-to-end con servicios reales si se decide
-  ampliar la suite de integracion.
+- Usar el contrato WebSocket desde un frontend futuro.
 - Agregar Docker o frontend solo en fases futuras autorizadas.

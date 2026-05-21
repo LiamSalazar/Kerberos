@@ -117,13 +117,21 @@ mvn -pl auth-websocket-gateway -am test
 
 La suite cubre serializacion de mensajes, tipos desconocidos, JSON invalido,
 flujo exitoso con cliente falso y error controlado cuando los servicios no estan
-disponibles.
+disponibles. Fase 11 agrega prueba E2E real con un cliente WebSocket de
+Java-WebSocket, AS/TGS/Service modulares en puertos de prueba y validacion de
+eventos `FLOW_*` mas `FLOW_RESULT`.
+
+## Seguridad Del Contrato
+
+Los eventos del gateway son deliberadamente didacticos y de bajo detalle. No
+envian tickets cifrados, claves de sesion, secretos demo, ciphertexts ni
+payloads completos al cliente WebSocket. El frontend debe tratar `FLOW_EVENT`
+como telemetria de estado y `FLOW_RESULT` como resultado final de alto nivel.
+
+Ver tambien `docs/frontend-contract.md`.
 
 ## Limites
 
 - No hay frontend en esta fase.
 - El gateway no levanta AS/TGS/Service automaticamente.
-- La prueba actual del gateway es principalmente unitaria/componente; una
-  prueba end-to-end con un cliente WebSocket real queda como objetivo natural de
-  Fase 11.
 - No hay TLS ni autenticacion mutua en el canal WebSocket.

@@ -61,13 +61,17 @@ public record WebSocketMessage(
     }
 
     public static WebSocketMessage flowEvent(String requestId, WebSocketFlowStage stage, String message) {
+        return flowEvent(new WebSocketFlowEvent(requestId, stage, message));
+    }
+
+    public static WebSocketMessage flowEvent(WebSocketFlowEvent event) {
         return new WebSocketMessage(
                 WebSocketMessageType.FLOW_EVENT,
-                requestId,
+                event.requestId(),
                 null,
                 null,
-                stage.name(),
-                message,
+                event.stage().name(),
+                event.message(),
                 null,
                 null,
                 null,
@@ -84,29 +88,44 @@ public record WebSocketMessage(
             long tgsMillis,
             long serviceMillis,
             long totalMillis) {
-        return new WebSocketMessage(
-                WebSocketMessageType.FLOW_RESULT,
+        return flowResult(new WebSocketFlowResult(
                 requestId,
-                null,
-                null,
-                null,
-                null,
                 success,
                 serviceMessage,
                 asMillis,
                 tgsMillis,
                 serviceMillis,
-                totalMillis);
+                totalMillis));
+    }
+
+    public static WebSocketMessage flowResult(WebSocketFlowResult result) {
+        return new WebSocketMessage(
+                WebSocketMessageType.FLOW_RESULT,
+                result.requestId(),
+                null,
+                null,
+                null,
+                null,
+                result.success(),
+                result.serviceMessage(),
+                result.asMillis(),
+                result.tgsMillis(),
+                result.serviceMillis(),
+                result.totalMillis());
     }
 
     public static WebSocketMessage error(String requestId, String message) {
+        return error(new WebSocketErrorResponse(requestId, message));
+    }
+
+    public static WebSocketMessage error(WebSocketErrorResponse error) {
         return new WebSocketMessage(
                 WebSocketMessageType.ERROR,
-                requestId,
+                error.requestId(),
                 null,
                 null,
                 null,
-                message,
+                error.message(),
                 false,
                 null,
                 null,

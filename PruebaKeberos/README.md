@@ -11,7 +11,7 @@ pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fase 9 + Fase 10: cierre tecnico modular y WebSocket Gateway**.
+Fase actual: **Fase 11: prueba end-to-end real del WebSocket Gateway y contrato estable para frontend**.
 
 | Area | Rol | Estado |
 | --- | --- | --- |
@@ -74,7 +74,8 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En la verificacion de Fase 9 + Fase 10 ambos comandos pasaron.
+En la verificacion de Fase 11 ambos comandos pasaron. Tambien paso el gate
+especifico del gateway: `mvn -pl auth-websocket-gateway -am test`.
 
 ## Ejecutar Sin Docker
 
@@ -145,7 +146,7 @@ El runner genera evidencia en:
 - `docs/audits/latest-run.md`
 - `docs/audits/latest-run.json`
 
-La auditoria de independencia legacy esta en
+La auditoria de independencia del runtime modular esta en
 [docs/audits/legacy-dependency-audit.md](docs/audits/legacy-dependency-audit.md).
 
 ## Configuracion
@@ -169,9 +170,8 @@ Variables comunes:
 - `AUTH_DEMO_SERVICE_SECRET`
 - `AUTH_DEMO_PBKDF2_SALT`
 
-Los nombres `AUTH_LEGACY_*` permanecen solo como alias temporal de
-compatibilidad en `AuthConfig`; la documentacion y la ruta modular usan
-`AUTH_DEMO_*`.
+Los nombres de secretos actuales usan `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
+estos valores deben definirse explicitamente y no pueden quedarse en defaults.
 
 ## CI
 
@@ -193,18 +193,16 @@ El workflow usa `working-directory: PruebaKeberos` y ejecuta:
 - El replay cache es local por proceso.
 - No hay TLS ni autenticacion mutua de transporte.
 - El codec JSON es propio y acotado a los DTOs del proyecto.
-- Los alias `AUTH_LEGACY_*` deben retirarse en una fase posterior.
+- El gateway WebSocket ya tiene E2E real, pero no hay frontend todavia.
 
 ## Roadmap
 
-1. Retirar aliases `AUTH_LEGACY_*` cuando ya no se necesite compatibilidad.
-2. Agregar pruebas WebSocket end-to-end con servicios reales si se decide
-   ampliar la suite de integracion.
-3. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
+1. Usar el contrato WebSocket desde un frontend futuro sin acoplarlo a AS/TGS/Service.
+2. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
    acotado.
-4. Agregar TLS o una capa de transporte autenticada.
-5. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
-6. Crear frontend solo cuando exista una fase especifica.
+3. Agregar TLS o una capa de transporte autenticada.
+4. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
+5. Crear frontend solo cuando exista una fase especifica.
 
 Mas detalle:
 
@@ -213,3 +211,4 @@ Mas detalle:
 - [docs/protocol-flow.md](docs/protocol-flow.md)
 - [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
 - [docs/websocket-gateway.md](docs/websocket-gateway.md)
+- [docs/frontend-contract.md](docs/frontend-contract.md)

@@ -55,6 +55,21 @@ class WebSocketMessageCodecTest {
     }
 
     @Test
+    void shouldRoundTripOutputContractFields() {
+        WebSocketMessage original = WebSocketMessage.flowResult(
+                new WebSocketFlowResult("ws-result", true, "service granted", 10, 20, 30, 60));
+
+        WebSocketMessage decoded = codec.decode(codec.encode(original));
+
+        assertEquals(WebSocketMessageType.FLOW_RESULT, decoded.type());
+        assertEquals("ws-result", decoded.requestId());
+        assertEquals(true, decoded.success());
+        assertEquals("service granted", decoded.serviceMessage());
+        assertEquals(10L, decoded.asMillis());
+        assertEquals(60L, decoded.totalMillis());
+    }
+
+    @Test
     void shouldRejectMalformedJson() {
         assertThrows(IllegalArgumentException.class, () -> codec.decode("{"));
         assertThrows(IllegalArgumentException.class, () -> codec.decode(""));

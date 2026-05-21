@@ -25,6 +25,5 @@ y el seguimiento tecnico de Fase 9 tambien quedo cerrado.
 ## Seguimiento
 
 Este archivo queda como registro historico. En Fase 9 se retiraron los
-adaptadores `auth-transport/javaio` y `auth-transport/legacy`. El seguimiento
-pendiente queda limitado a retirar los alias temporales `AUTH_LEGACY_*` cuando
-ya no sea necesario mantener compatibilidad de configuracion.
+adaptadores `auth-transport/javaio` y `auth-transport/legacy`. En Fase 11 se
+retiraron los alias `AUTH_LEGACY_*`; no hay bloqueadores actuales de legacy.

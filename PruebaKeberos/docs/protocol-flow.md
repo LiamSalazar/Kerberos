@@ -92,6 +92,8 @@ Casos cubiertos por pruebas unitarias, de componente o de integracion:
 - multiples clientes concurrentes;
 - mensajes WebSocket validos, tipo desconocido, JSON invalido y servicios no
   disponibles a nivel de gateway.
+- flujo WebSocket E2E real con AS, TGS, Service y Gateway levantados en pruebas
+  Maven.
 
 ## Estado Legacy
 

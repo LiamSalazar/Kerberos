@@ -33,6 +33,9 @@ El gateway WebSocket es una capa externa al flujo principal. Recibe mensajes
 JSON WebSocket y ejecuta el mismo flujo modular mediante `AuthClient`, por lo
 que AS, TGS y Service siguen hablando JSON/TCP.
 
+`auth-web-demo` consume este contrato desde el navegador local. El frontend solo
+se comunica con el gateway; no abre conexiones directas con AS, TGS ni Service.
+
 Entrada minima:
 
 ```json

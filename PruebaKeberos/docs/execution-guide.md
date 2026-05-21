@@ -6,6 +6,7 @@ Guia para compilar, probar, ejecutar y auditar localmente sin Docker.
 
 - Java 17 o superior.
 - Maven 3.9+.
+- Node.js 18+ y npm para `auth-web-demo`.
 - Git.
 - Docker no es requisito.
 
@@ -18,8 +19,13 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En Fase 11 ambos comandos fueron ejecutados y pasaron. Tambien paso el gate
-especifico del gateway: `mvn -pl auth-websocket-gateway -am test`.
+En Fase 12 + Fase 13 fueron ejecutados y pasaron:
+
+```bash
+mvn -q -DskipTests compile
+mvn test
+mvn -pl auth-websocket-gateway -am test
+```
 
 ## Ejecutar Runtime Modular Con Scripts
 
@@ -130,6 +136,57 @@ Tambien responde:
 {"type":"PING","requestId":"ping-1"}
 ```
 
+## Frontend Demo Local
+
+La demo web vive en `auth-web-demo/` y usa HTML, CSS y JavaScript vanilla. No
+usa React, Vite, TypeScript, bundler ni dependencias npm externas.
+
+Instalar/validar:
+
+```bash
+cd auth-web-demo
+npm install
+npm run build
+```
+
+Ejecutar:
+
+```cmd
+scripts\run-web-demo.bat
+```
+
+Linux/macOS:
+
+```bash
+scripts/run-web-demo.sh
+```
+
+Default:
+
+```text
+http://127.0.0.1:5173
+```
+
+Orden recomendado:
+
+```text
+Terminal 1: scripts\run-as.bat
+Terminal 2: scripts\run-tgs.bat
+Terminal 3: scripts\run-service.bat
+Terminal 4: scripts\run-websocket-gateway.bat
+Terminal 5: scripts\run-web-demo.bat
+```
+
+Checklist manual:
+
+- backend modular levantado;
+- gateway conectado en `ws://127.0.0.1:2800`;
+- frontend conectado;
+- boton `Start Auth Flow`;
+- eventos `FLOW_*` visibles;
+- `FLOW_RESULT success=true`;
+- servicio concedido visible.
+
 ## Configuracion
 
 Variables comunes:
@@ -161,5 +218,5 @@ para ejecutarla. Ver `docs/legacy-summary.md` para contexto historico.
 
 ## Futuro
 
-Docker, Docker Compose y frontend quedan fuera de esta fase y solo deben
-introducirse cuando se autorice una fase especifica.
+Docker y Docker Compose quedan fuera de esta fase y solo deben introducirse
+cuando se autorice una fase especifica.

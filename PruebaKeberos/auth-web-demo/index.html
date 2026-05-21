@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modular Auth Web Demo</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Ruta modular AS -> TGS -> Service</p>
+            <h1 id="app-title">Kerberos-Inspired Modular Auth Demo</h1>
+            <p class="summary">
+              Demo local desacoplada que consume el WebSocket Gateway real para
+              observar el flujo de autenticacion distribuida sin exponer
+              secretos, tickets ni material criptografico sensible.
+            </p>
+          </div>
+          <div class="connection-status" data-connection-status="closed">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span data-connection-label>Disconnected</span>
+          </div>
+        </header>
+
+        <form class="control-panel" data-control-panel>
+          <label class="field wide">
+            <span>WebSocket URL</span>
+            <input
+              id="ws-url"
+              name="wsUrl"
+              type="url"
+              value="ws://127.0.0.1:2800"
+              autocomplete="off"
+              spellcheck="false"
+            >
+          </label>
+          <label class="field">
+            <span>Client ID</span>
+            <input id="client-id" name="clientId" type="text" value="1" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Service ID</span>
+            <input id="service-id" name="serviceId" type="text" value="1" autocomplete="off">
+          </label>
+          <div class="actions">
+            <button type="button" class="button primary" data-action="connect">Connect</button>
+            <button type="button" class="button" data-action="start-flow">Start Auth Flow</button>
+            <button type="button" class="button quiet" data-action="clear-events">Clear Events</button>
+          </div>
+        </form>
+
+        <section class="stage-board" aria-label="Authentication flow stages">
+          <article class="stage" data-stage="client">
+            <span class="stage-kicker">01</span>
+            <h2>Client</h2>
+            <p>Creates the request and receives the protected service result.</p>
+            <strong data-stage-status="client">idle</strong>
+          </article>
+          <article class="stage" data-stage="gateway">
+            <span class="stage-kicker">02</span>
+            <h2>Gateway</h2>
+            <p>Bridges the browser to the modular TCP/JSON runtime.</p>
+            <strong data-stage-status="gateway">idle</strong>
+          </article>
+          <article class="stage" data-stage="as">
+            <span class="stage-kicker">03</span>
+            <h2>AS</h2>
+            <p>Issues the initial authentication response.</p>
+            <strong data-stage-status="as">idle</strong>
+          </article>
+          <article class="stage" data-stage="tgs">
+            <span class="stage-kicker">04</span>
+            <h2>TGS</h2>
+            <p>Grants a service ticket through the modular flow.</p>
+            <strong data-stage-status="tgs">idle</strong>
+          </article>
+          <article class="stage" data-stage="service">
+            <span class="stage-kicker">05</span>
+            <h2>Service</h2>
+            <p>Validates the request and returns the protected resource.</p>
+            <strong data-stage-status="service">idle</strong>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel events-panel">
+            <div class="panel-header">
+              <h2>FLOW_* Events</h2>
+              <span data-event-count>0 events</span>
+            </div>
+            <ol class="event-list" data-events aria-live="polite"></ol>
+          </article>
+
+          <aside class="side-stack">
+            <article class="panel result-panel">
+              <div class="panel-header">
+                <h2>Final Result</h2>
+                <span data-result-status>waiting</span>
+              </div>
+              <dl class="result-list">
+                <div>
+                  <dt>Request ID</dt>
+                  <dd data-result-request>none</dd>
+                </div>
+                <div>
+                  <dt>Service message</dt>
+                  <dd data-result-message>Run a flow to see the protected response.</dd>
+                </div>
+                <div>
+                  <dt>Latency</dt>
+                  <dd data-result-latency>not available</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="panel error-panel">
+              <div class="panel-header">
+                <h2>Errors</h2>
+                <span data-error-count>0 errors</span>
+              </div>
+              <ul class="error-list" data-errors aria-live="assertive"></ul>
+            </article>
+          </aside>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

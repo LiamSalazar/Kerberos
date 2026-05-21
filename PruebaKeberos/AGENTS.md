@@ -18,6 +18,8 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - `auth-websocket-gateway` es una capa separada de integracion; no debe
   reemplazar ni acoplar WebSockets dentro de `auth-as`, `auth-tgs` o
   `auth-service`.
+- `auth-web-demo` es una demo frontend local vanilla; mantenerla desacoplada del
+  backend y comunicandose solo con `auth-websocket-gateway`.
 - Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo
   AS -> TGS -> Service cuando sea viable.
 - Mantener `docs/audits/legacy-dependency-audit.md` actualizado cuando se toque
@@ -30,5 +32,6 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Mantener ejecucion local sin Docker como requisito actual.
 - Dejar Docker y Docker Compose como trabajo futuro hasta que se autorice
   explicitamente.
-- No introducir Spring Boot ni frontend salvo que la fase lo pida.
+- No introducir Spring Boot. No agregar frameworks frontend salvo que una fase
+  futura lo autorice explicitamente.
 - Explicar siempre que cambio, como probarlo y que queda pendiente.

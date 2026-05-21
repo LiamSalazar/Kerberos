@@ -20,6 +20,13 @@
 # Verify:
 #   git --version
 
+# Node.js and npm
+# Required only for auth-web-demo.
+# Recommended: Node.js 18 or newer.
+# Verify:
+#   node --version
+#   npm --version
+
 # Local execution scripts
 # Windows batch scripts are available under scripts/:
 #   scripts\run-as.bat
@@ -28,6 +35,7 @@
 #   scripts\run-client.bat
 #   scripts\run-audit.bat --iterations 5
 #   scripts\run-websocket-gateway.bat
+#   scripts\run-web-demo.bat
 #
 # Linux/macOS shell scripts are also available under scripts/:
 #   scripts/run-as.sh
@@ -36,6 +44,7 @@
 #   scripts/run-client.sh
 #   scripts/run-audit.sh --iterations 5
 #   scripts/run-websocket-gateway.sh
+#   scripts/run-web-demo.sh
 
 # Configuration modes
 #   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
@@ -52,8 +61,8 @@
 # Docker is not required for the current phase.
 # Docker and Docker Compose are planned as future deployment work.
 # Current modular runtime keeps local execution without Docker as the supported
-# path. A separate WebSocket Gateway exists for future web integration.
-# Docker and frontend work are future phases.
+# path. A separate WebSocket Gateway exists for web integration.
+# Docker work remains a future phase.
 # Phase 8 adds reproducible audit output in docs/audits/latest-run.md and
 # docs/audits/latest-run.json when scripts\run-audit.bat or
 # ModularAuthAuditRunner is executed against running modular services.
@@ -61,3 +70,5 @@
 # Phase 9 removed Java serialization and legacy mapper packages from
 # auth-transport. Phase 10 added auth-websocket-gateway with Java-WebSocket.
 # Phase 11 adds real WebSocket E2E tests and documents the frontend contract.
+# Phase 12 + Phase 13 add auth-web-demo, a vanilla local frontend integrated
+# with auth-websocket-gateway. It has no external npm dependencies.

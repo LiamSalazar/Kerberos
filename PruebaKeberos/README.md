@@ -11,7 +11,7 @@ pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fase 11: prueba end-to-end real del WebSocket Gateway y contrato estable para frontend**.
+Fase actual: **Fase 12 + Fase 13: frontend demo local e integracion real con WebSocket Gateway**.
 
 | Area | Rol | Estado |
 | --- | --- | --- |
@@ -23,6 +23,7 @@ Fase actual: **Fase 11: prueba end-to-end real del WebSocket Gateway y contrato 
 | `auth-service/` | Servicio protegido modular | Ejecutable |
 | `auth-client-sdk/` | Cliente modular, CLI y audit runner | Ejecutable |
 | `auth-websocket-gateway/` | Gateway WebSocket separado para futuras integraciones web | Ejecutable |
+| `auth-web-demo/` | Frontend vanilla local para observar el flujo via WebSocket | Demo local |
 | `docs/` | Documentacion tecnica y auditorias | Activa |
 
 El codigo legacy fisico fue retirado del proyecto principal. Su existencia se
@@ -55,12 +56,16 @@ El WebSocket Gateway no reemplaza AS, TGS ni Service. Expone una capa de
 integracion que recibe mensajes WebSocket y ejecuta el flujo modular existente
 mediante `AuthClient`.
 
+`auth-web-demo` es una interfaz local sin framework que habla solamente con el
+Gateway WebSocket. No modifica AS, TGS ni Service.
+
 ## Requisitos
 
 Consulta tambien [requirements.txt](requirements.txt).
 
 - Java 17 o superior.
 - Maven 3.9+.
+- Node.js 18+ y npm para la demo web local.
 - Git.
 - Windows, Linux o macOS con terminal.
 - Docker no es requisito en esta fase.
@@ -74,8 +79,21 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En la verificacion de Fase 11 ambos comandos pasaron. Tambien paso el gate
-especifico del gateway: `mvn -pl auth-websocket-gateway -am test`.
+En la verificacion de Fase 12 + Fase 13 pasaron:
+
+```bash
+mvn -q -DskipTests compile
+mvn test
+mvn -pl auth-websocket-gateway -am test
+```
+
+La demo web tambien valida con:
+
+```bash
+cd auth-web-demo
+npm install
+npm run build
+```
 
 ## Ejecutar Sin Docker
 
@@ -133,6 +151,31 @@ Mensaje minimo:
 {"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
 ```
 
+## Frontend Demo Local
+
+La demo web esta en `auth-web-demo/`. No usa React, Vite, TypeScript, bundler ni
+dependencias npm externas.
+
+Orden recomendado en cinco terminales:
+
+```cmd
+scripts\run-as.bat
+scripts\run-tgs.bat
+scripts\run-service.bat
+scripts\run-websocket-gateway.bat
+scripts\run-web-demo.bat
+```
+
+Abre:
+
+```text
+http://127.0.0.1:5173
+```
+
+En la UI, usa `ws://127.0.0.1:2800`, pulsa `Connect` y luego
+`Start Auth Flow`. Deben aparecer eventos `FLOW_*` y un `FLOW_RESULT` con el
+resultado del servicio.
+
 ## Auditoria Modular
 
 Con AS, TGS y Service levantados:
@@ -187,22 +230,23 @@ El workflow usa `working-directory: PruebaKeberos` y ejecuta:
 ## Limitaciones Actuales
 
 - No es production-ready.
-- No hay Docker ni frontend.
+- No hay Docker.
+- Existe frontend demo local, pero no hay despliegue web ni login real.
 - El WebSocket Gateway existe como capa de integracion separada; no sustituye
   el runtime TCP modular.
 - El replay cache es local por proceso.
 - No hay TLS ni autenticacion mutua de transporte.
 - El codec JSON es propio y acotado a los DTOs del proyecto.
-- El gateway WebSocket ya tiene E2E real, pero no hay frontend todavia.
+- El gateway WebSocket ya tiene E2E real y una demo web local desacoplada.
 
 ## Roadmap
 
-1. Usar el contrato WebSocket desde un frontend futuro sin acoplarlo a AS/TGS/Service.
+1. Endurecer el canal Gateway/frontend con TLS o autenticacion de demo si se
+   autoriza.
 2. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
    acotado.
-3. Agregar TLS o una capa de transporte autenticada.
+3. Agregar pruebas E2E de navegador si se autoriza tooling de browser.
 4. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
-5. Crear frontend solo cuando exista una fase especifica.
 
 Mas detalle:
 
@@ -212,3 +256,4 @@ Mas detalle:
 - [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
 - [docs/websocket-gateway.md](docs/websocket-gateway.md)
 - [docs/frontend-contract.md](docs/frontend-contract.md)
+- [docs/frontend-demo.md](docs/frontend-demo.md)

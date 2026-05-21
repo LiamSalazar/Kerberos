@@ -3,7 +3,9 @@
 La arquitectura actual esta centrada en la ruta modular `auth-*`. El codigo
 legacy fisico ya fue retirado, y Fase 9 elimino tambien los paquetes internos
 `auth-transport/javaio` y `auth-transport/legacy`. Fase 10 agrego
-`auth-websocket-gateway` como capa separada de integracion.
+`auth-websocket-gateway` como capa separada de integracion. Fase 12 + Fase 13
+agregan `auth-web-demo`, una demo web local que consume el gateway sin acoplarse
+al runtime TCP modular.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -20,6 +22,7 @@ critica.
 | `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
 | `auth-client-sdk` | `AuthClient`, `AuthFlowRunner`, `ClientCli`, audit runner | Ejecutable |
 | `auth-websocket-gateway` | WebSocket Gateway separado sobre `AuthClient` | Ejecutable |
+| `auth-web-demo` | Frontend vanilla local que consume el Gateway WebSocket | Demo local |
 | `docs` | Documentacion y auditorias | Activo |
 
 ## Flujo Principal
@@ -34,8 +37,8 @@ critica.
 
 ## WebSocket Gateway
 
-`auth-websocket-gateway` agrega una capa de integracion para una futura interfaz
-web. No modifica ni reemplaza `auth-as`, `auth-tgs` ni `auth-service`; usa
+`auth-websocket-gateway` agrega una capa de integracion para clientes WebSocket.
+No modifica ni reemplaza `auth-as`, `auth-tgs` ni `auth-service`; usa
 `AuthClient` para ejecutar el flujo AS -> TGS -> Service sobre la ruta TCP
 modular.
 
@@ -56,6 +59,23 @@ Mensajes de salida:
 El gateway emite eventos como `AS_REQUEST_SENT`, `TGS_RESPONSE_RECEIVED`,
 `SERVICE_RESPONSE_RECEIVED` y `FLOW_SUCCESS`, junto con latencias basicas por
 etapa.
+
+## Frontend Demo
+
+`auth-web-demo` es una aplicacion estatica en HTML, CSS y JavaScript vanilla. Se
+sirve localmente con un script Node propio, no usa bundler ni framework, y solo
+habla con `auth-websocket-gateway` mediante el contrato documentado en
+`docs/frontend-contract.md`.
+
+La UI muestra:
+
+- estado de conexion WebSocket;
+- etapas Client, Gateway, AS, TGS y Service;
+- eventos `FLOW_*`;
+- `FLOW_RESULT`, latencias y errores controlados.
+
+No muestra claves, secretos, tickets completos, ciphertexts ni payloads
+criptograficos.
 
 ## Transporte
 
@@ -94,6 +114,9 @@ La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
 transporte seguro JSON + AES-GCM, integracion modular con casos negativos,
 pruebas unitarias del WebSocket Gateway y una prueba E2E WebSocket real.
 
+La demo web se valida por separado con `npm install` y `npm run build` dentro de
+`auth-web-demo`.
+
 GitHub Actions vive en la raiz del repositorio Git en
 `../.github/workflows/maven.yml` y ejecuta desde `PruebaKeberos`:
 
@@ -104,5 +127,5 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 - Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
   acotado.
-- Usar el contrato WebSocket desde un frontend futuro.
-- Agregar Docker o frontend solo en fases futuras autorizadas.
+- Agregar Docker solo en una fase futura autorizada.
+- Evaluar pruebas E2E de navegador para la demo web.

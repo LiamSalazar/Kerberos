@@ -5,6 +5,8 @@ target/
 *.ser
 *.log
 sources.txt
+auth-web-demo/dist/
+auth-web-demo/node_modules/
 
 # IDE metadata
 .vscode/

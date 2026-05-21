@@ -1,7 +1,7 @@
 # Frontend Contract
 
-Este contrato describe como una futura interfaz web debe comunicarse con
-`auth-websocket-gateway`. No hay frontend implementado en esta fase.
+Este contrato describe como `auth-web-demo` y cualquier futura interfaz web
+deben comunicarse con `auth-websocket-gateway`.
 
 El gateway es una capa de integracion: no reemplaza `auth-as`, `auth-tgs` ni
 `auth-service`, y no expone tickets, claves ni ciphertexts al cliente.
@@ -167,5 +167,6 @@ El frontend no debe recibir ni pedir:
 - payloads internos AS/TGS/Service.
 
 Los mensajes WebSocket actuales exponen solo estado, texto de alto nivel y
-latencias basicas. El canal aun no tiene TLS ni autenticacion mutua; eso queda
-para una fase posterior.
+latencias basicas. `auth-web-demo` evita renderizar detalles con nombres de
+secretos, claves, tickets, ciphertexts, `CryptoEnvelope` o payloads internos. El
+canal aun no tiene TLS ni autenticacion mutua; eso queda para una fase posterior.

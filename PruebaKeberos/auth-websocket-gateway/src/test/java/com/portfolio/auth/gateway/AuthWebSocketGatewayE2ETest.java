@@ -360,12 +360,29 @@ class AuthWebSocketGatewayE2ETest {
         }
 
         private static RecordingWebSocketClient connect(int port, WebSocketMessageCodec codec) throws Exception {
-            RecordingWebSocketClient client = new RecordingWebSocketClient(
-                    URI.create("ws://" + AuthConfig.DEFAULT_LOCAL_HOST + ":" + port),
-                    codec);
-            assertTrue(client.connectBlocking(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
-            assertTrue(client.openLatch.await(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
-            return client;
+            URI uri = URI.create("ws://" + AuthConfig.DEFAULT_LOCAL_HOST + ":" + port);
+            long deadline = System.nanoTime() + TIMEOUT.toNanos();
+            Exception lastError = null;
+
+            while (System.nanoTime() < deadline) {
+                RecordingWebSocketClient client = new RecordingWebSocketClient(uri, codec);
+                try {
+                    if (client.connectBlocking(250, TimeUnit.MILLISECONDS)
+                            && client.openLatch.await(250, TimeUnit.MILLISECONDS)) {
+                        return client;
+                    }
+                } catch (Exception e) {
+                    lastError = e;
+                }
+                client.close();
+                Thread.sleep(25);
+            }
+
+            if (lastError != null) {
+                fail("No se pudo conectar al gateway WebSocket: " + lastError.getMessage());
+            }
+            fail("No se pudo conectar al gateway WebSocket en " + TIMEOUT.toMillis() + " ms");
+            throw new IllegalStateException("unreachable");
         }
 
         @Override

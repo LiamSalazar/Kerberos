@@ -1,10 +1,11 @@
 # WebSocket Gateway
 
-`auth-websocket-gateway` expone una capa WebSocket separada para futuras
-interfaces web. No reemplaza los servicios modulares principales: AS, TGS y
-Service siguen ejecutandose como procesos TCP/JSON.
+`auth-websocket-gateway` expone una capa WebSocket separada para clientes web.
+No reemplaza los servicios modulares principales: AS, TGS y Service siguen
+ejecutandose como procesos TCP/JSON.
 
-No incluye frontend, Docker ni Spring Boot.
+`auth-web-demo` consume este gateway como demo local desacoplada. El gateway no
+incluye Docker ni Spring Boot.
 
 ## Dependencia
 
@@ -117,9 +118,10 @@ mvn -pl auth-websocket-gateway -am test
 
 La suite cubre serializacion de mensajes, tipos desconocidos, JSON invalido,
 flujo exitoso con cliente falso y error controlado cuando los servicios no estan
-disponibles. Fase 11 agrega prueba E2E real con un cliente WebSocket de
+disponibles. Fase 11 agrego prueba E2E real con un cliente WebSocket de
 Java-WebSocket, AS/TGS/Service modulares en puertos de prueba y validacion de
-eventos `FLOW_*` mas `FLOW_RESULT`.
+eventos `FLOW_*` mas `FLOW_RESULT`. Fase 12 + Fase 13 agregan `auth-web-demo`
+como consumidor frontend local.
 
 ## Seguridad Del Contrato
 
@@ -130,8 +132,25 @@ como telemetria de estado y `FLOW_RESULT` como resultado final de alto nivel.
 
 Ver tambien `docs/frontend-contract.md`.
 
+## Demo Frontend Local
+
+Con AS, TGS, Service y Gateway levantados:
+
+```cmd
+scripts\run-web-demo.bat
+```
+
+Luego abrir:
+
+```text
+http://127.0.0.1:5173
+```
+
+La UI envia `START_AUTH_FLOW`, procesa `GATEWAY_READY`, `FLOW_EVENT`,
+`FLOW_RESULT`, `ERROR` y `PONG`, y muestra solo informacion de alto nivel.
+
 ## Limites
 
-- No hay frontend en esta fase.
 - El gateway no levanta AS/TGS/Service automaticamente.
 - No hay TLS ni autenticacion mutua en el canal WebSocket.
+- No hay Docker ni despliegue web en esta fase.

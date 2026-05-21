@@ -19,6 +19,8 @@ La ruta modular es la ruta principal:
 - incluye auditoria reproducible de ejecucion/desempeno.
 - agrega `auth-websocket-gateway` como capa separada para futuras integraciones
   web, sin reemplazar la ruta TCP modular.
+- agrega `auth-web-demo` como frontend local desacoplado que consume solamente
+  el Gateway WebSocket.
 
 El codigo legacy fisico ya fue retirado del proyecto principal. Fase 9 retiro
 tambien `auth-transport/javaio` y `auth-transport/legacy`. El contexto
@@ -37,15 +39,18 @@ historico queda documentado en `docs/legacy-summary.md`.
   exige valores explicitos.
 - El gateway WebSocket tiene pruebas unitarias, de componente y E2E real con
   cliente WebSocket y servidores modulares levantados dentro de Maven.
+- La demo web no muestra secretos, tickets completos, ciphertexts ni material
+  criptografico sensible.
 
 ## Prioridad Siguiente
 
-1. Conectar un frontend futuro al contrato WebSocket documentado.
+1. Endurecer el canal WebSocket/frontend con TLS o autenticacion local si se
+   autoriza.
 2. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
    fuera de su alcance acotado.
 3. Agregar TLS o una capa de transporte autenticada para la ruta modular.
 4. Docker y Docker Compose solo en una fase futura de despliegue.
-5. Frontend solo en una fase futura especifica.
+5. Agregar pruebas E2E de navegador para la demo web si se autoriza tooling.
 
 ## Dependencia WebSocket
 

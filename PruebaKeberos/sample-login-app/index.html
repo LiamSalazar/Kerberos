@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MelodyFinder Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="login-panel" id="login-panel">
+      <div class="brand-row">
+        <img src="assets/melodyfinder-mark.svg" alt="" class="brand-mark">
+        <div>
+          <p class="eyebrow">MelodyFinder</p>
+          <h1>Secure Login</h1>
+        </div>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <label>
+          Gateway URL
+          <input id="gateway-url" name="gatewayUrl" value="ws://127.0.0.1:2800" autocomplete="off">
+        </label>
+        <label>
+          Client ID
+          <input id="client-id" name="clientId" value="1" autocomplete="username">
+        </label>
+        <label>
+          Service ID
+          <input id="service-id" name="serviceId" value="1" autocomplete="off">
+        </label>
+        <button id="login-button" type="submit">Authenticate</button>
+      </form>
+
+      <p id="status-line" class="status-line">Disconnected</p>
+      <p id="error-line" class="error-line" hidden></p>
+    </section>
+
+    <section class="dashboard" id="dashboard" hidden>
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Protected Dashboard</p>
+          <h1>Welcome to MelodyFinder</h1>
+        </div>
+        <button id="logout-button" type="button">Log out</button>
+      </header>
+
+      <div class="dashboard-grid">
+        <article class="metric">
+          <span>Authenticated</span>
+          <strong id="authenticated-state">true</strong>
+        </article>
+        <article class="metric">
+          <span>Request ID</span>
+          <strong id="request-id">-</strong>
+        </article>
+        <article class="metric metric-wide">
+          <span>Service Message</span>
+          <strong id="service-message">-</strong>
+        </article>
+      </div>
+
+      <section class="playlist-band">
+        <div>
+          <span class="track-number">01</span>
+          <p>Private weekly mix</p>
+        </div>
+        <div>
+          <span class="track-number">02</span>
+          <p>Saved artist insights</p>
+        </div>
+        <div>
+          <span class="track-number">03</span>
+          <p>Protected listening history</p>
+        </div>
+      </section>
+    </section>
+
+    <aside class="event-panel">
+      <p class="eyebrow">Gateway Events</p>
+      <ol id="event-log" class="event-log"></ol>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

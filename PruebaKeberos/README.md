@@ -1,166 +1,75 @@
 # Kerberos-Inspired Modular Authentication Demo
 
-Proyecto Java de portafolio que implementa desde cero un flujo de autenticacion
-distribuida inspirado en Kerberos 4, centrado ahora en una arquitectura modular
-propia.
+Proyecto Java de portafolio que implementa un flujo de autenticacion distribuida
+inspirado en Kerberos 4, con una arquitectura modular propia bajo `auth-*`.
 
 Este repositorio no es MIT Kerberos oficial y no debe presentarse como un
-sistema listo para produccion critica. Es una pieza de ingenieria aplicada para
-mostrar arquitectura distribuida, diseno de protocolo, hardening incremental,
-pruebas y ejecucion local reproducible.
+sistema listo para produccion critica. Es una base local para estudiar
+protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
+reproducibles sin Docker.
 
-## Estado Actual
+Fase actual: **Fase 15: auditoria persistente, migraciones SQLite, validacion
+Maven/POM, administracion local y mini app de login integradora**.
 
-Fase actual: **Fase 14: pruebas de concurrencia e integrabilidad real con SQLite**.
+## Que Problema Resuelve
 
-| Area | Rol | Estado |
-| --- | --- | --- |
-| `auth-core/` | DTOs del protocolo, configuracion y replay cache | Activo |
-| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion | Activo |
-| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros | Activo |
-| `auth-storage-sqlite/` | Repositorios SQLite locales para clientes y servicios | Activo |
-| `auth-as/` | Authentication Server modular | Ejecutable |
-| `auth-tgs/` | Ticket Granting Server modular | Ejecutable |
-| `auth-service/` | Servicio protegido modular | Ejecutable |
-| `auth-client-sdk/` | Cliente modular, CLI, audit runner y concurrencia | Ejecutable |
-| `auth-websocket-gateway/` | Gateway WebSocket separado para futuras integraciones web | Ejecutable |
-| `auth-web-demo/` | Frontend vanilla local para observar el flujo via WebSocket | Demo local |
-| `docs/` | Documentacion tecnica y auditorias | Activa |
+El proyecto muestra como una aplicacion puede delegar una decision de acceso a
+un flujo distribuido AS -> TGS -> Service, y luego abrir una zona protegida solo
+cuando el servicio devuelve `FLOW_RESULT success=true`.
 
-El codigo legacy fisico fue retirado del proyecto principal. Su existencia se
-resume en [docs/legacy-summary.md](docs/legacy-summary.md), sin conservarlo
-como ruta ejecutable actual.
+No implementa login tradicional con password de usuario final. La demo usa
+`clientId` y `serviceId` para demostrar autenticacion distribuida local.
 
-## Arquitectura Modular
+## Modulos
 
-Vista simplificada:
+| Modulo | Responsabilidad |
+| --- | --- |
+| `auth-core/` | DTOs, configuracion, replay cache y contratos de repositorio/auditoria |
+| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion |
+| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros |
+| `auth-storage-sqlite/` | Repositorios SQLite, migraciones, auditoria y CLI local |
+| `auth-as/` | Authentication Server modular |
+| `auth-tgs/` | Ticket Granting Server modular |
+| `auth-service/` | Servicio protegido y `ProtectedResource` |
+| `auth-client-sdk/` | Cliente modular, CLI y runners de auditoria |
+| `auth-websocket-gateway/` | Gateway WebSocket separado para apps web/locales |
+| `auth-web-demo/` | Demo tecnica del flujo AS -> TGS -> Service |
+| `sample-login-app/` | Mini app tipo login para integradores |
+
+## Flujo
 
 ```mermaid
 sequenceDiagram
-    participant C as Client
-    participant AS as Authentication Server
-    participant TGS as Ticket Granting Server
-    participant S as Service Server
+    participant App as App / Browser
+    participant GW as WebSocket Gateway
+    participant C as AuthClient
+    participant AS as AS
+    participant TGS as TGS
+    participant S as Service
 
-    C->>AS: AS_REQUEST JSON (AsRequest)
-    AS-->>C: AS_RESPONSE JSON (CryptoEnvelope<SecureAsResponse>)
-    C->>TGS: TGS_REQUEST JSON (SecureTgsRequest)
-    TGS-->>C: TGS_RESPONSE JSON (CryptoEnvelope<SecureTgsResponse>)
-    C->>S: SERVICE_REQUEST JSON (SecureServiceRequest)
-    S-->>C: SERVICE_RESPONSE JSON (CryptoEnvelope<ServiceResponse>)
+    App->>GW: START_AUTH_FLOW
+    GW->>C: run flow
+    C->>AS: AS_REQUEST
+    AS-->>C: AS_RESPONSE
+    C->>TGS: TGS_REQUEST
+    TGS-->>C: TGS_RESPONSE
+    C->>S: SERVICE_REQUEST
+    S-->>C: SERVICE_RESPONSE
+    GW-->>App: FLOW_RESULT
 ```
-
-La ruta principal usa DTOs tipados, JSON/TCP, AES-GCM con `CryptoEnvelope`,
-replay cache, configuracion demo/strict, auditoria reproducible, pruebas de
-concurrencia y storage seleccionable `memory|sqlite`.
-
-El WebSocket Gateway no reemplaza AS, TGS ni Service. Expone una capa de
-integracion que recibe mensajes WebSocket y ejecuta el flujo modular existente
-mediante `AuthClient`.
-
-`auth-web-demo` es una interfaz local sin framework que habla solamente con el
-Gateway WebSocket. No modifica AS, TGS ni Service.
-
-## Requisitos
-
-Consulta tambien [requirements.txt](requirements.txt).
-
-- Java 17 o superior.
-- Maven 3.9+.
-- Node.js 18+ y npm para la demo web local.
-- Git.
-- Windows, Linux o macOS con terminal.
-- Docker no es requisito en esta fase.
-- SQLite no requiere servidor externo; Maven descarga `org.xerial:sqlite-jdbc`.
 
 ## Compilar Y Probar
 
-Desde esta carpeta:
-
 ```bash
 mvn -q -DskipTests compile
 mvn test
-```
-
-En la verificacion de Fase 14 se ejecutan:
-
-```bash
-mvn -q -DskipTests compile
-mvn test
-mvn -pl auth-websocket-gateway -am test
 mvn -pl auth-storage-sqlite -am test
+mvn -pl auth-websocket-gateway -am test
 ```
 
-La demo web tambien valida con:
+## Ejecutar Demo Tecnica
 
-```bash
-cd auth-web-demo
-npm install
-npm run build
-```
-
-## Ejecutar Sin Docker
-
-En Windows, abre tres terminales para servidores y una para cliente:
-
-```cmd
-scripts\run-as.bat
-```
-
-```cmd
-scripts\run-tgs.bat
-```
-
-```cmd
-scripts\run-service.bat
-```
-
-```cmd
-scripts\run-client.bat
-```
-
-Los scripts compilan con Maven antes de ejecutar las clases modulares.
-
-En Linux/macOS tambien existen scripts equivalentes:
-
-```bash
-scripts/run-as.sh
-scripts/run-tgs.sh
-scripts/run-service.sh
-scripts/run-client.sh
-```
-
-## WebSocket Gateway
-
-Primero levanta AS, TGS y Service. Despues:
-
-```cmd
-scripts\run-websocket-gateway.bat
-```
-
-En Linux/macOS:
-
-```bash
-scripts/run-websocket-gateway.sh
-```
-
-Por defecto escucha en `127.0.0.1:2800`. Variables:
-
-- `AUTH_WS_HOST`
-- `AUTH_WS_PORT`
-
-Mensaje minimo:
-
-```json
-{"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
-```
-
-## Frontend Demo Local
-
-La demo web esta en `auth-web-demo/`. No usa React, Vite, TypeScript, bundler ni
-dependencias npm externas.
-
-Orden recomendado en cinco terminales:
+Windows:
 
 ```cmd
 scripts\run-as.bat
@@ -170,150 +79,169 @@ scripts\run-websocket-gateway.bat
 scripts\run-web-demo.bat
 ```
 
-Abre:
+Abrir:
 
 ```text
 http://127.0.0.1:5173
 ```
 
-En la UI, usa `ws://127.0.0.1:2800`, pulsa `Connect` y luego
-`Start Auth Flow`. Deben aparecer eventos `FLOW_*` y un `FLOW_RESULT` con el
-resultado del servicio.
+Linux/macOS:
 
-## Auditoria Modular
-
-Con AS, TGS y Service levantados:
-
-```cmd
-scripts\run-audit.bat --iterations 5
+```bash
+scripts/run-as.sh
+scripts/run-tgs.sh
+scripts/run-service.sh
+scripts/run-websocket-gateway.sh
+scripts/run-web-demo.sh
 ```
 
-El runner genera evidencia en:
+## Ejecutar Mini App De Login
 
-- `docs/audits/latest-run.md`
-- `docs/audits/latest-run.json`
-
-La auditoria de independencia del runtime modular esta en
-[docs/audits/legacy-dependency-audit.md](docs/audits/legacy-dependency-audit.md).
-
-## Auditoria De Concurrencia
-
-Con AS, TGS y Service levantados:
+Con AS, TGS, Service y Gateway levantados:
 
 ```cmd
-scripts\run-concurrency-audit.bat --clients 25 --flows 100
+scripts\run-sample-login-app.bat
 ```
 
 Linux/macOS:
 
 ```bash
-scripts/run-concurrency-audit.sh --clients 25 --flows 100
+scripts/run-sample-login-app.sh
 ```
 
-Genera:
+Abrir:
 
-- `docs/audits/concurrency-latest-run.md`
-- `docs/audits/concurrency-latest-run.json`
+```text
+http://127.0.0.1:5174
+```
 
-La ultima evidencia versionada registra 25 clientes concurrentes, 100 flujos,
-100 exitos y 0 fallos.
+Usar `clientId=1`, `serviceId=1` para un flujo exitoso. Usar un `serviceId`
+invalido para verificar acceso denegado.
 
 ## SQLite Local
 
-El modo por defecto sigue siendo memoria:
+Modo demo por defecto:
 
 ```text
 AUTH_STORAGE_MODE=memory
 ```
 
-Para crear una base demo:
+Inicializar SQLite con migraciones:
 
 ```cmd
 scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
 ```
 
-Luego levanta AS, TGS y Service con:
+Linux/macOS:
+
+```bash
+scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
+```
+
+Ejecutar servidores con SQLite:
 
 ```cmd
 set AUTH_STORAGE_MODE=sqlite
 set AUTH_SQLITE_PATH=data\auth-demo.sqlite
 scripts\run-as.bat
+scripts\run-tgs.bat
+scripts\run-service.bat
+scripts\run-websocket-gateway.bat
 ```
 
-Usa las mismas variables para `scripts\run-tgs.bat` y
-`scripts\run-service.bat`. El cliente y el Gateway siguen hablando con los
-servicios por TCP/JSON.
+Las migraciones viven en `scripts/sqlite/migrations/` y registran versiones en
+`schema_version`.
 
-## Configuracion
+## Administracion Local
 
-Variables comunes:
+Registrar cliente:
 
-- `AUTH_MODE`: `demo`, `local` o `strict`.
-- `AUTH_AS_PORT`
-- `AUTH_TGS_PORT`
-- `AUTH_SERVICE_PORT`
-- `AUTH_DEMO_CLIENT_ID`
-- `AUTH_DEMO_TGS_ID`
-- `AUTH_DEMO_SERVICE_ID`
-- `AUTH_TICKET_TTL_MINUTES`
-- `AUTH_ALLOWED_SKEW_SECONDS`
-- `AUTH_REPLAY_WINDOW_SECONDS`
-- `AUTH_STORAGE_MODE`: `memory` o `sqlite`.
-- `AUTH_SQLITE_PATH`: ruta de la base SQLite local.
-- `AUTH_DEMO_CLIENT_SECRET`
-- `AUTH_DEMO_CLIENT_TGS_KEY`
-- `AUTH_DEMO_TGS_SECRET`
-- `AUTH_DEMO_CLIENT_SERVICE_KEY`
-- `AUTH_DEMO_SERVICE_SECRET`
-- `AUTH_DEMO_PBKDF2_SALT`
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
+```
 
-Los nombres de secretos actuales usan `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
-estos valores deben definirse explicitamente y no pueden quedarse en defaults.
+Registrar servicio:
 
-## CI
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfinder --display-name "MelodyFinder" --secret "<secret>" --endpoint local://melodyfinder
+```
 
-GitHub Actions vive en la raiz Git:
+Listar y activar/desactivar:
 
-- `../.github/workflows/maven.yml`
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients disable --id app-client
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services enable --id melodyfinder
+```
 
-El workflow usa `working-directory: PruebaKeberos` y ejecuta:
+Consultar auditoria:
 
-- `mvn -q -DskipTests compile`
-- `mvn test`
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --request-id sample-login-1
+```
 
-## Limitaciones Actuales
+La salida no imprime secretos, tickets, claves ni ciphertexts.
 
-- No es production-ready.
-- No hay Docker.
-- Existe frontend demo local, pero no hay despliegue web ni login real.
-- El WebSocket Gateway existe como capa de integracion separada; no sustituye
-  el runtime TCP modular.
-- El replay cache es local por proceso.
-- SQLite es una integracion local ligera, no una base productiva.
-- No hay TLS ni autenticacion mutua de transporte.
-- El codec JSON es propio y acotado a los DTOs del proyecto.
-- El gateway WebSocket ya tiene E2E real y una demo web local desacoplada.
+## Using This Project To Secure Your Own App
+
+1. Registrar un cliente en SQLite con `scripts\sqlite-admin.bat ... clients add`.
+2. Registrar un servicio con `scripts\sqlite-admin.bat ... services add`.
+3. Inicializar o migrar la base con `scripts\init-sqlite-demo.bat`.
+4. Levantar AS, TGS y Service con `AUTH_STORAGE_MODE=sqlite`.
+5. Levantar `auth-websocket-gateway`.
+6. Desde la app, abrir `ws://127.0.0.1:2800`.
+7. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
+8. Validar `FLOW_RESULT`: solo conceder acceso si `success=true`.
+9. Mostrar datos de alto nivel como `requestId` y mensaje del servicio.
+10. Consultar auditoria en `auth_audit_events` o con `sqlite-admin ... audit list`.
+
+La app conserva responsabilidad sobre UI, sesiones propias, autorizacion de
+negocio, expiracion de sesion web, TLS y almacenamiento de usuario. Este sistema
+asume la validacion modular AS -> TGS -> Service y la auditoria local SQLite del
+flujo cuando el Gateway corre en modo SQLite.
+
+## API De Integracion
+
+Para integrar un servicio real, implementar `ProtectedResource`:
+
+```java
+String getServiceId();
+ProtectedServiceResponse execute(ProtectedServiceRequest request);
+```
+
+`DemoProtectedResource` es el ejemplo local. `HttpProtectedResource` muestra como
+reenviar una llamada a un servidor HTTP local simple en pruebas, sin consumir
+APIs externas reales.
+
+## Limitaciones
+
+- No es MIT Kerberos oficial.
+- No esta listo para produccion critica.
+- No hay Docker, Spring Boot, PostgreSQL, ORM pesado, React ni Next.js.
+- SQLite es persistencia local verificable, no una base productiva.
+- No hay TLS ni autenticacion mutua en TCP/WebSocket.
+- Los secretos demo no deben usarse fuera de ejecucion local.
+- El replay cache sigue siendo local por proceso.
 
 ## Roadmap
 
-1. Endurecer la persistencia con migraciones versionadas y auditoria persistente
-   si se autoriza.
-2. Endurecer el canal Gateway/frontend con TLS o autenticacion de demo si se
-   autoriza.
-3. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
-   acotado.
-4. Agregar pruebas E2E de navegador si se autoriza tooling de browser.
-5. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
+1. Endurecer transporte con TLS/autenticacion mutua.
+2. Separar secretos demo de secretos operativos con vault o mecanismo externo.
+3. Agregar politicas de autorizacion por recurso.
+4. Evaluar parser JSON mantenido si el codec propio crece.
+5. Introducir Docker solo cuando una fase futura lo autorice.
 
-Mas detalle:
+## Mas Documentacion
 
 - [docs/execution-guide.md](docs/execution-guide.md)
 - [docs/architecture.md](docs/architecture.md)
-- [docs/protocol-flow.md](docs/protocol-flow.md)
-- [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
-- [docs/websocket-gateway.md](docs/websocket-gateway.md)
-- [docs/frontend-contract.md](docs/frontend-contract.md)
-- [docs/frontend-demo.md](docs/frontend-demo.md)
-- [docs/concurrency.md](docs/concurrency.md)
 - [docs/sqlite-integration.md](docs/sqlite-integration.md)
 - [docs/integration-api.md](docs/integration-api.md)
+- [docs/sample-login-app.md](docs/sample-login-app.md)
+- [docs/websocket-gateway.md](docs/websocket-gateway.md)
+- [docs/frontend-demo.md](docs/frontend-demo.md)
+- [docs/concurrency.md](docs/concurrency.md)
+- [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
+- [docs/audits/maven-dependency-audit.md](docs/audits/maven-dependency-audit.md)

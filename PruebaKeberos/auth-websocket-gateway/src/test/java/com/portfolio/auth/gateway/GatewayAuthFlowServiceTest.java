@@ -1,5 +1,8 @@
 package com.portfolio.auth.gateway;
 
+import com.portfolio.auth.core.audit.AuthAuditEvent;
+import com.portfolio.auth.core.audit.AuthEventRepository;
+import com.portfolio.auth.core.audit.AuthEventStatus;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.ProtocolDefaults;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
@@ -22,7 +25,8 @@ class GatewayAuthFlowServiceTest {
     @Test
     void shouldRunSuccessfulFlowAndPublishEvents() {
         FakeGatewayAuthClient client = new FakeGatewayAuthClient(false);
-        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client);
+        RecordingAuditRepository audit = new RecordingAuditRepository();
+        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client, audit);
         List<WebSocketMessage> events = new ArrayList<>();
 
         WebSocketMessage result = service.run(
@@ -38,12 +42,16 @@ class GatewayAuthFlowServiceTest {
         assertEquals(1, client.serviceCalls);
         assertTrue(events.stream().anyMatch(event -> "AS_REQUEST_SENT".equals(event.stage())));
         assertTrue(events.stream().anyMatch(event -> "FLOW_SUCCESS".equals(event.stage())));
+        assertEquals(2, audit.events.size());
+        assertEquals(AuthEventStatus.STARTED, audit.events.get(0).status());
+        assertEquals(AuthEventStatus.SUCCESS, audit.events.get(1).status());
     }
 
     @Test
     void shouldRejectUnknownClientBeforeNetworkCalls() {
         FakeGatewayAuthClient client = new FakeGatewayAuthClient(false);
-        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client);
+        RecordingAuditRepository audit = new RecordingAuditRepository();
+        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client, audit);
         List<WebSocketMessage> events = new ArrayList<>();
 
         WebSocketMessage result = service.run(
@@ -53,12 +61,15 @@ class GatewayAuthFlowServiceTest {
         assertFalse(result.success());
         assertEquals(0, client.asCalls);
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
+        assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());
+        assertEquals("UNKNOWN_CLIENT", audit.events.get(1).errorType());
     }
 
     @Test
     void shouldReturnControlledFailureWhenServicesAreUnavailable() {
         FakeGatewayAuthClient client = new FakeGatewayAuthClient(true);
-        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client);
+        RecordingAuditRepository audit = new RecordingAuditRepository();
+        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client, audit);
         List<WebSocketMessage> events = new ArrayList<>();
 
         WebSocketMessage result = service.run(
@@ -68,6 +79,29 @@ class GatewayAuthFlowServiceTest {
         assertFalse(result.success());
         assertTrue(result.serviceMessage().contains("AS no disponible"));
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
+        assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());
+        assertEquals("IOException", audit.events.get(1).errorType());
+    }
+
+    private static final class RecordingAuditRepository implements AuthEventRepository {
+        private final List<AuthAuditEvent> events = new ArrayList<>();
+
+        @Override
+        public void append(AuthAuditEvent event) {
+            events.add(event);
+        }
+
+        @Override
+        public List<AuthAuditEvent> findRecent(int limit) {
+            return events;
+        }
+
+        @Override
+        public List<AuthAuditEvent> findByRequestId(String requestId) {
+            return events.stream()
+                    .filter(event -> event.requestId().equals(requestId))
+                    .toList();
+        }
     }
 
     private static final class FakeGatewayAuthClient implements GatewayAuthClient {

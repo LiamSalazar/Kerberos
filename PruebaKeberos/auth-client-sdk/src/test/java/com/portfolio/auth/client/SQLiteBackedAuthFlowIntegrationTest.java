@@ -8,7 +8,7 @@ import com.portfolio.auth.service.DemoProtectedResource;
 import com.portfolio.auth.service.ProtectedServiceHandler;
 import com.portfolio.auth.storage.sqlite.SQLitePrincipalRepository;
 import com.portfolio.auth.storage.sqlite.SQLiteServiceRegistry;
-import com.portfolio.auth.storage.sqlite.SqlScriptRunner;
+import com.portfolio.auth.storage.sqlite.SQLiteMigrationRunner;
 import com.portfolio.auth.tgs.TicketGrantingHandler;
 import com.portfolio.auth.transport.json.JsonMessageCodec;
 import com.portfolio.auth.transport.protocol.MessageType;
@@ -37,10 +37,9 @@ class SQLiteBackedAuthFlowIntegrationTest {
 
     private Path initializedDatabase() throws Exception {
         Path database = tempDir.resolve("auth-flow.sqlite");
-        SqlScriptRunner.runScripts(
+        SQLiteMigrationRunner.applyMigrations(
                 database,
-                Path.of("..", "scripts", "sqlite", "schema.sql").normalize(),
-                Path.of("..", "scripts", "sqlite", "seed-demo.sql").normalize());
+                Path.of("..", "scripts", "sqlite", "migrations").normalize());
         return database;
     }
 

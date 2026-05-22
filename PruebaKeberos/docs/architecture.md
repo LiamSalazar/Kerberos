@@ -6,7 +6,9 @@ legacy fisico ya fue retirado, y Fase 9 elimino tambien los paquetes internos
 `auth-websocket-gateway` como capa separada de integracion. Fase 12 + Fase 13
 agregan `auth-web-demo`, una demo web local que consume el gateway sin acoplarse
 al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
-`auth-storage-sqlite` como primera integracion persistente local.
+`auth-storage-sqlite` como primera integracion persistente local. Fase 15 agrega
+migraciones SQLite, auditoria persistente, administracion local y
+`sample-login-app`.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -18,13 +20,14 @@ critica.
 | `auth-core` | DTOs, `AuthConfig`, `ReplayCache` | Activo |
 | `auth-crypto` | `CryptoEnvelope`, AES-GCM, derivacion de claves | Activo |
 | `auth-transport` | `ProtocolEnvelope`, JSON, TCP y DTOs seguros | Activo |
-| `auth-storage-sqlite` | Repositorios SQLite para clientes y servicios | Activo |
+| `auth-storage-sqlite` | Repositorios SQLite, migraciones, auditoria y CLI local | Activo |
 | `auth-as` | `AuthenticationServerApp`, `AuthenticationHandler` | Ejecutable |
 | `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
 | `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
 | `auth-client-sdk` | `AuthClient`, `AuthFlowRunner`, `ClientCli`, audit runner | Ejecutable |
 | `auth-websocket-gateway` | WebSocket Gateway separado sobre `AuthClient` | Ejecutable |
 | `auth-web-demo` | Frontend vanilla local que consume el Gateway WebSocket | Demo local |
+| `sample-login-app` | Mini app vanilla tipo login para integradores | Demo local |
 | `docs` | Documentacion y auditorias | Activo |
 
 ## Flujo Principal
@@ -60,6 +63,20 @@ Implementaciones actuales:
 SQLite se mantiene en un modulo separado para evitar acoplar `auth-core` a JDBC.
 No hay ORM ni servidor externo.
 
+Fase 15 agrega migraciones versionadas en `scripts/sqlite/migrations/` y una
+tabla `schema_version`. `SQLiteDemoDatabaseInitializer` aplica migraciones en
+vez de depender solo de scripts sueltos.
+
+## Auditoria Persistente
+
+`auth-core` define `AuditRepository` y `AuthEventRepository`. En modo memoria se
+usa `NoOpAuthEventRepository`. En modo SQLite, `auth-websocket-gateway` usa
+`SQLiteAuditRepository` para registrar inicio, exito y fallo del flujo.
+
+La auditoria persiste `requestId`, `clientId`, `serviceId`, `eventType`,
+`status`, `errorType`, `latencyMs` y `createdAt`. No registra secretos, tickets
+completos, claves, ciphertexts ni payloads internos.
+
 ## API De Servicio Protegido
 
 `auth-service` expone `ProtectedResource` como interfaz:
@@ -69,7 +86,8 @@ No hay ORM ni servidor externo.
 
 `ProtectedServiceHandler` valida el protocolo antes de llamar al recurso. La
 implementacion actual es `DemoProtectedResource`; servicios reales pueden crear
-su propia implementacion sin cambiar AS/TGS.
+su propia implementacion sin cambiar AS/TGS. `HttpProtectedResource` sirve como
+ejemplo de adaptador HTTP local simple para integraciones externas.
 
 ## WebSocket Gateway
 
@@ -113,6 +131,9 @@ La UI muestra:
 No muestra claves, secretos, tickets completos, ciphertexts ni payloads
 criptograficos.
 
+`sample-login-app` tambien es vanilla y no usa npm. A diferencia de
+`auth-web-demo`, simula una app real con pantalla de login y zona protegida.
+
 ## Transporte
 
 La ruta modular usa `ProtocolEnvelope`, `JsonMessageCodec`, `TcpMessageClient`
@@ -151,8 +172,9 @@ Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
 
 La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
 transporte seguro JSON + AES-GCM, integracion modular con casos negativos,
-concurrencia, SQLite local, pruebas unitarias del WebSocket Gateway y una prueba
-E2E WebSocket real.
+concurrencia, SQLite local, migraciones, auditoria persistente, administracion
+SQLite, `ProtectedResource` HTTP local, pruebas unitarias del WebSocket Gateway y
+una prueba E2E WebSocket real.
 
 La demo web se valida por separado con `npm install` y `npm run build` dentro de
 `auth-web-demo`.
@@ -167,7 +189,6 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 - Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
   acotado.
-- Agregar migraciones versionadas y auditoria persistente si la integracion de
-  base de datos crece.
+- Endurecer secretos SQLite, transporte y auditoria si la integracion crece.
 - Agregar Docker solo en una fase futura autorizada.
 - Evaluar pruebas E2E de navegador para la demo web.

@@ -1,7 +1,26 @@
 # Integration API
 
-Este documento resume como conectar repositorios o servicios reales sin cambiar
-el flujo modular principal.
+Este documento resume como conectar aplicaciones y servicios reales al runtime
+modular sin reemplazar la arquitectura `auth-*`.
+
+## Responsabilidades
+
+Este sistema asume:
+
+- ejecutar el flujo AS -> TGS -> Service;
+- validar tickets, autenticadores, expiracion, clock skew y replay local;
+- devolver `ServiceResponse` al cliente modular;
+- exponer `FLOW_RESULT` por WebSocket Gateway;
+- registrar auditoria local SQLite cuando el Gateway corre en modo SQLite.
+
+La aplicacion integradora conserva:
+
+- UI y experiencia de usuario;
+- sesion web propia;
+- autorizacion de negocio;
+- TLS y proteccion de transporte;
+- almacenamiento de usuarios si aplica;
+- manejo de logout y expiracion de sesion.
 
 ## Repositorios De Identidad
 
@@ -12,14 +31,10 @@ Optional<String> clientSecret(String clientId);
 Optional<String> ticketGrantingServerSecret(String tgsId);
 ```
 
-`auth-as` depende de esta interfaz. Para integrar una fuente real de clientes,
-crea una implementacion que resuelva secretos por `clientId` y secretos del TGS
-por `tgsId`.
-
 Implementaciones actuales:
 
-- `InMemoryPrincipalRepository` para demo local.
-- `SQLitePrincipalRepository` para SQLite local.
+- `InMemoryPrincipalRepository`
+- `SQLitePrincipalRepository`
 
 ## Registro De Servicios
 
@@ -30,66 +45,105 @@ Optional<String> ticketGrantingServerSecret(String tgsId);
 Optional<String> serviceSecret(String serviceId);
 ```
 
-`auth-tgs` y `auth-service` dependen de esta interfaz. Para integrar un registro
-real, implementa busqueda de secretos del TGS y de servicios por id.
+Implementaciones actuales:
+
+- `InMemoryServiceRegistry`
+- `SQLiteServiceRegistry`
+
+## Auditoria
+
+`auth-core` define:
+
+```java
+void append(AuthAuditEvent event);
+List<AuthAuditEvent> findRecent(int limit);
+List<AuthAuditEvent> findByRequestId(String requestId);
+```
 
 Implementaciones actuales:
 
-- `InMemoryServiceRegistry` para demo local.
-- `SQLiteServiceRegistry` para SQLite local.
+- `NoOpAuthEventRepository` para `AUTH_STORAGE_MODE=memory`;
+- `SQLiteAuditRepository` para `AUTH_STORAGE_MODE=sqlite`.
+
+Eventos persistidos:
+
+- `AUTH_FLOW_STARTED`
+- `AUTH_FLOW_SUCCEEDED`
+- `AUTH_FLOW_FAILED`
 
 ## Recurso Protegido
 
-`auth-service` define `ProtectedResource`:
+`auth-service` define:
 
 ```java
 String getServiceId();
 ProtectedServiceResponse execute(ProtectedServiceRequest request);
 ```
 
-`ProtectedServiceHandler` valida ticket, autenticador, replay y expiracion antes
-de invocar el recurso. Una aplicacion externa debe implementar `ProtectedResource`
-para encapsular la accion protegida real.
+`ProtectedServiceHandler` valida el protocolo antes de invocar el recurso.
 
-Implementacion actual:
+Implementaciones actuales:
 
-- `DemoProtectedResource`, que devuelve una respuesta didactica local.
+- `DemoProtectedResource`: respuesta local de demostracion.
+- `HttpProtectedResource`: ejemplo que invoca un servidor HTTP local simple en
+  pruebas. No consume APIs externas reales.
 
-## Registrar Cliente Y Servicio En SQLite
+## Registrar Cliente Y Servicio
 
-Inicializa la base:
+Inicializar base:
 
 ```cmd
 scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
 ```
 
-Luego agrega registros en:
+Registrar cliente:
 
-- `principals` para clientes y TGS;
-- `services` para servicios protegidos.
-
-El esquema esta en `scripts/sqlite/schema.sql`.
-
-## Seleccionar Storage
-
-Modo memoria:
-
-```text
-AUTH_STORAGE_MODE=memory
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
 ```
 
-Modo SQLite:
+Registrar servicio:
 
-```text
-AUTH_STORAGE_MODE=sqlite
-AUTH_SQLITE_PATH=data/auth-demo.sqlite
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfinder --display-name "MelodyFinder" --secret "<secret>" --endpoint local://melodyfinder
 ```
+
+## Conectar SQLite
+
+```cmd
+set AUTH_STORAGE_MODE=sqlite
+set AUTH_SQLITE_PATH=data\auth-demo.sqlite
+```
+
+Usar las mismas variables al levantar AS, TGS, Service y Gateway.
+
+## Conectar Una App Externa Por WebSocket
+
+1. Abrir `ws://127.0.0.1:2800`.
+2. Esperar `GATEWAY_READY`.
+3. Enviar:
+
+```json
+{"type":"START_AUTH_FLOW","requestId":"app-req-1","clientId":"app-client","serviceId":"melodyfinder"}
+```
+
+4. Procesar `FLOW_EVENT` como progreso.
+5. Conceder acceso solo si `FLOW_RESULT.success` es `true`.
+6. Mostrar `requestId` y mensaje de servicio de alto nivel.
+7. Consultar auditoria con `sqlite-admin ... audit list` si se usa SQLite.
+
+## Mini App De Referencia
+
+`sample-login-app/` demuestra el patron anterior con HTML/CSS/JS vanilla. Ver:
+
+- `docs/sample-login-app.md`
+- `sample-login-app/index.html`
+- `sample-login-app/app.js`
 
 ## Limites Actuales
 
-- No hay API HTTP de administracion para registrar clientes o servicios.
-- No hay migrador de schema ni rotacion de secretos.
+- No hay API HTTP de administracion.
 - No hay vault externo.
-- `HttpProtectedResource` no se implemento en esta fase para evitar introducir
-  acoplamiento prematuro o dependencias externas.
-- El sistema no es production-ready.
+- No hay TLS/mTLS.
+- No hay autorizacion granular por rol o scope.
+- No es production-ready.

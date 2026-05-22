@@ -7,6 +7,7 @@ Guia para compilar, probar, ejecutar y auditar localmente sin Docker.
 - Java 17 o superior.
 - Maven 3.9+.
 - Node.js 18+ y npm para `auth-web-demo`.
+- Python 3 para servir `sample-login-app` con los scripts locales.
 - Git.
 - Docker no es requisito.
 
@@ -24,14 +25,22 @@ Comandos principales de verificacion:
 ```bash
 mvn -q -DskipTests compile
 mvn test
+mvn -pl auth-storage-sqlite -am test
 mvn -pl auth-websocket-gateway -am test
 ```
 
-Fase 14 agrega tambien la verificacion especifica de SQLite:
+Fase 15 mantiene esas verificaciones como cierre minimo cuando se toca runtime,
+SQLite o Gateway.
+
+## Dependency Audit
 
 ```bash
-mvn -pl auth-storage-sqlite -am test
+mvn dependency:tree
 ```
+
+Resumen versionado:
+
+- `docs/audits/maven-dependency-audit.md`
 
 ## Ejecutar Runtime Modular Con Scripts
 
@@ -135,7 +144,7 @@ mvn -pl auth-client-sdk -am test
 
 ## SQLite Local
 
-Crear base demo:
+Crear o migrar base demo:
 
 ```cmd
 scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
@@ -146,6 +155,9 @@ Linux/macOS:
 ```bash
 scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
 ```
+
+Las migraciones viven en `scripts/sqlite/migrations/` y se registran en
+`schema_version`.
 
 Ejecutar servidores en modo SQLite:
 
@@ -166,6 +178,21 @@ Modo memoria por defecto:
 
 ```text
 AUTH_STORAGE_MODE=memory
+```
+
+Administracion local:
+
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
+```
+
+Registrar cliente/servicio:
+
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfinder --display-name "MelodyFinder" --secret "<secret>" --endpoint local://melodyfinder
 ```
 
 ## WebSocket Gateway
@@ -257,6 +284,29 @@ Checklist manual:
 - eventos `FLOW_*` visibles;
 - `FLOW_RESULT success=true`;
 - servicio concedido visible.
+
+## Sample Login App
+
+`sample-login-app` no usa npm. Con AS, TGS, Service y Gateway levantados:
+
+```cmd
+scripts\run-sample-login-app.bat
+```
+
+Linux/macOS:
+
+```bash
+scripts/run-sample-login-app.sh
+```
+
+Default:
+
+```text
+http://127.0.0.1:5174
+```
+
+Validar flujo exitoso con `clientId=1` y `serviceId=1`. Validar fallo con un
+`serviceId` inexistente. Ver `docs/sample-login-app.md`.
 
 ## Configuracion
 

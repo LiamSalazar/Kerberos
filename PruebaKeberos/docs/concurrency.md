@@ -53,6 +53,11 @@ latencia maxima, promedio, p95, throughput aproximado y errores por tipo.
 No registra secretos, claves, tickets completos, ciphertexts ni material
 criptografico sensible.
 
+La auditoria persistente SQLite de Fase 15 es independiente de esta auditoria de
+concurrencia. El Gateway registra eventos por flujo en `auth_audit_events`
+cuando se ejecuta con `AUTH_STORAGE_MODE=sqlite`; el runner de concurrencia
+mantiene su evidencia en Markdown/JSON bajo `docs/audits/`.
+
 ## Ultima Evidencia Versionada
 
 La ultima corrida versionada fue:

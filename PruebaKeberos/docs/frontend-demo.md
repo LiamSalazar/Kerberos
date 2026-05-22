@@ -3,6 +3,10 @@
 `auth-web-demo` es una demo web local para visualizar el flujo modular
 AS -> TGS -> Service a traves de `auth-websocket-gateway`.
 
+Para una pantalla tipo login orientada a integradores, usar `sample-login-app`.
+Esa mini app no reemplaza `auth-web-demo`; demuestra como una app podria abrir
+una zona protegida tras `FLOW_RESULT success=true`.
+
 No usa React, Vite, TypeScript, bundler ni dependencias npm externas. Es HTML,
 CSS y JavaScript vanilla con scripts Node propios para servir y validar archivos
 estaticos.
@@ -122,3 +126,11 @@ npm run build
 
 El build valida que existan los archivos estaticos principales y copia la demo a
 `auth-web-demo/dist/`, carpeta generada que no se versiona.
+
+## Relacion Con sample-login-app
+
+- `auth-web-demo`: observa el flujo tecnico y sus etapas.
+- `sample-login-app`: simula login y dashboard protegido.
+
+Ambas consumen solamente `auth-websocket-gateway` y no muestran secretos,
+tickets completos, claves ni ciphertexts.

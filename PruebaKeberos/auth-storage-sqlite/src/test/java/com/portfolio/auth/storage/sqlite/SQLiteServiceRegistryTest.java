@@ -28,11 +28,6 @@ class SQLiteServiceRegistryTest {
     }
 
     private Path initializedDatabase() throws Exception {
-        Path database = tempDir.resolve("auth-test.sqlite");
-        SqlScriptRunner.runScripts(
-                database,
-                Path.of("..", "scripts", "sqlite", "schema.sql").normalize(),
-                Path.of("..", "scripts", "sqlite", "seed-demo.sql").normalize());
-        return database;
+        return SQLiteTestSupport.initializedDatabase(tempDir, "auth-test.sqlite");
     }
 }

@@ -36,8 +36,12 @@
 #   scripts\run-audit.bat --iterations 5
 #   scripts\run-concurrency-audit.bat --clients 25 --flows 100
 #   scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
+#   scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
+#   scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
+#   scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
 #   scripts\run-websocket-gateway.bat
 #   scripts\run-web-demo.bat
+#   scripts\run-sample-login-app.bat
 #
 # Linux/macOS shell scripts are also available under scripts/:
 #   scripts/run-as.sh
@@ -47,8 +51,20 @@
 #   scripts/run-audit.sh --iterations 5
 #   scripts/run-concurrency-audit.sh --clients 25 --flows 100
 #   scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
+#   scripts/sqlite-admin.sh --db data/auth-demo.sqlite clients list
+#   scripts/sqlite-admin.sh --db data/auth-demo.sqlite services list
+#   scripts/sqlite-admin.sh --db data/auth-demo.sqlite audit list --limit 20
 #   scripts/run-websocket-gateway.sh
 #   scripts/run-web-demo.sh
+#   scripts/run-sample-login-app.sh
+
+# Python
+# Required only to serve sample-login-app with the provided scripts.
+# No Python packages are required.
+# Verify:
+#   python --version
+# or:
+#   python3 --version
 
 # Configuration modes
 #   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
@@ -82,3 +98,6 @@
 # Phase 14 adds concurrency tests/audits and auth-storage-sqlite as a local
 # SQLite integration. SQLite needs no external server and generated database
 # files are ignored by Git.
+# Phase 15 adds SQLite migrations, persistent Gateway audit, sqlite-admin local
+# administration, Maven dependency audit evidence, and sample-login-app without
+# npm dependencies.

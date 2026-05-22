@@ -20,10 +20,17 @@ La ruta modular es la ruta principal:
 - incluye prueba y auditoria de concurrencia con evidencia versionada.
 - soporta `AUTH_STORAGE_MODE=memory|sqlite`; SQLite es local y sin servidor
   externo.
+- incluye migraciones SQLite versionadas y `schema_version`.
+- registra auditoria persistente local de flujos WebSocket en SQLite cuando se
+  usa `AUTH_STORAGE_MODE=sqlite`.
+- agrega CLI local para registrar/listar/habilitar/deshabilitar clientes y
+  servicios.
 - agrega `auth-websocket-gateway` como capa separada para futuras integraciones
   web, sin reemplazar la ruta TCP modular.
 - agrega `auth-web-demo` como frontend local desacoplado que consume solamente
   el Gateway WebSocket.
+- agrega `sample-login-app` como mini app vanilla para demostrar integracion
+  tipo login.
 
 El codigo legacy fisico ya fue retirado del proyecto principal. Fase 9 retiro
 tambien `auth-transport/javaio` y `auth-transport/legacy`. El contexto
@@ -35,10 +42,10 @@ historico queda documentado en `docs/legacy-summary.md`.
 - `AUTH_MODE=strict` valida presencia de secretos, pero no agrega vault ni
   rotacion real.
 - `InMemoryReplayCache` no es compartida entre procesos.
-- SQLite local no reemplaza una estrategia productiva de persistencia,
-  migraciones, cifrado de secretos ni rotacion.
-- `auth_audit_events` existe como tabla inicial, pero no hay auditoria
-  persistente completa.
+- SQLite local no reemplaza una estrategia productiva de persistencia, cifrado
+  de secretos ni rotacion.
+- La auditoria persistente registra eventos de alto nivel, no trazas completas
+  ni observabilidad distribuida.
 - `JsonMessageCodec` es un codec acotado al proyecto, no un parser JSON
   general-purpose auditado.
 - No hay TLS ni autenticacion mutua de transporte.
@@ -51,8 +58,7 @@ historico queda documentado en `docs/legacy-summary.md`.
 
 ## Prioridad Siguiente
 
-1. Agregar migraciones versionadas, auditoria persistente y manejo mas serio de
-   secretos si la capa SQLite crece.
+1. Agregar manejo mas serio de secretos si la capa SQLite crece.
 2. Endurecer el canal WebSocket/frontend con TLS o autenticacion local si se
    autoriza.
 3. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece

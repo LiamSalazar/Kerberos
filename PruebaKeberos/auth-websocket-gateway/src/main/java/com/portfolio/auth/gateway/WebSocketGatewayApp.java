@@ -1,9 +1,14 @@
 package com.portfolio.auth.gateway;
 
 import com.portfolio.auth.client.AuthClient;
+import com.portfolio.auth.core.audit.AuthEventRepository;
+import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.storage.sqlite.SQLiteAuditRepository;
+import com.portfolio.auth.storage.sqlite.SQLiteMigrationRunner;
 
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 
 public final class WebSocketGatewayApp {
     public static final String ENV_WEBSOCKET_HOST = "AUTH_WS_HOST";
@@ -19,9 +24,11 @@ public final class WebSocketGatewayApp {
         int port = intValue(ENV_WEBSOCKET_PORT, DEFAULT_WEBSOCKET_PORT);
 
         AuthClient authClient = new AuthClient(config);
+        AuthEventRepository auditRepository = auditRepository(config);
         GatewayAuthFlowService flowService = new GatewayAuthFlowService(
                 config,
-                new DefaultGatewayAuthClient(config, authClient));
+                new DefaultGatewayAuthClient(config, authClient),
+                auditRepository);
         AuthWebSocketServer server = new AuthWebSocketServer(
                 new InetSocketAddress(host, port),
                 new WebSocketMessageCodec(),
@@ -30,6 +37,15 @@ public final class WebSocketGatewayApp {
         server.start();
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
         Thread.currentThread().join();
+    }
+
+    private static AuthEventRepository auditRepository(AuthConfig config) throws Exception {
+        if (!config.usesSqliteStorage()) {
+            return NoOpAuthEventRepository.INSTANCE;
+        }
+        Path databasePath = Path.of(config.sqlitePath());
+        SQLiteMigrationRunner.applyMigrations(databasePath);
+        return new SQLiteAuditRepository(databasePath);
     }
 
     private static String value(String key, String defaultValue) {

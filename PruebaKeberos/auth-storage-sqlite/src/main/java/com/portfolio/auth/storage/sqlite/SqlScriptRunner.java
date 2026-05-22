@@ -25,16 +25,27 @@ public final class SqlScriptRunner {
         }
     }
 
-    private static void runScript(Connection connection, Path script) throws IOException, SQLException {
-        String sql = Files.readString(script, StandardCharsets.UTF_8);
+    public static void runScript(Connection connection, Path script) throws IOException, SQLException {
+        String sql = stripLineComments(Files.readString(script, StandardCharsets.UTF_8));
         for (String statementSql : sql.split(";")) {
             String trimmed = statementSql.trim();
-            if (trimmed.isBlank() || trimmed.startsWith("--")) {
+            if (trimmed.isBlank()) {
                 continue;
             }
             try (Statement statement = connection.createStatement()) {
                 statement.execute(trimmed);
             }
         }
+    }
+
+    private static String stripLineComments(String sql) {
+        StringBuilder cleaned = new StringBuilder();
+        for (String line : sql.split("\\R")) {
+            String trimmed = line.trim();
+            if (!trimmed.startsWith("--")) {
+                cleaned.append(line).append(System.lineSeparator());
+            }
+        }
+        return cleaned.toString();
     }
 }

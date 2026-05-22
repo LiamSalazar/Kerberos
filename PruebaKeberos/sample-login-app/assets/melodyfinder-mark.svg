@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="MelodyFinder">
+  <rect width="96" height="96" rx="20" fill="#17202a"/>
+  <path d="M29 64c0 7 6 12 13 10 6-1 10-6 10-12V31l20-5v26c-2-1-5-1-8 0-7 1-12 6-12 12 0 7 6 12 13 10 6-1 11-6 11-12V16L47 23v31c-2-1-5-1-8 0-6 1-10 5-10 10z" fill="#0f8b8d"/>
+  <path d="M25 22h17" stroke="#e85d4f" stroke-width="6" stroke-linecap="round"/>
+  <path d="M22 36h13" stroke="#d7a21f" stroke-width="6" stroke-linecap="round"/>
+</svg>

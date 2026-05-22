@@ -20,6 +20,8 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
   `auth-service`.
 - `auth-web-demo` es una demo frontend local vanilla; mantenerla desacoplada del
   backend y comunicandose solo con `auth-websocket-gateway`.
+- `sample-login-app` es una mini app vanilla para integradores; mantenerla
+  desacoplada del backend y sin frameworks frontend salvo autorizacion futura.
 - Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo
   AS -> TGS -> Service cuando sea viable.
 - Mantener `docs/audits/legacy-dependency-audit.md` actualizado cuando se toque
@@ -29,6 +31,11 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Si se ejecuta auditoria de concurrencia, documentar o versionar la evidencia
   en `docs/audits/concurrency-latest-run.md` y
   `docs/audits/concurrency-latest-run.json`.
+- Mantener `docs/audits/maven-dependency-audit.md` actualizado cuando se toquen
+  dependencias Maven/POM.
+- Mantener `docs/audits/sqlite-audit-sample.md` y
+  `docs/audits/sqlite-audit-sample.json` sincronizados cuando cambie el formato
+  de auditoria SQLite.
 - Respetar `AUTH_MODE=demo/local` para demo y `AUTH_MODE=strict` para
   validacion sin secretos por defecto.
 - Mantener `AUTH_STORAGE_MODE=memory` como modo demo por defecto y
@@ -40,4 +47,5 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
   explicitamente.
 - No introducir Spring Boot. No agregar frameworks frontend salvo que una fase
   futura lo autorice explicitamente.
+- No agregar npm ni frameworks a `sample-login-app` sin autorizacion explicita.
 - Explicar siempre que cambio, como probarlo y que queda pendiente.

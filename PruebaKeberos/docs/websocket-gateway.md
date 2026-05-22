@@ -26,9 +26,9 @@ mal tipados.
 5. El gateway emite `FLOW_EVENT` por etapa.
 6. El gateway responde `FLOW_RESULT` con estado final y latencias.
 
-El gateway es transparente al modo de storage. Si AS, TGS y Service se levantan
-con `AUTH_STORAGE_MODE=sqlite`, el WebSocket Gateway sigue usando el mismo
-contrato y no accede directamente a la base.
+El contrato WebSocket es transparente al modo de storage. Si AS, TGS y Service
+se levantan con `AUTH_STORAGE_MODE=sqlite`, el Gateway mantiene el mismo
+contrato y ademas registra auditoria persistente local en SQLite.
 
 ## Mensajes
 
@@ -153,10 +153,38 @@ http://127.0.0.1:5173
 La UI envia `START_AUTH_FLOW`, procesa `GATEWAY_READY`, `FLOW_EVENT`,
 `FLOW_RESULT`, `ERROR` y `PONG`, y muestra solo informacion de alto nivel.
 
+## Sample Login App
+
+`sample-login-app` usa el mismo contrato WebSocket para simular una app real con
+login y zona protegida:
+
+```cmd
+scripts\run-sample-login-app.bat
+```
+
+Default:
+
+```text
+http://127.0.0.1:5174
+```
+
+Ver `docs/sample-login-app.md`.
+
+## Auditoria SQLite
+
+Con `AUTH_STORAGE_MODE=sqlite`, el Gateway aplica migraciones y registra eventos
+seguros en `auth_audit_events`.
+
+Consultar:
+
+```cmd
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
+```
+
 ## Limites
 
 - El gateway no levanta AS/TGS/Service automaticamente.
-- El gateway no administra SQLite ni repositorios; solo consume el runtime TCP
-  modular.
+- El gateway no administra clientes ni servicios; solo registra auditoria
+  persistente cuando se configura SQLite.
 - No hay TLS ni autenticacion mutua en el canal WebSocket.
 - No hay Docker ni despliegue web en esta fase.

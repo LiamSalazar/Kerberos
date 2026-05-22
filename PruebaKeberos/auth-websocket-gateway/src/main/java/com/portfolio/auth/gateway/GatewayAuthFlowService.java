@@ -1,6 +1,9 @@
 package com.portfolio.auth.gateway;
 
 import com.portfolio.auth.client.AuthClientException;
+import com.portfolio.auth.core.audit.AuthAuditEvent;
+import com.portfolio.auth.core.audit.AuthEventRepository;
+import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
 import com.portfolio.auth.transport.secure.SecureAsResponse;
@@ -13,10 +16,19 @@ import java.util.UUID;
 public final class GatewayAuthFlowService {
     private final AuthConfig config;
     private final GatewayAuthClient authClient;
+    private final AuthEventRepository auditRepository;
 
     public GatewayAuthFlowService(AuthConfig config, GatewayAuthClient authClient) {
+        this(config, authClient, NoOpAuthEventRepository.INSTANCE);
+    }
+
+    public GatewayAuthFlowService(
+            AuthConfig config,
+            GatewayAuthClient authClient,
+            AuthEventRepository auditRepository) {
         this.config = Objects.requireNonNull(config, "config");
         this.authClient = Objects.requireNonNull(authClient, "authClient");
+        this.auditRepository = Objects.requireNonNull(auditRepository, "auditRepository");
     }
 
     public WebSocketMessage run(WebSocketMessage input, WebSocketEventPublisher publisher) {
@@ -33,12 +45,25 @@ public final class GatewayAuthFlowService {
         long tgsMillis = 0;
         long serviceMillis = 0;
 
+        auditRepository.append(AuthAuditEvent.started(
+                session.requestId(),
+                session.clientId(),
+                session.serviceId(),
+                session.startedAt()));
         publisher.publish(WebSocketMessage.flowEvent(session.requestId(), WebSocketFlowStage.FLOW_STARTED,
                 "Flujo modular iniciado"));
 
         if (!authClient.configuredClientId().equals(session.clientId())) {
             publisher.publish(WebSocketMessage.flowEvent(session.requestId(), WebSocketFlowStage.FLOW_ERROR,
                     "Cliente no registrado en la configuracion local"));
+            long totalMillis = elapsedMillis(started);
+            auditRepository.append(AuthAuditEvent.failed(
+                    session.requestId(),
+                    session.clientId(),
+                    session.serviceId(),
+                    "UNKNOWN_CLIENT",
+                    totalMillis,
+                    Instant.now()));
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,
@@ -46,7 +71,7 @@ public final class GatewayAuthFlowService {
                     asMillis,
                     tgsMillis,
                     serviceMillis,
-                    elapsedMillis(started));
+                    totalMillis);
         }
 
         try {
@@ -87,6 +112,13 @@ public final class GatewayAuthFlowService {
 
             publisher.publish(WebSocketMessage.flowEvent(session.requestId(), WebSocketFlowStage.FLOW_SUCCESS,
                     "Flujo modular completado"));
+            long totalMillis = elapsedMillis(started);
+            auditRepository.append(AuthAuditEvent.succeeded(
+                    session.requestId(),
+                    session.clientId(),
+                    session.serviceId(),
+                    totalMillis,
+                    Instant.now()));
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     serviceResponse.accessGranted(),
@@ -94,10 +126,18 @@ public final class GatewayAuthFlowService {
                     asMillis,
                     tgsMillis,
                     serviceMillis,
-                    elapsedMillis(started));
+                    totalMillis);
         } catch (Exception e) {
             String message = safeMessage(e);
             publisher.publish(WebSocketMessage.flowEvent(session.requestId(), WebSocketFlowStage.FLOW_ERROR, message));
+            long totalMillis = elapsedMillis(started);
+            auditRepository.append(AuthAuditEvent.failed(
+                    session.requestId(),
+                    session.clientId(),
+                    session.serviceId(),
+                    errorType(e),
+                    totalMillis,
+                    Instant.now()));
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,
@@ -105,7 +145,7 @@ public final class GatewayAuthFlowService {
                     asMillis,
                     tgsMillis,
                     serviceMillis,
-                    elapsedMillis(started));
+                    totalMillis);
         }
     }
 
@@ -136,5 +176,12 @@ public final class GatewayAuthFlowService {
             return e.getClass().getSimpleName();
         }
         return e.getClass().getSimpleName() + ": " + message;
+    }
+
+    private static String errorType(Exception e) {
+        if (e instanceof AuthClientException authError) {
+            return authError.errorResponse().errorCode();
+        }
+        return e.getClass().getSimpleName();
     }
 }

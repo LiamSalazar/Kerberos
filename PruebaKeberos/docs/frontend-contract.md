@@ -1,6 +1,6 @@
 # Frontend Contract
 
-Este contrato describe como `auth-web-demo` y cualquier futura interfaz web
+Este contrato describe como `auth-web-demo`, `sample-login-app` y cualquier futura interfaz web
 deben comunicarse con `auth-websocket-gateway`.
 
 El gateway es una capa de integracion: no reemplaza `auth-as`, `auth-tgs` ni
@@ -170,3 +170,5 @@ Los mensajes WebSocket actuales exponen solo estado, texto de alto nivel y
 latencias basicas. `auth-web-demo` evita renderizar detalles con nombres de
 secretos, claves, tickets, ciphertexts, `CryptoEnvelope` o payloads internos. El
 canal aun no tiene TLS ni autenticacion mutua; eso queda para una fase posterior.
+Cuando el Gateway corre con `AUTH_STORAGE_MODE=sqlite`, registra eventos de alto
+nivel en `auth_audit_events` sin incluir secretos ni payloads sensibles.

@@ -34,6 +34,8 @@
 #   scripts\run-service.bat
 #   scripts\run-client.bat
 #   scripts\run-audit.bat --iterations 5
+#   scripts\run-concurrency-audit.bat --clients 25 --flows 100
+#   scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
 #   scripts\run-websocket-gateway.bat
 #   scripts\run-web-demo.bat
 #
@@ -43,12 +45,17 @@
 #   scripts/run-service.sh
 #   scripts/run-client.sh
 #   scripts/run-audit.sh --iterations 5
+#   scripts/run-concurrency-audit.sh --clients 25 --flows 100
+#   scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
 #   scripts/run-websocket-gateway.sh
 #   scripts/run-web-demo.sh
 
 # Configuration modes
 #   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
 #   AUTH_MODE=strict requires explicit secrets and rejects defaults.
+#   AUTH_STORAGE_MODE=memory uses in-memory demo repositories.
+#   AUTH_STORAGE_MODE=sqlite uses SQLite through org.xerial:sqlite-jdbc.
+#   AUTH_SQLITE_PATH points to the local SQLite database file.
 
 # Operating system
 # Tested/recommended local execution targets:
@@ -72,3 +79,6 @@
 # Phase 11 adds real WebSocket E2E tests and documents the frontend contract.
 # Phase 12 + Phase 13 add auth-web-demo, a vanilla local frontend integrated
 # with auth-websocket-gateway. It has no external npm dependencies.
+# Phase 14 adds concurrency tests/audits and auth-storage-sqlite as a local
+# SQLite integration. SQLite needs no external server and generated database
+# files are ignored by Git.

@@ -6,6 +6,7 @@ import com.portfolio.auth.core.protocol.dto.ClientAuthenticator;
 import com.portfolio.auth.core.protocol.dto.ErrorResponse;
 import com.portfolio.auth.core.protocol.dto.TicketService;
 import com.portfolio.auth.core.protocol.dto.TicketTgs;
+import com.portfolio.auth.core.repository.ServiceRegistry;
 import com.portfolio.auth.core.replay.ReplayCache;
 import com.portfolio.auth.crypto.CryptoEnvelope;
 import com.portfolio.auth.crypto.SessionKeys;
@@ -25,14 +26,14 @@ import java.util.UUID;
 
 public final class TicketGrantingHandler implements MessageHandler {
     private final AuthConfig config;
-    private final InMemoryServiceRegistry registry;
+    private final ServiceRegistry registry;
     private final ReplayCache replayCache;
     private final JsonMessageCodec codec;
     private final SecureJsonCrypto secureJsonCrypto;
 
     public TicketGrantingHandler(
             AuthConfig config,
-            InMemoryServiceRegistry registry,
+            ServiceRegistry registry,
             ReplayCache replayCache,
             JsonMessageCodec codec,
             SecureJsonCrypto secureJsonCrypto) {

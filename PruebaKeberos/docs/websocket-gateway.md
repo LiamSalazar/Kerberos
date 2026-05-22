@@ -26,6 +26,10 @@ mal tipados.
 5. El gateway emite `FLOW_EVENT` por etapa.
 6. El gateway responde `FLOW_RESULT` con estado final y latencias.
 
+El gateway es transparente al modo de storage. Si AS, TGS y Service se levantan
+con `AUTH_STORAGE_MODE=sqlite`, el WebSocket Gateway sigue usando el mismo
+contrato y no accede directamente a la base.
+
 ## Mensajes
 
 Entrada:
@@ -152,5 +156,7 @@ La UI envia `START_AUTH_FLOW`, procesa `GATEWAY_READY`, `FLOW_EVENT`,
 ## Limites
 
 - El gateway no levanta AS/TGS/Service automaticamente.
+- El gateway no administra SQLite ni repositorios; solo consume el runtime TCP
+  modular.
 - No hay TLS ni autenticacion mutua en el canal WebSocket.
 - No hay Docker ni despliegue web en esta fase.

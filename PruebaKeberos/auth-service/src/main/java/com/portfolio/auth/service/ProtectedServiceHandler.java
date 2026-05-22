@@ -6,6 +6,8 @@ import com.portfolio.auth.core.protocol.dto.ClientAuthenticator;
 import com.portfolio.auth.core.protocol.dto.ErrorResponse;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
 import com.portfolio.auth.core.protocol.dto.TicketService;
+import com.portfolio.auth.core.repository.InMemoryServiceRegistry;
+import com.portfolio.auth.core.repository.ServiceRegistry;
 import com.portfolio.auth.core.replay.ReplayCache;
 import com.portfolio.auth.crypto.CryptoEnvelope;
 import com.portfolio.auth.transport.json.JsonMessageCodec;
@@ -23,7 +25,7 @@ import java.util.Objects;
 
 public final class ProtectedServiceHandler implements MessageHandler {
     private final AuthConfig config;
-    private final Map<String, String> serviceSecrets;
+    private final ServiceRegistry serviceRegistry;
     private final ProtectedResource resource;
     private final ReplayCache replayCache;
     private final JsonMessageCodec codec;
@@ -31,13 +33,13 @@ public final class ProtectedServiceHandler implements MessageHandler {
 
     public ProtectedServiceHandler(
             AuthConfig config,
-            Map<String, String> serviceSecrets,
+            ServiceRegistry serviceRegistry,
             ProtectedResource resource,
             ReplayCache replayCache,
             JsonMessageCodec codec,
             SecureJsonCrypto secureJsonCrypto) {
         this.config = Objects.requireNonNull(config, "config");
-        this.serviceSecrets = Map.copyOf(serviceSecrets);
+        this.serviceRegistry = Objects.requireNonNull(serviceRegistry, "serviceRegistry");
         this.resource = Objects.requireNonNull(resource, "resource");
         this.replayCache = Objects.requireNonNull(replayCache, "replayCache");
         this.codec = Objects.requireNonNull(codec, "codec");
@@ -46,6 +48,22 @@ public final class ProtectedServiceHandler implements MessageHandler {
 
     public static Map<String, String> defaultSecrets(AuthConfig config) {
         return Map.of(config.defaultServiceId(), config.demoServiceSecret());
+    }
+
+    public ProtectedServiceHandler(
+            AuthConfig config,
+            Map<String, String> serviceSecrets,
+            ProtectedResource resource,
+            ReplayCache replayCache,
+            JsonMessageCodec codec,
+            SecureJsonCrypto secureJsonCrypto) {
+        this(
+                config,
+                InMemoryServiceRegistry.forServiceSecrets(serviceSecrets),
+                resource,
+                replayCache,
+                codec,
+                secureJsonCrypto);
     }
 
     @Override
@@ -60,7 +78,7 @@ public final class ProtectedServiceHandler implements MessageHandler {
             return error(request.requestId(), "SERVICE_REPLAY", "requestId de servicio repetido");
         }
 
-        String serviceSecret = serviceSecrets.get(request.serviceId());
+        String serviceSecret = serviceRegistry.serviceSecret(request.serviceId()).orElse(null);
         if (serviceSecret == null) {
             return error(request.requestId(), "SERVICE_UNKNOWN", "Servicio no registrado");
         }
@@ -87,6 +105,11 @@ public final class ProtectedServiceHandler implements MessageHandler {
         }
 
         Instant now = Instant.now();
+        ProtectedServiceResponse protectedResponse = resource.execute(new ProtectedServiceRequest(
+                request.requestId(),
+                ticket.clientId(),
+                ticket.serviceId(),
+                now));
         ServiceResponse response = new ServiceResponse(
                 request.version(),
                 request.requestId(),
@@ -96,8 +119,8 @@ public final class ProtectedServiceHandler implements MessageHandler {
                 ticket.serviceId(),
                 authenticator.issuedAt(),
                 now,
-                resource.read(),
-                true);
+                protectedResponse.serviceMessage(),
+                protectedResponse.accessGranted());
         CryptoEnvelope encryptedResponse = secureJsonCrypto.encrypt(
                 response,
                 ticket.clientServiceSessionKey(),

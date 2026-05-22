@@ -1,11 +1,12 @@
 package com.portfolio.auth.as;
 
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.repository.PrincipalRepository;
 
 import java.util.Map;
 import java.util.Optional;
 
-public final class InMemoryPrincipalRepository {
+public final class InMemoryPrincipalRepository implements PrincipalRepository {
     private final Map<String, String> clientSecrets;
     private final Map<String, String> ticketGrantingServerSecrets;
 
@@ -20,10 +21,12 @@ public final class InMemoryPrincipalRepository {
                 Map.of(config.defaultTicketGrantingServerId(), config.demoTicketGrantingServerSecret()));
     }
 
+    @Override
     public Optional<String> clientSecret(String clientId) {
         return Optional.ofNullable(clientSecrets.get(clientId));
     }
 
+    @Override
     public Optional<String> ticketGrantingServerSecret(String tgsId) {
         return Optional.ofNullable(ticketGrantingServerSecrets.get(tgsId));
     }

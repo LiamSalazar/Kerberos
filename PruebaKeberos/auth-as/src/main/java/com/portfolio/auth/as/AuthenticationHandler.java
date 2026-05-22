@@ -5,6 +5,7 @@ import com.portfolio.auth.core.protocol.ProtocolDefaults;
 import com.portfolio.auth.core.protocol.dto.AsRequest;
 import com.portfolio.auth.core.protocol.dto.ErrorResponse;
 import com.portfolio.auth.core.protocol.dto.TicketTgs;
+import com.portfolio.auth.core.repository.PrincipalRepository;
 import com.portfolio.auth.crypto.CryptoEnvelope;
 import com.portfolio.auth.crypto.SessionKeys;
 import com.portfolio.auth.transport.json.JsonMessageCodec;
@@ -21,13 +22,13 @@ import java.util.UUID;
 
 public final class AuthenticationHandler implements MessageHandler {
     private final AuthConfig config;
-    private final InMemoryPrincipalRepository principals;
+    private final PrincipalRepository principals;
     private final JsonMessageCodec codec;
     private final SecureJsonCrypto secureJsonCrypto;
 
     public AuthenticationHandler(
             AuthConfig config,
-            InMemoryPrincipalRepository principals,
+            PrincipalRepository principals,
             JsonMessageCodec codec,
             SecureJsonCrypto secureJsonCrypto) {
         this.config = Objects.requireNonNull(config, "config");

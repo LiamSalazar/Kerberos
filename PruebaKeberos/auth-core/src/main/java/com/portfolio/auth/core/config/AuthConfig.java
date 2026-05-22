@@ -29,7 +29,9 @@ public record AuthConfig(
         String demoTicketGrantingServerSecret,
         String demoClientServiceSessionKey,
         String demoServiceSecret,
-        String demoPbkdf2Salt
+        String demoPbkdf2Salt,
+        String storageMode,
+        String sqlitePath
 ) implements Serializable {
     public static final String DEFAULT_LOCAL_CLIENT_ID = "1";
     public static final String DEFAULT_LOCAL_TGS_ID = "1";
@@ -47,12 +49,18 @@ public record AuthConfig(
     public static final String DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY = "contraseñaClienteServidor";
     public static final String DEFAULT_LOCAL_DEMO_SERVICE_SECRET = "contraseñaServidor";
     public static final String DEFAULT_LOCAL_DEMO_PBKDF2_SALT = "12345678";
+    public static final String DEFAULT_LOCAL_STORAGE_MODE = "memory";
+    public static final String DEFAULT_LOCAL_SQLITE_PATH = "data/auth-demo.sqlite";
 
     public static final String MODE_DEMO = "demo";
     public static final String MODE_LOCAL = "local";
     public static final String MODE_STRICT = "strict";
+    public static final String STORAGE_MODE_MEMORY = "memory";
+    public static final String STORAGE_MODE_SQLITE = "sqlite";
 
     public static final String ENV_AUTH_MODE = "AUTH_MODE";
+    public static final String ENV_STORAGE_MODE = "AUTH_STORAGE_MODE";
+    public static final String ENV_SQLITE_PATH = "AUTH_SQLITE_PATH";
     public static final String ENV_CLIENT_ID = "AUTH_DEMO_CLIENT_ID";
     public static final String ENV_TGS_ID = "AUTH_DEMO_TGS_ID";
     public static final String ENV_SERVICE_ID = "AUTH_DEMO_SERVICE_ID";
@@ -93,7 +101,9 @@ public record AuthConfig(
                 DEFAULT_LOCAL_DEMO_TGS_SECRET,
                 DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY,
                 DEFAULT_LOCAL_DEMO_SERVICE_SECRET,
-                DEFAULT_LOCAL_DEMO_PBKDF2_SALT);
+                DEFAULT_LOCAL_DEMO_PBKDF2_SALT,
+                DEFAULT_LOCAL_STORAGE_MODE,
+                DEFAULT_LOCAL_SQLITE_PATH);
     }
 
     public static AuthConfig fromEnvironment() {
@@ -122,7 +132,9 @@ public record AuthConfig(
                 value(environment, ENV_DEMO_TGS_SECRET, defaults.demoTicketGrantingServerSecret()),
                 value(environment, ENV_DEMO_CLIENT_SERVICE_KEY, defaults.demoClientServiceSessionKey()),
                 value(environment, ENV_DEMO_SERVICE_SECRET, defaults.demoServiceSecret()),
-                value(environment, ENV_DEMO_PBKDF2_SALT, defaults.demoPbkdf2Salt()));
+                value(environment, ENV_DEMO_PBKDF2_SALT, defaults.demoPbkdf2Salt()),
+                storageMode(environment),
+                value(environment, ENV_SQLITE_PATH, defaults.sqlitePath()));
 
         if (isStrictMode(environment)) {
             validateStrictMode(environment, config);
@@ -141,6 +153,19 @@ public record AuthConfig(
         }
         throw new IllegalArgumentException(
                 ENV_AUTH_MODE + " debe ser '" + MODE_DEMO + "', '" + MODE_LOCAL + "' o '" + MODE_STRICT + "'");
+    }
+
+    public static String storageMode(Map<String, String> environment) {
+        String configured = value(environment, ENV_STORAGE_MODE, DEFAULT_LOCAL_STORAGE_MODE).trim().toLowerCase();
+        if (STORAGE_MODE_MEMORY.equals(configured) || STORAGE_MODE_SQLITE.equals(configured)) {
+            return configured;
+        }
+        throw new IllegalArgumentException(
+                ENV_STORAGE_MODE + " debe ser '" + STORAGE_MODE_MEMORY + "' o '" + STORAGE_MODE_SQLITE + "'");
+    }
+
+    public boolean usesSqliteStorage() {
+        return STORAGE_MODE_SQLITE.equals(storageMode());
     }
 
     public boolean usesDemoSecrets() {

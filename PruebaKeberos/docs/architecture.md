@@ -5,7 +5,8 @@ legacy fisico ya fue retirado, y Fase 9 elimino tambien los paquetes internos
 `auth-transport/javaio` y `auth-transport/legacy`. Fase 10 agrego
 `auth-websocket-gateway` como capa separada de integracion. Fase 12 + Fase 13
 agregan `auth-web-demo`, una demo web local que consume el gateway sin acoplarse
-al runtime TCP modular.
+al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
+`auth-storage-sqlite` como primera integracion persistente local.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -17,6 +18,7 @@ critica.
 | `auth-core` | DTOs, `AuthConfig`, `ReplayCache` | Activo |
 | `auth-crypto` | `CryptoEnvelope`, AES-GCM, derivacion de claves | Activo |
 | `auth-transport` | `ProtocolEnvelope`, JSON, TCP y DTOs seguros | Activo |
+| `auth-storage-sqlite` | Repositorios SQLite para clientes y servicios | Activo |
 | `auth-as` | `AuthenticationServerApp`, `AuthenticationHandler` | Ejecutable |
 | `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
 | `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
@@ -34,6 +36,40 @@ critica.
 4. TGS devuelve ticket de servicio y clave de sesion cliente-servicio.
 5. Client presenta ticket y autenticador al Service.
 6. Service devuelve `ServiceResponse` cifrado.
+
+## Storage
+
+La ruta modular soporta dos modos:
+
+- `AUTH_STORAGE_MODE=memory`: modo demo por defecto con repositorios en memoria.
+- `AUTH_STORAGE_MODE=sqlite`: AS, TGS y Service cargan clientes, TGS y servicios
+  desde una base SQLite local indicada por `AUTH_SQLITE_PATH`.
+
+Las interfaces viven en `auth-core`:
+
+- `PrincipalRepository`
+- `ServiceRegistry`
+
+Implementaciones actuales:
+
+- `InMemoryPrincipalRepository`
+- `InMemoryServiceRegistry`
+- `SQLitePrincipalRepository`
+- `SQLiteServiceRegistry`
+
+SQLite se mantiene en un modulo separado para evitar acoplar `auth-core` a JDBC.
+No hay ORM ni servidor externo.
+
+## API De Servicio Protegido
+
+`auth-service` expone `ProtectedResource` como interfaz:
+
+- `getServiceId()`
+- `execute(ProtectedServiceRequest request)`
+
+`ProtectedServiceHandler` valida el protocolo antes de llamar al recurso. La
+implementacion actual es `DemoProtectedResource`; servicios reales pueden crear
+su propia implementacion sin cambiar AS/TGS.
 
 ## WebSocket Gateway
 
@@ -104,6 +140,9 @@ Se cifran con AES-GCM:
 
 - `AUTH_MODE=demo` o `AUTH_MODE=local`: permite secretos por defecto para demo.
 - `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
+- `AUTH_STORAGE_MODE=memory|sqlite`: selecciona repositorios en memoria o
+  SQLite local.
+- `AUTH_SQLITE_PATH`: ruta de base SQLite cuando se usa `sqlite`.
 
 Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
 `AuthConfig` exige valores explicitos y rechaza los defaults de demo.
@@ -112,7 +151,8 @@ Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
 
 La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
 transporte seguro JSON + AES-GCM, integracion modular con casos negativos,
-pruebas unitarias del WebSocket Gateway y una prueba E2E WebSocket real.
+concurrencia, SQLite local, pruebas unitarias del WebSocket Gateway y una prueba
+E2E WebSocket real.
 
 La demo web se valida por separado con `npm install` y `npm run build` dentro de
 `auth-web-demo`.
@@ -127,5 +167,7 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 - Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
   acotado.
+- Agregar migraciones versionadas y auditoria persistente si la integracion de
+  base de datos crece.
 - Agregar Docker solo en una fase futura autorizada.
 - Evaluar pruebas E2E de navegador para la demo web.

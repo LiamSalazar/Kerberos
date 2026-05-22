@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0.."
-call mvn -q -DskipTests compile
+call mvn -q -pl auth-service -am -DskipTests package org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy-dependencies "-DoutputDirectory=target/dependency" "-DincludeScope=runtime"
 if errorlevel 1 exit /b %errorlevel%
-set "AUTH_CP=auth-core\target\classes;auth-crypto\target\classes;auth-transport\target\classes;auth-as\target\classes;auth-tgs\target\classes;auth-service\target\classes;auth-client-sdk\target\classes"
+set "AUTH_CP=auth-service\target\classes;auth-service\target\dependency\*"
 java -cp "%AUTH_CP%" com.portfolio.auth.service.ProtectedServiceApp %*

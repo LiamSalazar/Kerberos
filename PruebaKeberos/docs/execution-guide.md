@@ -19,12 +19,18 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En Fase 12 + Fase 13 fueron ejecutados y pasaron:
+Comandos principales de verificacion:
 
 ```bash
 mvn -q -DskipTests compile
 mvn test
 mvn -pl auth-websocket-gateway -am test
+```
+
+Fase 14 agrega tambien la verificacion especifica de SQLite:
+
+```bash
+mvn -pl auth-storage-sqlite -am test
 ```
 
 ## Ejecutar Runtime Modular Con Scripts
@@ -47,7 +53,9 @@ scripts\run-service.bat
 scripts\run-client.bat
 ```
 
-Los scripts ejecutan `mvn -q -DskipTests compile` antes de lanzar la clase Java.
+Los scripts compilan con Maven y preparan el classpath runtime antes de lanzar
+la clase Java. Esto permite usar tanto `AUTH_STORAGE_MODE=memory` como
+`AUTH_STORAGE_MODE=sqlite`.
 
 En Linux/macOS:
 
@@ -84,6 +92,9 @@ java -cp auth-service\target\classes;auth-core\target\classes;auth-crypto\target
 java -cp auth-client-sdk\target\classes;auth-core\target\classes;auth-crypto\target\classes;auth-transport\target\classes com.portfolio.auth.client.ClientCli
 ```
 
+Para ejecucion manual con SQLite, usa preferentemente los scripts porque
+incluyen `sqlite-jdbc` en el classpath.
+
 ## Auditoria Modular
 
 Con AS, TGS y Service modulares levantados:
@@ -96,6 +107,66 @@ El runner genera:
 
 - `docs/audits/latest-run.md`
 - `docs/audits/latest-run.json`
+
+## Auditoria De Concurrencia
+
+Con AS, TGS y Service modulares levantados:
+
+```cmd
+scripts\run-concurrency-audit.bat --clients 25 --flows 100
+```
+
+Linux/macOS:
+
+```bash
+scripts/run-concurrency-audit.sh --clients 25 --flows 100
+```
+
+El runner genera:
+
+- `docs/audits/concurrency-latest-run.md`
+- `docs/audits/concurrency-latest-run.json`
+
+Tambien existe una prueba Maven que levanta servidores en puertos dinamicos:
+
+```bash
+mvn -pl auth-client-sdk -am test
+```
+
+## SQLite Local
+
+Crear base demo:
+
+```cmd
+scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
+```
+
+Linux/macOS:
+
+```bash
+scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
+```
+
+Ejecutar servidores en modo SQLite:
+
+```cmd
+set AUTH_STORAGE_MODE=sqlite
+set AUTH_SQLITE_PATH=data\auth-demo.sqlite
+scripts\run-as.bat
+```
+
+Repite las mismas variables para:
+
+```cmd
+scripts\run-tgs.bat
+scripts\run-service.bat
+```
+
+Modo memoria por defecto:
+
+```text
+AUTH_STORAGE_MODE=memory
+```
 
 ## WebSocket Gateway
 
@@ -201,6 +272,8 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
+- `AUTH_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_SQLITE_PATH`: ruta SQLite local.
 - `AUTH_DEMO_CLIENT_SECRET`
 - `AUTH_DEMO_CLIENT_TGS_KEY`
 - `AUTH_DEMO_TGS_SECRET`

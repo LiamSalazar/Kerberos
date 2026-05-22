@@ -4,6 +4,9 @@ target/
 *.class
 *.ser
 *.log
+*.db
+*.sqlite
+*.sqlite3
 sources.txt
 auth-web-demo/dist/
 auth-web-demo/node_modules/

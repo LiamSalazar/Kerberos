@@ -15,6 +15,7 @@
         <module>auth-core</module>
         <module>auth-crypto</module>
         <module>auth-transport</module>
+        <module>auth-storage-sqlite</module>
         <module>auth-as</module>
         <module>auth-tgs</module>
         <module>auth-service</module>
@@ -29,6 +30,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
         <java.websocket.version>1.5.6</java.websocket.version>
+        <sqlite.jdbc.version>3.45.3.0</sqlite.jdbc.version>
     </properties>
 
     <dependencyManagement>
@@ -43,6 +45,11 @@
                 <groupId>org.java-websocket</groupId>
                 <artifactId>Java-WebSocket</artifactId>
                 <version>${java.websocket.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite.jdbc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

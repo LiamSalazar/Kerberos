@@ -1,7 +1,9 @@
 package com.portfolio.auth.as;
 
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.repository.PrincipalRepository;
 import com.portfolio.auth.crypto.AesGcmCryptoService;
+import com.portfolio.auth.storage.sqlite.SQLitePrincipalRepository;
 import com.portfolio.auth.transport.json.JsonMessageCodec;
 import com.portfolio.auth.transport.protocol.MessageType;
 import com.portfolio.auth.transport.secure.SecureJsonCrypto;
@@ -14,9 +16,12 @@ public final class AuthenticationServerApp {
     public static void main(String[] args) throws Exception {
         AuthConfig config = AuthConfig.fromEnvironment();
         JsonMessageCodec codec = new JsonMessageCodec();
+        PrincipalRepository principals = config.usesSqliteStorage()
+                ? new SQLitePrincipalRepository(java.nio.file.Path.of(config.sqlitePath()))
+                : InMemoryPrincipalRepository.fromConfig(config);
         AuthenticationHandler handler = new AuthenticationHandler(
                 config,
-                InMemoryPrincipalRepository.fromConfig(config),
+                principals,
                 codec,
                 new SecureJsonCrypto(codec, new AesGcmCryptoService(), config.demoPbkdf2Salt()));
         TcpMessageServer server = new TcpMessageServer(

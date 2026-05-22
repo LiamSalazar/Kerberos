@@ -1,18 +1,11 @@
 package com.portfolio.auth.service;
 
-public final class ProtectedResource {
-    private final String message;
+public interface ProtectedResource {
+    String getServiceId();
 
-    public ProtectedResource(String message) {
-        this.message = message;
-    }
+    ProtectedServiceResponse execute(ProtectedServiceRequest request);
 
-    public static ProtectedResource demo() {
-        return new ProtectedResource(
-                "This is a protected resource. You have successfully authenticated using Kerberos and can access this message.");
-    }
-
-    public String read() {
-        return message;
+    static ProtectedResource demo() {
+        return DemoProtectedResource.create();
     }
 }

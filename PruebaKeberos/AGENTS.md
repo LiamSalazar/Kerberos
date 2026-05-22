@@ -26,8 +26,14 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
   independencia legacy.
 - Si se ejecuta auditoria modular, documentar o versionar la evidencia en
   `docs/audits/latest-run.md` y `docs/audits/latest-run.json`.
+- Si se ejecuta auditoria de concurrencia, documentar o versionar la evidencia
+  en `docs/audits/concurrency-latest-run.md` y
+  `docs/audits/concurrency-latest-run.json`.
 - Respetar `AUTH_MODE=demo/local` para demo y `AUTH_MODE=strict` para
   validacion sin secretos por defecto.
+- Mantener `AUTH_STORAGE_MODE=memory` como modo demo por defecto y
+  `AUTH_STORAGE_MODE=sqlite` como integracion local verificable.
+- No versionar bases generadas `*.db`, `*.sqlite` ni `*.sqlite3`.
 - Preferir documentacion honesta sobre afirmaciones exageradas.
 - Mantener ejecucion local sin Docker como requisito actual.
 - Dejar Docker y Docker Compose como trabajo futuro hasta que se autorice

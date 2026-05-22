@@ -21,6 +21,8 @@ class AuthConfigTest {
         assertEquals(AuthConfig.DEFAULT_LOCAL_AS_PORT, config.authenticationServerPort());
         assertEquals(AuthConfig.DEFAULT_LOCAL_TICKET_LIFETIME, config.ticketLifetime());
         assertEquals(AuthConfig.DEFAULT_LOCAL_DEMO_CLIENT_SECRET, config.demoClientSecret());
+        assertEquals(AuthConfig.STORAGE_MODE_MEMORY, config.storageMode());
+        assertEquals(AuthConfig.DEFAULT_LOCAL_SQLITE_PATH, config.sqlitePath());
         assertTrue(config.usesDemoSecrets());
     }
 
@@ -32,7 +34,9 @@ class AuthConfigTest {
                 AuthConfig.ENV_SERVICE_PORT, "2102",
                 AuthConfig.ENV_TICKET_TTL_MINUTES, "9",
                 AuthConfig.ENV_ALLOWED_SKEW_SECONDS, "30",
-                AuthConfig.ENV_REPLAY_WINDOW_SECONDS, "45"));
+                AuthConfig.ENV_REPLAY_WINDOW_SECONDS, "45",
+                AuthConfig.ENV_STORAGE_MODE, AuthConfig.STORAGE_MODE_SQLITE,
+                AuthConfig.ENV_SQLITE_PATH, "target/test-auth.sqlite"));
 
         assertEquals(2100, config.authenticationServerPort());
         assertEquals(2101, config.ticketGrantingServerPort());
@@ -40,6 +44,9 @@ class AuthConfigTest {
         assertEquals(Duration.ofMinutes(9), config.ticketLifetime());
         assertEquals(Duration.ofSeconds(30), config.allowedClockSkew());
         assertEquals(Duration.ofSeconds(45), config.replayWindow());
+        assertEquals(AuthConfig.STORAGE_MODE_SQLITE, config.storageMode());
+        assertEquals("target/test-auth.sqlite", config.sqlitePath());
+        assertTrue(config.usesSqliteStorage());
     }
 
     @Test
@@ -83,5 +90,13 @@ class AuthConfigTest {
                 () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, "prod")));
 
         assertTrue(error.getMessage().contains(AuthConfig.ENV_AUTH_MODE));
+    }
+
+    @Test
+    void shouldRejectUnknownStorageMode() {
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_STORAGE_MODE, "postgres")));
+
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_STORAGE_MODE));
     }
 }

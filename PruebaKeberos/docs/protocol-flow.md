@@ -16,6 +16,10 @@ El transporte TCP usa un mensaje JSON por conexion. El servidor modular valida
 payload no vacio, tamano maximo, timeout de lectura y, cuando se configura,
 `MessageType` esperado por endpoint.
 
+El protocolo no cambia entre `AUTH_STORAGE_MODE=memory` y
+`AUTH_STORAGE_MODE=sqlite`; solo cambia la fuente interna de clientes, TGS y
+servicios.
+
 ## Flujo
 
 1. Client envia `AS_REQUEST` con `AsRequest`.
@@ -97,6 +101,8 @@ Casos cubiertos por pruebas unitarias, de componente o de integracion:
   disponibles a nivel de gateway.
 - flujo WebSocket E2E real con AS, TGS, Service y Gateway levantados en pruebas
   Maven.
+- concurrencia con multiples clientes y flujos simultaneos;
+- flujo AS -> TGS -> Service respaldado por SQLite temporal en pruebas Maven.
 
 ## Estado Legacy
 

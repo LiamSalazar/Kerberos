@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-05-22T05:43:26.745823500Z",
+  "javaVersion": "19",
+  "operatingSystem": "Windows 11 10.0",
+  "commitHash": "1160869",
+  "command": "com.portfolio.auth.client.audit.ModularAuthConcurrencyAuditRunner --clients 25 --flows 100",
+  "concurrentClients": 25,
+  "totalFlows": 100,
+  "successes": 100,
+  "failures": 0,
+  "throughputPerSecond": 9.038825,
+  "p95TotalMs": 5698.616,
+  "latencyMs": {
+    "asExchange": {"min": 131.544, "max": 4063.657, "average": 1255.533},
+    "tgsExchange": {"min": 359.796, "max": 1221.686, "average": 775.459},
+    "serviceExchange": {"min": 194.248, "max": 1054.867, "average": 605.769},
+    "total": {"min": 947.352, "max": 5839.143, "average": 2636.763}
+  },
+  "errorsByType": {}
+}

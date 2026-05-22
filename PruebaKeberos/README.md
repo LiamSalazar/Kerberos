@@ -11,17 +11,18 @@ pruebas y ejecucion local reproducible.
 
 ## Estado Actual
 
-Fase actual: **Fase 12 + Fase 13: frontend demo local e integracion real con WebSocket Gateway**.
+Fase actual: **Fase 14: pruebas de concurrencia e integrabilidad real con SQLite**.
 
 | Area | Rol | Estado |
 | --- | --- | --- |
 | `auth-core/` | DTOs del protocolo, configuracion y replay cache | Activo |
 | `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion | Activo |
 | `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros | Activo |
+| `auth-storage-sqlite/` | Repositorios SQLite locales para clientes y servicios | Activo |
 | `auth-as/` | Authentication Server modular | Ejecutable |
 | `auth-tgs/` | Ticket Granting Server modular | Ejecutable |
 | `auth-service/` | Servicio protegido modular | Ejecutable |
-| `auth-client-sdk/` | Cliente modular, CLI y audit runner | Ejecutable |
+| `auth-client-sdk/` | Cliente modular, CLI, audit runner y concurrencia | Ejecutable |
 | `auth-websocket-gateway/` | Gateway WebSocket separado para futuras integraciones web | Ejecutable |
 | `auth-web-demo/` | Frontend vanilla local para observar el flujo via WebSocket | Demo local |
 | `docs/` | Documentacion tecnica y auditorias | Activa |
@@ -50,7 +51,8 @@ sequenceDiagram
 ```
 
 La ruta principal usa DTOs tipados, JSON/TCP, AES-GCM con `CryptoEnvelope`,
-replay cache, configuracion demo/strict y auditoria reproducible.
+replay cache, configuracion demo/strict, auditoria reproducible, pruebas de
+concurrencia y storage seleccionable `memory|sqlite`.
 
 El WebSocket Gateway no reemplaza AS, TGS ni Service. Expone una capa de
 integracion que recibe mensajes WebSocket y ejecuta el flujo modular existente
@@ -69,6 +71,7 @@ Consulta tambien [requirements.txt](requirements.txt).
 - Git.
 - Windows, Linux o macOS con terminal.
 - Docker no es requisito en esta fase.
+- SQLite no requiere servidor externo; Maven descarga `org.xerial:sqlite-jdbc`.
 
 ## Compilar Y Probar
 
@@ -79,12 +82,13 @@ mvn -q -DskipTests compile
 mvn test
 ```
 
-En la verificacion de Fase 12 + Fase 13 pasaron:
+En la verificacion de Fase 14 se ejecutan:
 
 ```bash
 mvn -q -DskipTests compile
 mvn test
 mvn -pl auth-websocket-gateway -am test
+mvn -pl auth-storage-sqlite -am test
 ```
 
 La demo web tambien valida con:
@@ -192,6 +196,54 @@ El runner genera evidencia en:
 La auditoria de independencia del runtime modular esta en
 [docs/audits/legacy-dependency-audit.md](docs/audits/legacy-dependency-audit.md).
 
+## Auditoria De Concurrencia
+
+Con AS, TGS y Service levantados:
+
+```cmd
+scripts\run-concurrency-audit.bat --clients 25 --flows 100
+```
+
+Linux/macOS:
+
+```bash
+scripts/run-concurrency-audit.sh --clients 25 --flows 100
+```
+
+Genera:
+
+- `docs/audits/concurrency-latest-run.md`
+- `docs/audits/concurrency-latest-run.json`
+
+La ultima evidencia versionada registra 25 clientes concurrentes, 100 flujos,
+100 exitos y 0 fallos.
+
+## SQLite Local
+
+El modo por defecto sigue siendo memoria:
+
+```text
+AUTH_STORAGE_MODE=memory
+```
+
+Para crear una base demo:
+
+```cmd
+scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
+```
+
+Luego levanta AS, TGS y Service con:
+
+```cmd
+set AUTH_STORAGE_MODE=sqlite
+set AUTH_SQLITE_PATH=data\auth-demo.sqlite
+scripts\run-as.bat
+```
+
+Usa las mismas variables para `scripts\run-tgs.bat` y
+`scripts\run-service.bat`. El cliente y el Gateway siguen hablando con los
+servicios por TCP/JSON.
+
 ## Configuracion
 
 Variables comunes:
@@ -206,6 +258,8 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
+- `AUTH_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_SQLITE_PATH`: ruta de la base SQLite local.
 - `AUTH_DEMO_CLIENT_SECRET`
 - `AUTH_DEMO_CLIENT_TGS_KEY`
 - `AUTH_DEMO_TGS_SECRET`
@@ -235,18 +289,21 @@ El workflow usa `working-directory: PruebaKeberos` y ejecuta:
 - El WebSocket Gateway existe como capa de integracion separada; no sustituye
   el runtime TCP modular.
 - El replay cache es local por proceso.
+- SQLite es una integracion local ligera, no una base productiva.
 - No hay TLS ni autenticacion mutua de transporte.
 - El codec JSON es propio y acotado a los DTOs del proyecto.
 - El gateway WebSocket ya tiene E2E real y una demo web local desacoplada.
 
 ## Roadmap
 
-1. Endurecer el canal Gateway/frontend con TLS o autenticacion de demo si se
+1. Endurecer la persistencia con migraciones versionadas y auditoria persistente
+   si se autoriza.
+2. Endurecer el canal Gateway/frontend con TLS o autenticacion de demo si se
    autoriza.
-2. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
+3. Evaluar un parser JSON mantenido si el codec propio crece fuera de su alcance
    acotado.
-3. Agregar pruebas E2E de navegador si se autoriza tooling de browser.
-4. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
+4. Agregar pruebas E2E de navegador si se autoriza tooling de browser.
+5. Introducir Docker y Docker Compose solo en una fase futura de despliegue.
 
 Mas detalle:
 
@@ -257,3 +314,6 @@ Mas detalle:
 - [docs/websocket-gateway.md](docs/websocket-gateway.md)
 - [docs/frontend-contract.md](docs/frontend-contract.md)
 - [docs/frontend-demo.md](docs/frontend-demo.md)
+- [docs/concurrency.md](docs/concurrency.md)
+- [docs/sqlite-integration.md](docs/sqlite-integration.md)
+- [docs/integration-api.md](docs/integration-api.md)

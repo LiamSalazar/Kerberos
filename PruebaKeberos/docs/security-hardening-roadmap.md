@@ -17,6 +17,9 @@ La ruta modular es la ruta principal:
 - tiene timeouts y limite de tamano de mensaje en transporte TCP;
 - tiene modo `AUTH_MODE=strict` para rechazar secretos demo;
 - incluye auditoria reproducible de ejecucion/desempeno.
+- incluye prueba y auditoria de concurrencia con evidencia versionada.
+- soporta `AUTH_STORAGE_MODE=memory|sqlite`; SQLite es local y sin servidor
+  externo.
 - agrega `auth-websocket-gateway` como capa separada para futuras integraciones
   web, sin reemplazar la ruta TCP modular.
 - agrega `auth-web-demo` como frontend local desacoplado que consume solamente
@@ -32,6 +35,10 @@ historico queda documentado en `docs/legacy-summary.md`.
 - `AUTH_MODE=strict` valida presencia de secretos, pero no agrega vault ni
   rotacion real.
 - `InMemoryReplayCache` no es compartida entre procesos.
+- SQLite local no reemplaza una estrategia productiva de persistencia,
+  migraciones, cifrado de secretos ni rotacion.
+- `auth_audit_events` existe como tabla inicial, pero no hay auditoria
+  persistente completa.
 - `JsonMessageCodec` es un codec acotado al proyecto, no un parser JSON
   general-purpose auditado.
 - No hay TLS ni autenticacion mutua de transporte.
@@ -44,13 +51,15 @@ historico queda documentado en `docs/legacy-summary.md`.
 
 ## Prioridad Siguiente
 
-1. Endurecer el canal WebSocket/frontend con TLS o autenticacion local si se
+1. Agregar migraciones versionadas, auditoria persistente y manejo mas serio de
+   secretos si la capa SQLite crece.
+2. Endurecer el canal WebSocket/frontend con TLS o autenticacion local si se
    autoriza.
-2. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
+3. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
    fuera de su alcance acotado.
-3. Agregar TLS o una capa de transporte autenticada para la ruta modular.
-4. Docker y Docker Compose solo en una fase futura de despliegue.
-5. Agregar pruebas E2E de navegador para la demo web si se autoriza tooling.
+4. Agregar TLS o una capa de transporte autenticada para la ruta modular.
+5. Docker y Docker Compose solo en una fase futura de despliegue.
+6. Agregar pruebas E2E de navegador para la demo web si se autoriza tooling.
 
 ## Dependencia WebSocket
 
@@ -62,3 +71,10 @@ aplicacion completo.
 No se agrego Jackson/Gson en esta fase. El codec JSON propio se mantiene porque
 sigue acotado a DTOs del protocolo y mensajes planos del gateway, con pruebas de
 JSON malformado, campos faltantes, tipos incorrectos y payload invalido.
+
+## Dependencia SQLite
+
+Se agrego `org.xerial:sqlite-jdbc` en `auth-storage-sqlite` para probar
+persistencia local sin Docker, sin servidor externo y sin ORM. La dependencia no
+se usa para guardar secretos de produccion; solo habilita una integracion local
+verificable con schema y seed demo.

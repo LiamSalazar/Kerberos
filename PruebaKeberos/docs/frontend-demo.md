@@ -40,6 +40,10 @@ El gateway escucha por defecto en:
 ws://127.0.0.1:2800
 ```
 
+La demo frontend no distingue entre `AUTH_STORAGE_MODE=memory` y
+`AUTH_STORAGE_MODE=sqlite`; esa decision pertenece a AS, TGS y Service. El
+frontend solo habla con el Gateway WebSocket.
+
 ## Ejecutar Frontend
 
 Primera vez:

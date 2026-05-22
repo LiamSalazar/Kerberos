@@ -9,7 +9,7 @@ public final class ProtectedResource {
 
     public static ProtectedResource demo() {
         return new ProtectedResource(
-                "--------- ACCESO CONCEDIDO A MELODYFINDER --------- MODULAR AUTH EXITOSO ---------");
+                "This is a protected resource. You have successfully authenticated using Kerberos and can access this message.");
     }
 
     public String read() {

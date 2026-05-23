@@ -8,14 +8,15 @@ sistema listo para produccion critica. Es una base local para estudiar
 protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
 reproducibles con o sin Docker.
 
-Fase actual: **Fase 16 + Fase 17: seguridad operativa, API integrable y
-despliegue local reproducible con Docker**.
+Fase actual: **Fase 18: correccion tecnica del repositorio, sesion opaca
+verificable en Gateway y preparacion para pruebas Docker/cloud**.
 
 ## Que Problema Resuelve
 
 El proyecto muestra como una aplicacion puede delegar una decision de acceso a
-un flujo distribuido AS -> TGS -> Service, y luego abrir una zona protegida solo
-cuando el servicio devuelve `FLOW_RESULT success=true`.
+un flujo distribuido AS -> TGS -> Service. El Gateway emite una sesion opaca
+solo cuando el flujo fue exitoso, y la app debe verificar esa sesion con
+`VERIFY_SESSION` antes de abrir una zona protegida.
 
 No implementa login tradicional con password de usuario final. La demo usa
 `clientId` y `serviceId` para demostrar autenticacion distribuida local.
@@ -56,6 +57,8 @@ sequenceDiagram
     C->>S: SERVICE_REQUEST
     S-->>C: SERVICE_RESPONSE
     GW-->>App: FLOW_RESULT
+    App->>GW: VERIFY_SESSION
+    GW-->>App: SESSION_VALID
 ```
 
 ## Compilar Y Probar
@@ -223,16 +226,21 @@ La salida no imprime secretos, tickets, claves ni ciphertexts.
 5. Levantar `auth-websocket-gateway`.
 6. Desde la app, abrir `ws://127.0.0.1:2800`.
 7. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
-8. Validar `FLOW_RESULT`: solo conceder acceso si `success=true`.
-9. Mostrar datos de alto nivel como `requestId` y mensaje del servicio.
-10. Consultar auditoria con `sqlite-admin ... audit list`, `by-request`,
+8. Leer `FLOW_RESULT`: si `success=true`, tomar `sessionId` y
+   `sessionExpiresAt`.
+9. Enviar `VERIFY_SESSION` con `sessionId`, `clientId` y `serviceId`.
+10. Conceder acceso solo despues de recibir `SESSION_VALID`.
+11. En logout, enviar `LOGOUT_SESSION` y limpiar estado local.
+12. Consultar auditoria con `sqlite-admin ... audit list`, `by-request`,
     `by-client` o `by-service`.
 
 La app conserva responsabilidad sobre UI, sesiones propias, autorizacion de
-negocio, expiracion de sesion web, TLS y almacenamiento de usuario. Este sistema
-asume la validacion modular AS -> TGS -> Service y la auditoria local SQLite del
-flujo cuando el Gateway corre en modo SQLite. SQLite pertenece al sistema de
-autenticacion; la app externa no debe conectarse directamente a esa base.
+negocio, TLS y almacenamiento de usuario. No debe conceder acceso solamente por
+ver `FLOW_RESULT.success=true` en el frontend. Este sistema asume la validacion
+modular AS -> TGS -> Service, sesion opaca server-side en el Gateway y auditoria
+local SQLite del flujo cuando el Gateway corre en modo SQLite. SQLite pertenece
+al sistema de autenticacion; la app externa no debe conectarse directamente a
+esa base.
 
 ## API De Integracion
 
@@ -252,6 +260,8 @@ APIs externas reales.
 - No es MIT Kerberos oficial.
 - No esta listo para produccion critica.
 - Docker local es opcional; no hay Spring Boot, PostgreSQL, ORM pesado, React ni Next.js.
+- No hay RSA, JWT ni autoridad certificadora en el modelo actual.
+- `ws://` es solo para desarrollo local; en cloud se requiere `wss://`.
 - SQLite es persistencia local verificable, no una base productiva.
 - No hay TLS ni autenticacion mutua en TCP/WebSocket.
 - Los secretos demo no deben usarse fuera de ejecucion local.
@@ -272,6 +282,7 @@ APIs externas reales.
 - [docs/sqlite-integration.md](docs/sqlite-integration.md)
 - [docs/integration-api.md](docs/integration-api.md)
 - [docs/using-auth-api.md](docs/using-auth-api.md)
+- [docs/session-model.md](docs/session-model.md)
 - [docs/sample-login-app.md](docs/sample-login-app.md)
 - [docs/docker-deployment.md](docs/docker-deployment.md)
 - [docs/websocket-gateway.md](docs/websocket-gateway.md)

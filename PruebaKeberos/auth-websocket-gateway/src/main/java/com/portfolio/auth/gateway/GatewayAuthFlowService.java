@@ -6,6 +6,7 @@ import com.portfolio.auth.core.audit.AuthEventRepository;
 import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
+import com.portfolio.auth.core.session.AuthSession;
 import com.portfolio.auth.transport.secure.SecureAsResponse;
 import com.portfolio.auth.transport.secure.SecureTgsResponse;
 
@@ -17,18 +18,28 @@ public final class GatewayAuthFlowService {
     private final AuthConfig config;
     private final GatewayAuthClient authClient;
     private final AuthEventRepository auditRepository;
+    private final GatewaySessionService sessionService;
 
     public GatewayAuthFlowService(AuthConfig config, GatewayAuthClient authClient) {
-        this(config, authClient, NoOpAuthEventRepository.INSTANCE);
+        this(config, authClient, NoOpAuthEventRepository.INSTANCE, GatewaySessionService.inMemory(config));
     }
 
     public GatewayAuthFlowService(
             AuthConfig config,
             GatewayAuthClient authClient,
             AuthEventRepository auditRepository) {
+        this(config, authClient, auditRepository, GatewaySessionService.inMemory(config));
+    }
+
+    public GatewayAuthFlowService(
+            AuthConfig config,
+            GatewayAuthClient authClient,
+            AuthEventRepository auditRepository,
+            GatewaySessionService sessionService) {
         this.config = Objects.requireNonNull(config, "config");
         this.authClient = Objects.requireNonNull(authClient, "authClient");
         this.auditRepository = Objects.requireNonNull(auditRepository, "auditRepository");
+        this.sessionService = Objects.requireNonNull(sessionService, "sessionService");
     }
 
     public WebSocketMessage run(WebSocketMessage input, WebSocketEventPublisher publisher) {
@@ -69,6 +80,8 @@ public final class GatewayAuthFlowService {
                     false,
                     WebSocketErrorType.CLIENT_NOT_FOUND,
                     "Cliente no registrado en la configuracion local",
+                    null,
+                    null,
                     asMillis,
                     tgsMillis,
                     serviceMillis,
@@ -120,11 +133,20 @@ public final class GatewayAuthFlowService {
                     session.serviceId(),
                     totalMillis,
                     Instant.now()));
+            AuthSession authSession = serviceResponse.accessGranted()
+                    ? sessionService.createSession(
+                            session.requestId(),
+                            session.clientId(),
+                            session.serviceId(),
+                            serviceResponse.expiresAt())
+                    : null;
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     serviceResponse.accessGranted(),
                     serviceResponse.accessGranted() ? null : WebSocketErrorType.FLOW_FAILED,
                     serviceResponse.serviceMessage(),
+                    authSession == null ? null : authSession.sessionId(),
+                    authSession == null ? null : authSession.expiresAt(),
                     asMillis,
                     tgsMillis,
                     serviceMillis,
@@ -145,6 +167,8 @@ public final class GatewayAuthFlowService {
                     false,
                     flowErrorType(e),
                     message,
+                    null,
+                    null,
                     asMillis,
                     tgsMillis,
                     serviceMillis,

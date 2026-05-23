@@ -52,6 +52,13 @@ const renderer = createRenderer({
     updateInputs(inputs);
     startAuthFlow();
   },
+  verifySession(inputs) {
+    updateInputs(inputs);
+    verifySession();
+  },
+  logoutSession() {
+    logoutSession();
+  },
   clearEvents() {
     clearEvents();
   }
@@ -106,6 +113,9 @@ function startAuthFlow() {
     status: "running",
     requestId,
     serviceMessage: "Waiting for FLOW_RESULT.",
+    sessionId: "none",
+    sessionExpiresAt: "not available",
+    sessionState: "not issued",
     latency: "not available",
     success: null
   };
@@ -140,6 +150,36 @@ function handleGatewayMessage(message) {
     case "ERROR":
       addError(message.message || "Respuesta ERROR recibida desde el gateway.");
       break;
+    case "SESSION_VALID":
+      state.result = {
+        ...state.result,
+        sessionState: "valid",
+        sessionExpiresAt: message.expiresAt || state.result.sessionExpiresAt
+      };
+      addEvent({
+        type: "SESSION_VALID",
+        requestId: message.requestId,
+        message: "Sesion verificada por el Gateway."
+      });
+      break;
+    case "SESSION_INVALID":
+      state.result = {
+        ...state.result,
+        sessionState: `invalid: ${message.reason || "unknown"}`
+      };
+      addError(`Sesion invalida: ${message.reason || "unknown"}`);
+      break;
+    case "SESSION_LOGGED_OUT":
+      state.result = {
+        ...state.result,
+        sessionState: "logged out"
+      };
+      addEvent({
+        type: "SESSION_LOGGED_OUT",
+        requestId: message.requestId,
+        message: "Sesion revocada por el Gateway."
+      });
+      break;
     case "PONG":
       addEvent({
         type: "PONG",
@@ -151,6 +191,52 @@ function handleGatewayMessage(message) {
       addError(`Tipo de mensaje WebSocket desconocido: ${message.type || "none"}`);
       break;
   }
+  render();
+}
+
+function verifySession() {
+  if (!gateway.isConnected()) {
+    addError("Gateway no disponible. Conecta el WebSocket antes de verificar sesion.");
+    render();
+    return;
+  }
+  if (!state.result.sessionId || state.result.sessionId === "none") {
+    addError("No hay sessionId emitido para verificar.");
+    render();
+    return;
+  }
+  const requestId = `${state.result.requestId}-verify`;
+  gateway.send({
+    type: "VERIFY_SESSION",
+    requestId,
+    sessionId: state.result.sessionId,
+    clientId: state.inputs.clientId || "1",
+    serviceId: state.inputs.serviceId || "1"
+  });
+  state.result = { ...state.result, sessionState: "verifying" };
+  addEvent({ type: "LOCAL", requestId, message: "VERIFY_SESSION enviado al gateway." });
+  render();
+}
+
+function logoutSession() {
+  if (!gateway.isConnected()) {
+    addError("Gateway no disponible. Conecta el WebSocket antes de cerrar sesion.");
+    render();
+    return;
+  }
+  if (!state.result.sessionId || state.result.sessionId === "none") {
+    addError("No hay sessionId emitido para cerrar.");
+    render();
+    return;
+  }
+  const requestId = `${state.result.requestId}-logout`;
+  gateway.send({
+    type: "LOGOUT_SESSION",
+    requestId,
+    sessionId: state.result.sessionId
+  });
+  state.result = { ...state.result, sessionState: "logging out" };
+  addEvent({ type: "LOCAL", requestId, message: "LOGOUT_SESSION enviado al gateway." });
   render();
 }
 
@@ -176,6 +262,9 @@ function handleFlowResult(message) {
     status: message.success ? "success" : "error",
     requestId: message.requestId || state.activeRequestId || "none",
     serviceMessage: message.serviceMessage || "No service message returned.",
+    sessionId: message.sessionId || "none",
+    sessionExpiresAt: message.sessionExpiresAt || "not available",
+    sessionState: message.sessionId ? "issued" : "not issued",
     latency: formatLatency(message),
     success: Boolean(message.success)
   };
@@ -196,6 +285,9 @@ function finishFlowWithError(message) {
     status: "error",
     requestId: state.activeRequestId || "none",
     serviceMessage: message,
+    sessionId: "none",
+    sessionExpiresAt: "not available",
+    sessionState: "not issued",
     latency: "not available",
     success: false
   };
@@ -235,6 +327,9 @@ function clearEvents() {
     status: "waiting",
     requestId: "none",
     serviceMessage: "Run a flow to see the protected response.",
+    sessionId: "none",
+    sessionExpiresAt: "not available",
+    sessionState: "not available",
     latency: "not available",
     success: null
   };

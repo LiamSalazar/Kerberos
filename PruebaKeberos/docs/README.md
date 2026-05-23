@@ -18,6 +18,7 @@ Aqui se concentrara la documentacion viva del proyecto:
 - integracion SQLite local en `sqlite-integration.md`
 - API interna de integracion en `integration-api.md`
 - guia de uso de la API en `using-auth-api.md`
+- modelo de sesion opaca verificable en `session-model.md`
 - despliegue Docker local en `docker-deployment.md`
 - mini app de login integradora en `sample-login-app.md`
 - auditoria Maven en `audits/maven-dependency-audit.md`

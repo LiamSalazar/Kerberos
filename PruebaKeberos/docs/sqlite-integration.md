@@ -16,6 +16,7 @@ vaults y migraciones avanzadas quedan fuera de esta fase.
 - `SQLitePrincipalRepository`
 - `SQLiteServiceRegistry`
 - `SQLiteAuditRepository`
+- `SQLiteSessionRepository`
 - `SQLiteMigrationRunner`
 - `SQLiteDemoDatabaseInitializer`
 - `SQLiteAdminCli`
@@ -34,10 +35,12 @@ Las interfaces de runtime viven en `auth-core`:
 AUTH_STORAGE_MODE=memory
 AUTH_STORAGE_MODE=sqlite
 AUTH_SQLITE_PATH=data/auth-demo.sqlite
+AUTH_SESSION_STORAGE_MODE=sqlite
 ```
 
 `memory` sigue siendo el default demo. `sqlite` activa lectura de clientes,
-TGS, servicios y auditoria persistente del Gateway.
+TGS, servicios, auditoria persistente del Gateway y sesiones opacas cuando
+`AUTH_SESSION_STORAGE_MODE=sqlite`.
 
 ## Migraciones
 
@@ -52,6 +55,8 @@ Versiones actuales:
 - `V1__schema.sql`: tablas `principals` y `services`.
 - `V2__seed_demo.sql`: datos demo locales.
 - `V3__audit_events.sql`: tabla `auth_audit_events` e indices.
+- `V4__audit_query_indexes.sql`: indices de consulta de auditoria.
+- `V5__auth_sessions.sql`: tabla `auth_sessions` e indices de sesion.
 
 El migrador crea `schema_version` y registra version, descripcion, script,
 checksum y fecha de aplicacion. Reaplicar migraciones no duplica versiones ni
@@ -163,6 +168,24 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-i
 No se registran secretos, claves, tickets descifrados completos, ciphertexts ni
 payloads internos.
 
+## Sesiones Opacas
+
+Cuando el Gateway corre con `AUTH_SESSION_STORAGE_MODE=sqlite`, guarda sesiones
+en `auth_sessions`:
+
+- `session_id`
+- `request_id`
+- `client_id`
+- `service_id`
+- `issued_at`
+- `expires_at`
+- `status`
+- `revoked_at`
+- `created_at`
+
+No se guardan secretos, tickets, ciphertexts ni claves. La app externa no debe
+consultar esta tabla; debe usar `VERIFY_SESSION` contra el Gateway.
+
 ## Pruebas
 
 ```bash
@@ -177,6 +200,7 @@ Cobertura agregada:
 - no duplicar migraciones;
 - seed demo verificable;
 - persistencia y consulta de auditoria;
+- persistencia, expiracion, revocacion y mismatch de sesiones;
 - administracion de clientes y servicios;
 - flujo AS -> TGS -> Service respaldado por SQLite.
 

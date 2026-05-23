@@ -91,6 +91,9 @@ export function createInitialState() {
       status: "waiting",
       requestId: "none",
       serviceMessage: "Run a flow to see the protected response.",
+      sessionId: "none",
+      sessionExpiresAt: "not available",
+      sessionState: "not available",
       latency: "not available",
       success: null
     },

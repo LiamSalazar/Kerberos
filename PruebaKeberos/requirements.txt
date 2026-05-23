@@ -73,6 +73,11 @@
 #   AUTH_STORAGE_MODE=sqlite uses SQLite through org.xerial:sqlite-jdbc.
 #   AUTH_SQLITE_PATH points to the local SQLite database file.
 #   AUTH_ALLOWED_ORIGINS restricts browser WebSocket origins when set.
+#   AUTH_SESSION_TTL_SECONDS sets the opaque Gateway session TTL.
+#   AUTH_SESSION_MAX_TTL_SECONDS caps Gateway session lifetime.
+#   AUTH_SESSION_STORAGE_MODE=memory|sqlite controls server-side session storage.
+#   AUTH_REQUIRE_SESSION_VERIFY=true keeps strict-mode integrations from
+#     treating FLOW_RESULT.success=true as final authorization.
 
 # Docker
 # Optional for running the full local stack with Compose.
@@ -112,3 +117,6 @@
 # Phase 16 tightens demo/strict configuration, WebSocket API errors, origin
 # checks, rate limits, flow timeouts, ProtectedResource tests, and audit queries.
 # Phase 17 adds Docker Compose for local reproducible demo deployment.
+# Phase 18 adds opaque Gateway sessions, VERIFY_SESSION, LOGOUT_SESSION,
+# SQLite-backed auth_sessions, a root README, cleaner CI/Compose files, and
+# removes the versioned portable tools directory.

@@ -18,6 +18,11 @@ public final class WebSocketMessageCodec {
         putIfPresent(fields, "success", message.success());
         putIfPresent(fields, "errorType", message.errorType());
         putIfPresent(fields, "serviceMessage", message.serviceMessage());
+        putIfPresent(fields, "sessionId", message.sessionId());
+        putIfPresent(fields, "sessionExpiresAt", message.sessionExpiresAt());
+        putIfPresent(fields, "valid", message.valid());
+        putIfPresent(fields, "reason", message.reason());
+        putIfPresent(fields, "expiresAt", message.expiresAt());
         putIfPresent(fields, "asMillis", message.asMillis());
         putIfPresent(fields, "tgsMillis", message.tgsMillis());
         putIfPresent(fields, "serviceMillis", message.serviceMillis());
@@ -38,6 +43,11 @@ public final class WebSocketMessageCodec {
                 boolOrNull(fields, "success"),
                 stringOrNull(fields, "errorType"),
                 stringOrNull(fields, "serviceMessage"),
+                stringOrNull(fields, "sessionId"),
+                stringOrNull(fields, "sessionExpiresAt"),
+                boolOrNull(fields, "valid"),
+                stringOrNull(fields, "reason"),
+                stringOrNull(fields, "expiresAt"),
                 longOrNull(fields, "asMillis"),
                 longOrNull(fields, "tgsMillis"),
                 longOrNull(fields, "serviceMillis"),

@@ -11,6 +11,11 @@ target/
 sources.txt
 auth-web-demo/dist/
 auth-web-demo/node_modules/
+node_modules/
+tools/
+node-*-win-x64/
+node-v*-win-x64/
+v*-win-x64.zip
 
 # IDE metadata
 .vscode/

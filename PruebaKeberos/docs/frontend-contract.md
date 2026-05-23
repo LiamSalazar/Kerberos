@@ -1,96 +1,65 @@
 # Frontend Contract
 
-Este contrato describe como `auth-web-demo`, `sample-login-app` y cualquier
-futura interfaz web deben comunicarse con `auth-websocket-gateway`.
+Este contrato describe como `auth-web-demo`, `sample-login-app` y futuras UIs
+deben comunicarse con `auth-websocket-gateway`.
 
-El gateway es una capa de integracion: no reemplaza `auth-as`, `auth-tgs` ni
-`auth-service`, y no expone tickets, claves ni ciphertexts al cliente.
+El Gateway no reemplaza AS, TGS ni Service. No expone secretos, claves, tickets,
+ciphertexts ni payloads internos al cliente.
 
 ## URL Local
-
-Default:
 
 ```text
 ws://127.0.0.1:2800
 ```
 
-Variables:
+`ws://` es solo para desarrollo local. En cloud se debe publicar `wss://`.
 
-- `AUTH_WS_HOST`: host del gateway. Default `127.0.0.1`.
-- `AUTH_WS_PORT`: puerto del gateway. Default `2800`.
-- `AUTH_ALLOWED_ORIGINS`: lista separada por comas para validar el header
-  `Origin`. Si esta vacia, se permite ejecucion local sin restriccion de origen.
-
-## Mensajes De Entrada
+## Input Messages
 
 ### START_AUTH_FLOW
 
-Ejecuta AS -> TGS -> Service mediante la ruta TCP modular.
-
 ```json
-{
-  "type": "START_AUTH_FLOW",
-  "requestId": "front-req-1",
-  "clientId": "1",
-  "serviceId": "1"
-}
+{"type":"START_AUTH_FLOW","requestId":"front-req-1","clientId":"1","serviceId":"1"}
 ```
 
-Campos requeridos:
+### VERIFY_SESSION
 
-- `type`
-- `requestId`
-- `clientId`
-- `serviceId`
+```json
+{"type":"VERIFY_SESSION","requestId":"verify-1","sessionId":"opaque-session-id","clientId":"1","serviceId":"1"}
+```
+
+### LOGOUT_SESSION
+
+```json
+{"type":"LOGOUT_SESSION","requestId":"logout-1","sessionId":"opaque-session-id"}
+```
 
 ### PING
 
 ```json
-{
-  "type": "PING",
-  "requestId": "ping-1"
-}
+{"type":"PING","requestId":"ping-1"}
 ```
 
-Respuesta esperada: `PONG`.
-
-## Mensajes De Salida
+## Output Messages
 
 ### FLOW_EVENT
 
-Evento de progreso.
-
 ```json
-{
-  "type": "FLOW_EVENT",
-  "requestId": "front-req-1",
-  "stage": "AS_RESPONSE_RECEIVED",
-  "message": "TGT emitido"
-}
+{"type":"FLOW_EVENT","requestId":"front-req-1","stage":"AS_RESPONSE_RECEIVED","message":"TGT emitido"}
 ```
-
-Stages actuales:
-
-- `FLOW_STARTED`
-- `AS_REQUEST_SENT`
-- `AS_RESPONSE_RECEIVED`
-- `TGS_REQUEST_SENT`
-- `TGS_RESPONSE_RECEIVED`
-- `SERVICE_REQUEST_SENT`
-- `SERVICE_RESPONSE_RECEIVED`
-- `FLOW_SUCCESS`
-- `FLOW_ERROR`
 
 ### FLOW_RESULT
 
-Resultado terminal del flujo.
+Resultado exitoso:
 
 ```json
 {
   "type": "FLOW_RESULT",
   "requestId": "front-req-1",
   "success": true,
-  "serviceMessage": "--------- ACCESO CONCEDIDO A MELODYFINDER --------- MODULAR AUTH EXITOSO ---------",
+  "serviceMessage": "MODULAR AUTH EXITOSO",
+  "sessionId": "opaque-session-id",
+  "sessionExpiresAt": "2026-05-23T17:00:00Z",
   "asMillis": 4,
   "tgsMillis": 3,
   "serviceMillis": 3,
@@ -98,40 +67,48 @@ Resultado terminal del flujo.
 }
 ```
 
-Cuando `success=false`, el mensaje incluye `errorType`:
+Resultado fallido:
 
 ```json
-{
-  "type": "FLOW_RESULT",
-  "requestId": "front-req-2",
-  "success": false,
-  "errorType": "SERVICE_NOT_FOUND",
-  "serviceMessage": "TGS_UNKNOWN_SERVICE: TGS o servicio no registrado"
-}
+{"type":"FLOW_RESULT","requestId":"front-req-2","success":false,"errorType":"SERVICE_NOT_FOUND","serviceMessage":"TGS_UNKNOWN_SERVICE"}
+```
+
+`FLOW_RESULT.success=true` no es autorizacion final. Solo indica que el Gateway
+creo una sesion opaca server-side despues de un flujo exitoso.
+
+### SESSION_VALID
+
+```json
+{"type":"SESSION_VALID","requestId":"verify-1","valid":true,"clientId":"1","serviceId":"1","expiresAt":"2026-05-23T17:00:00Z"}
+```
+
+### SESSION_INVALID
+
+```json
+{"type":"SESSION_INVALID","requestId":"verify-1","valid":false,"reason":"EXPIRED"}
+```
+
+### SESSION_LOGGED_OUT
+
+```json
+{"type":"SESSION_LOGGED_OUT","requestId":"logout-1","message":"Sesion revocada"}
 ```
 
 ### ERROR
 
-Error de contrato, origen, rate limit o JSON invalido.
-
 ```json
-{
-  "type": "ERROR",
-  "errorType": "MISSING_REQUIRED_FIELD",
-  "message": "Campo requerido faltante: serviceId",
-  "success": false
-}
+{"type":"ERROR","errorType":"MISSING_REQUIRED_FIELD","message":"Campo requerido faltante: serviceId","success":false}
 ```
 
-### PONG
+## Recommended Frontend Flow
 
-```json
-{
-  "type": "PONG",
-  "requestId": "ping-1",
-  "message": "pong"
-}
-```
+1. Abrir WebSocket al Gateway.
+2. Enviar `START_AUTH_FLOW`.
+3. Renderizar `FLOW_EVENT` como progreso.
+4. Si `FLOW_RESULT.success === true`, guardar `sessionId` solo en memoria.
+5. Enviar `VERIFY_SESSION`.
+6. Abrir la zona protegida solo si llega `SESSION_VALID`.
+7. En logout, enviar `LOGOUT_SESSION` y limpiar estado local.
 
 ## Error Types
 
@@ -143,30 +120,20 @@ Error de contrato, origen, rate limit o JSON invalido.
 - `FLOW_FAILED`
 - `RATE_LIMITED`
 - `ORIGIN_NOT_ALLOWED`
+- `SESSION_NOT_FOUND`
+- `SESSION_EXPIRED`
+- `SESSION_REVOKED`
+- `SESSION_CLIENT_MISMATCH`
+- `SESSION_SERVICE_MISMATCH`
+- `SESSION_REQUIRED`
+- `INVALID_SESSION_REQUEST`
 
-## Flujo Recomendado Para Frontend
+`SESSION_INVALID.reason` usa `NOT_FOUND`, `EXPIRED`, `REVOKED`,
+`CLIENT_MISMATCH` o `SERVICE_MISMATCH`.
 
-1. Abrir `ws://127.0.0.1:2800`.
-2. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
-3. Renderizar cada `FLOW_EVENT` como progreso.
-4. Al recibir `FLOW_RESULT`, cerrar o reutilizar la conexion segun la pantalla.
-5. Conceder acceso solo si `FLOW_RESULT.success === true`.
-6. Mostrar `ERROR` como fallo de contrato del gateway.
+## Security
 
-## Seguridad
-
-El frontend no debe recibir ni pedir:
-
-- secretos demo;
-- claves de sesion;
-- tickets completos;
-- `CryptoEnvelope` completo;
-- ciphertexts;
-- payloads internos AS/TGS/Service.
-
-Los mensajes WebSocket actuales exponen solo estado, texto de alto nivel y
-latencias basicas. `auth-web-demo` evita renderizar detalles con nombres de
-secretos, claves, tickets, ciphertexts, `CryptoEnvelope` o payloads internos. El
-canal aun no tiene TLS ni autenticacion mutua; eso queda para una fase posterior.
-Cuando el Gateway corre con `AUTH_STORAGE_MODE=sqlite`, registra eventos de alto
-nivel en `auth_audit_events` sin incluir secretos ni payloads sensibles.
+El frontend no debe recibir ni pedir secretos demo, claves de sesion, tickets
+completos, `CryptoEnvelope`, ciphertexts ni payloads internos. La sesion opaca
+puede mostrarse parcialmente enmascarada para depuracion local, pero no debe
+tratarse como un token auto-verificable: la autoridad es el Gateway.

@@ -1,24 +1,16 @@
 # Using Auth API
 
-Esta guia muestra como una aplicacion propia puede usar este proyecto como capa
-local de autenticacion modular. No es MIT Kerberos oficial y no esta listo para
+Esta guia muestra como una app propia puede usar el Gateway como capa local de
+autenticacion modular. No es MIT Kerberos oficial y no esta listo para
 produccion critica.
 
 ## Integration Model
 
-La aplicacion externa no se conecta a SQLite. SQLite pertenece al sistema de
-autenticacion y lo usan AS, TGS, Service y el WebSocket Gateway para clientes,
-servicios, secretos demo y auditoria.
+La app externa no se conecta a SQLite. SQLite guarda clientes, servicios,
+secretos demo, auditoria y sesiones del sistema de autenticacion. La app debe
+hablar con el Gateway o con `auth-client-sdk`.
 
-La aplicacion externa debe integrarse de una de estas formas:
-
-- hablar con `auth-websocket-gateway`;
-- usar `auth-client-sdk` desde una app Java controlada por el integrador.
-
-Para aplicaciones web o frontends locales, la ruta recomendada es el Gateway
-WebSocket.
-
-## How to secure your own app with this project
+## How To Secure Your Own App With This Project
 
 1. Registrar cliente:
 
@@ -48,77 +40,53 @@ scripts\run-service.bat
 scripts\run-websocket-gateway.bat
 ```
 
-5. Enviar `START_AUTH_FLOW` desde la app:
+5. Enviar `START_AUTH_FLOW`:
 
 ```json
 {"type":"START_AUTH_FLOW","requestId":"app-req-1","clientId":"app-client","serviceId":"app-service"}
 ```
 
-6. Validar `FLOW_RESULT`:
+6. Leer `FLOW_RESULT`:
 
 ```js
-if (message.type === "FLOW_RESULT" && message.success === true) {
-  grantAccess(message.requestId);
-} else {
-  denyAccess(message.errorType || "FLOW_FAILED");
+if (message.type === "FLOW_RESULT" && message.success === true && message.sessionId) {
+  pendingSessionId = message.sessionId;
+  verifySession(pendingSessionId);
 }
 ```
 
-7. Conceder acceso al recurso:
+7. Validar con `VERIFY_SESSION`:
 
-La app crea su propia sesion o marca su propio estado autenticado solo despues
-de `FLOW_RESULT.success === true`. No debe aceptar `FLOW_EVENT` como prueba de
-autenticacion.
+```json
+{"type":"VERIFY_SESSION","requestId":"verify-1","sessionId":"opaque-session-id","clientId":"app-client","serviceId":"app-service"}
+```
 
-8. Consultar auditoria:
+8. Conceder acceso solo con `SESSION_VALID`:
+
+```js
+if (message.type === "SESSION_VALID" && message.valid === true) {
+  grantAccess(message.clientId, message.serviceId);
+}
+```
+
+9. Cerrar sesion:
+
+```json
+{"type":"LOGOUT_SESSION","requestId":"logout-1","sessionId":"opaque-session-id"}
+```
+
+10. Consultar auditoria:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-id app-req-1
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id app-client
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id app-service
 ```
 
-9. Limitaciones de seguridad:
+## Security Limits
 
-- no hay TLS/mTLS integrado;
-- no hay vault externo;
-- los secretos demo no deben usarse fuera de pruebas locales;
-- el replay cache es local por proceso;
-- la app externa sigue a cargo de UI, sesion web, logout, roles, permisos y TLS;
-- Docker local, si se usa, es reproducible para demo, no despliegue productivo.
-
-## WebSocket Contract
-
-Mensajes de entrada:
-
-- `START_AUTH_FLOW`
-- `PING`
-
-Mensajes de salida:
-
-- `FLOW_EVENT`
-- `FLOW_RESULT`
-- `ERROR`
-- `PONG`
-
-`START_AUTH_FLOW` requiere:
-
-- `type`
-- `requestId`
-- `clientId`
-- `serviceId`
-
-Errores tipados:
-
-- `INVALID_JSON`
-- `UNKNOWN_MESSAGE_TYPE`
-- `MISSING_REQUIRED_FIELD`
-- `CLIENT_NOT_FOUND`
-- `SERVICE_NOT_FOUND`
-- `FLOW_FAILED`
-- `RATE_LIMITED`
-- `ORIGIN_NOT_ALLOWED`
-
-El Gateway no expone claves, secretos, tickets, ciphertexts ni payloads
-criptograficos completos.
+- `FLOW_RESULT.success=true` no es autorizacion final.
+- La autoridad practica de sesion es el Gateway.
+- La sesion opaca no debe guardarse en `localStorage` para esta demo.
+- `ws://` es solo local; en cloud usar `wss://`.
+- No hay RSA, JWT ni CA en esta fase.
+- La app externa sigue a cargo de roles, permisos, cookies, CSRF, TLS y negocio.

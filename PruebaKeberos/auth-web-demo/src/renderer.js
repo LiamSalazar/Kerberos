@@ -13,6 +13,9 @@ export function createRenderer(actions) {
     resultStatus: document.querySelector("[data-result-status]"),
     resultRequest: document.querySelector("[data-result-request]"),
     resultMessage: document.querySelector("[data-result-message]"),
+    resultSession: document.querySelector("[data-result-session]"),
+    resultSessionExpiresAt: document.querySelector("[data-result-session-expires-at]"),
+    resultSessionState: document.querySelector("[data-result-session-state]"),
     resultLatency: document.querySelector("[data-result-latency]"),
     errors: document.querySelector("[data-errors]"),
     errorCount: document.querySelector("[data-error-count]"),
@@ -31,6 +34,12 @@ export function createRenderer(actions) {
     }
     if (action === "start-flow") {
       actions.startFlow(readInputs(refs));
+    }
+    if (action === "verify-session") {
+      actions.verifySession(readInputs(refs));
+    }
+    if (action === "logout-session") {
+      actions.logoutSession();
     }
     if (action === "clear-events") {
       actions.clearEvents();
@@ -96,6 +105,9 @@ function renderResult(refs, result) {
   refs.resultStatus.dataset.resultStatus = result.success === false ? "error" : result.success === true ? "success" : "waiting";
   refs.resultRequest.textContent = safeDisplay(result.requestId);
   refs.resultMessage.textContent = safeDisplay(result.serviceMessage);
+  refs.resultSession.textContent = maskSessionId(result.sessionId);
+  refs.resultSessionExpiresAt.textContent = safeDisplay(result.sessionExpiresAt);
+  refs.resultSessionState.textContent = safeDisplay(result.sessionState);
   refs.resultLatency.textContent = safeDisplay(result.latency);
 }
 
@@ -129,4 +141,14 @@ function safeDisplay(value) {
     return "[sensitive detail omitted]";
   }
   return text;
+}
+
+function maskSessionId(sessionId) {
+  if (!sessionId || sessionId === "none") {
+    return "none";
+  }
+  if (sessionId.length < 12) {
+    return "masked";
+  }
+  return `${sessionId.slice(0, 6)}...${sessionId.slice(-4)}`;
 }

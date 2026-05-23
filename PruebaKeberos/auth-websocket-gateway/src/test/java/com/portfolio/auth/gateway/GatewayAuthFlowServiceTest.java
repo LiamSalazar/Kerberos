@@ -6,6 +6,8 @@ import com.portfolio.auth.core.audit.AuthEventStatus;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.protocol.ProtocolDefaults;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
+import com.portfolio.auth.core.session.InMemorySessionRepository;
+import com.portfolio.auth.core.session.SessionValidationStatus;
 import com.portfolio.auth.crypto.CryptoEnvelope;
 import com.portfolio.auth.transport.secure.SecureAsResponse;
 import com.portfolio.auth.transport.secure.SecureTgsResponse;
@@ -26,7 +28,13 @@ class GatewayAuthFlowServiceTest {
     void shouldRunSuccessfulFlowAndPublishEvents() {
         FakeGatewayAuthClient client = new FakeGatewayAuthClient(false);
         RecordingAuditRepository audit = new RecordingAuditRepository();
-        GatewayAuthFlowService service = new GatewayAuthFlowService(AuthConfig.localDemo(), client, audit);
+        InMemorySessionRepository sessions = new InMemorySessionRepository();
+        GatewaySessionService sessionService = new GatewaySessionService(AuthConfig.localDemo(), sessions);
+        GatewayAuthFlowService service = new GatewayAuthFlowService(
+                AuthConfig.localDemo(),
+                client,
+                audit,
+                sessionService);
         List<WebSocketMessage> events = new ArrayList<>();
 
         WebSocketMessage result = service.run(
@@ -37,6 +45,10 @@ class GatewayAuthFlowServiceTest {
         assertTrue(result.success());
         assertEquals(null, result.errorType());
         assertEquals("MODULAR AUTH EXITOSO", result.serviceMessage());
+        assertTrue(result.sessionId() != null && !result.sessionId().isBlank());
+        assertTrue(result.sessionExpiresAt() != null && !result.sessionExpiresAt().isBlank());
+        assertEquals(SessionValidationStatus.VALID,
+                sessions.validate(result.sessionId(), "1", "1", Instant.now()).status());
         assertTrue(result.totalMillis() >= 0);
         assertEquals(1, client.asCalls);
         assertEquals(1, client.tgsCalls);
@@ -61,6 +73,7 @@ class GatewayAuthFlowServiceTest {
 
         assertFalse(result.success());
         assertEquals(WebSocketErrorType.CLIENT_NOT_FOUND.name(), result.errorType());
+        assertEquals(null, result.sessionId());
         assertEquals(0, client.asCalls);
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
         assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());
@@ -80,6 +93,7 @@ class GatewayAuthFlowServiceTest {
 
         assertFalse(result.success());
         assertEquals(WebSocketErrorType.FLOW_FAILED.name(), result.errorType());
+        assertEquals(null, result.sessionId());
         assertTrue(result.serviceMessage().contains("AS no disponible"));
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
         assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());

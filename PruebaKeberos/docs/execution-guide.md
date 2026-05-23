@@ -283,7 +283,8 @@ Checklist manual:
 - frontend conectado;
 - boton `Start Auth Flow`;
 - eventos `FLOW_*` visibles;
-- `FLOW_RESULT success=true`;
+- `FLOW_RESULT success=true` con `sessionId` y `sessionExpiresAt`;
+- `VERIFY_SESSION` responde `SESSION_VALID`;
 - servicio concedido visible.
 
 ## Sample Login App
@@ -307,7 +308,9 @@ http://127.0.0.1:5174
 ```
 
 Validar flujo exitoso con `clientId=1` y `serviceId=1`. Validar fallo con un
-`serviceId` inexistente. Ver `docs/sample-login-app.md`.
+`serviceId` inexistente. La app solo desbloquea el dashboard despues de
+`SESSION_VALID`, no solo por `FLOW_RESULT.success=true`. Ver
+`docs/sample-login-app.md`.
 
 ## Configuracion
 
@@ -330,6 +333,10 @@ Variables comunes:
 - `AUTH_DEMO_SERVICE_SECRET`
 - `AUTH_DEMO_PBKDF2_SALT`
 - `AUTH_ALLOWED_ORIGINS`
+- `AUTH_SESSION_TTL_SECONDS`
+- `AUTH_SESSION_MAX_TTL_SECONDS`
+- `AUTH_SESSION_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_REQUIRE_SESSION_VERIFY`
 
 `AUTH_MODE=demo` permite defaults de demo local y muestra una advertencia.
 `AUTH_MODE=strict` exige `AUTH_DEMO_CLIENT_SECRET`,
@@ -385,3 +392,5 @@ para ejecutarla. Ver `docs/legacy-summary.md` para contexto historico.
 ## Futuro
 
 TLS/mTLS, vault de secretos y despliegue cloud quedan fuera de esta fase.
+Para pruebas cloud futuras, usar `wss://`; `ws://` queda limitado a desarrollo
+local.

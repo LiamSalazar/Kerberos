@@ -10,7 +10,8 @@ al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
 migraciones SQLite, auditoria persistente, administracion local y
 `sample-login-app`. Fase 16 endurece configuracion, Gateway y auditoria
 consultable; Fase 17 agrega Docker Compose local sin reemplazar la ejecucion sin
-Docker.
+Docker. Fase 18 agrega sesiones opacas verificables en el Gateway, corrige la
+presentacion publica del repositorio y prepara pruebas Docker/cloud.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -79,6 +80,16 @@ La auditoria persiste `requestId`, `clientId`, `serviceId`, `eventType`,
 `status`, `errorType`, `latencyMs` y `createdAt`. No registra secretos, tickets
 completos, claves, ciphertexts ni payloads internos.
 
+## Sesiones Opacas
+
+`auth-core` define `AuthSession`, `SessionRepository` e
+`InMemorySessionRepository`. `auth-storage-sqlite` implementa
+`SQLiteSessionRepository` sobre `auth_sessions`.
+
+El Gateway crea una sesion solo si AS -> TGS -> Service termina con acceso
+concedido. La app externa debe verificarla con `VERIFY_SESSION`; no debe abrir
+recursos solo por `FLOW_RESULT.success=true`.
+
 ## API De Servicio Protegido
 
 `auth-service` expone `ProtectedResource` como interfaz:
@@ -101,12 +112,17 @@ modular.
 Mensajes de entrada soportados:
 
 - `START_AUTH_FLOW`
+- `VERIFY_SESSION`
+- `LOGOUT_SESSION`
 - `PING`
 
 Mensajes de salida:
 
 - `FLOW_EVENT`
 - `FLOW_RESULT`
+- `SESSION_VALID`
+- `SESSION_INVALID`
+- `SESSION_LOGGED_OUT`
 - `ERROR`
 - `PONG`
 
@@ -127,12 +143,14 @@ La UI muestra:
 - etapas Client, Gateway, AS, TGS y Service;
 - eventos `FLOW_*`;
 - `FLOW_RESULT`, latencias y errores controlados.
+- sesion opaca enmascarada, expiracion y estado de verificacion.
 
 No muestra claves, secretos, tickets completos, ciphertexts ni payloads
 criptograficos.
 
 `sample-login-app` tambien es vanilla y no usa npm. A diferencia de
-`auth-web-demo`, simula una app real con pantalla de login y zona protegida.
+`auth-web-demo`, simula una app real con pantalla de login y zona protegida. El
+dashboard se muestra solo despues de `SESSION_VALID`.
 
 ## Transporte
 
@@ -164,6 +182,9 @@ Se cifran con AES-GCM:
 - `AUTH_STORAGE_MODE=memory|sqlite`: selecciona repositorios en memoria o
   SQLite local.
 - `AUTH_SQLITE_PATH`: ruta de base SQLite cuando se usa `sqlite`.
+- `AUTH_SESSION_TTL_SECONDS` y `AUTH_SESSION_MAX_TTL_SECONDS`.
+- `AUTH_SESSION_STORAGE_MODE=memory|sqlite`.
+- `AUTH_REQUIRE_SESSION_VERIFY`.
 
 Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
 `AuthConfig` exige valores explicitos y rechaza los defaults de demo.
@@ -184,11 +205,13 @@ GitHub Actions vive en la raiz del repositorio Git en
 
 - `mvn -q -DskipTests compile`
 - `mvn test`
+- `mvn -pl auth-websocket-gateway -am test`
+- `mvn -pl auth-storage-sqlite -am test`
 
 ## Pendiente
 
 - Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
   acotado.
 - Endurecer secretos SQLite, transporte y auditoria si la integracion crece.
-- Agregar Docker solo en una fase futura autorizada.
+- Validar Docker Compose en Linux con `docker compose config/build/up`.
 - Evaluar pruebas E2E de navegador para la demo web.

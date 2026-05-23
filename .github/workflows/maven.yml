@@ -29,3 +29,9 @@ jobs:
 
       - name: Test
         run: mvn test
+
+      - name: Test WebSocket Gateway
+        run: mvn -pl auth-websocket-gateway -am test
+
+      - name: Test SQLite Storage
+        run: mvn -pl auth-storage-sqlite -am test

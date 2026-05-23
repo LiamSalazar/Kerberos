@@ -25,6 +25,15 @@ cp .env.example .env
 `.env.example` usa `AUTH_MODE=demo`, `AUTH_STORAGE_MODE=sqlite` y secretos demo
 documentados como no productivos.
 
+Tambien define sesiones opacas del Gateway:
+
+```text
+AUTH_SESSION_TTL_SECONDS=300
+AUTH_SESSION_MAX_TTL_SECONDS=300
+AUTH_SESSION_STORAGE_MODE=sqlite
+AUTH_REQUIRE_SESSION_VERIFY=true
+```
+
 ## Levantar Todo
 
 Windows:
@@ -86,8 +95,19 @@ Desde una herramienta WebSocket, enviar:
 Resultado esperado:
 
 - eventos `FLOW_EVENT`;
-- `FLOW_RESULT` con `success=true`;
+- `FLOW_RESULT` con `success=true`, `sessionId` y `sessionExpiresAt`;
 - sin secretos, tickets, claves ni ciphertexts.
+
+Luego verificar la sesion:
+
+```json
+{"type":"VERIFY_SESSION","requestId":"docker-smoke-verify","sessionId":"<sessionId>","clientId":"1","serviceId":"1"}
+```
+
+Resultado esperado:
+
+- `SESSION_VALID` con `valid=true`;
+- `expiresAt` no mayor que la vigencia del flujo de servicio.
 
 ## Logs
 
@@ -145,6 +165,15 @@ En este entorno `docker` y `docker-compose` no estan disponibles en PATH. Por
 eso quedan pendientes para una maquina con Docker Desktop:
 
 ```bash
+docker compose config
+docker compose build
+docker compose up
+```
+
+En Linux, la validacion recomendada para Fase 18 es:
+
+```bash
+cp .env.example .env
 docker compose config
 docker compose build
 docker compose up

@@ -3,6 +3,7 @@ package com.portfolio.auth.core.config;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Configuracion central para la ruta modular local.
@@ -29,8 +30,23 @@ public record AuthConfig(
         String demoServiceSecret,
         String demoPbkdf2Salt,
         String storageMode,
-        String sqlitePath
+        String sqlitePath,
+        Duration sessionTtl,
+        Duration sessionMaxTtl,
+        String sessionStorageMode,
+        boolean requireSessionVerify
 ) implements Serializable {
+    public AuthConfig {
+        Objects.requireNonNull(sessionTtl, "sessionTtl");
+        Objects.requireNonNull(sessionMaxTtl, "sessionMaxTtl");
+        if (sessionTtl.isZero() || sessionTtl.isNegative()) {
+            throw new IllegalArgumentException("sessionTtl must be positive");
+        }
+        if (sessionMaxTtl.isZero() || sessionMaxTtl.isNegative()) {
+            throw new IllegalArgumentException("sessionMaxTtl must be positive");
+        }
+    }
+
     public static final String DEFAULT_LOCAL_CLIENT_ID = "1";
     public static final String DEFAULT_LOCAL_TGS_ID = "1";
     public static final String DEFAULT_LOCAL_SERVICE_ID = "1";
@@ -47,6 +63,8 @@ public record AuthConfig(
     public static final String DEFAULT_LOCAL_DEMO_PBKDF2_SALT = "12345678";
     public static final String DEFAULT_LOCAL_STORAGE_MODE = "memory";
     public static final String DEFAULT_LOCAL_SQLITE_PATH = "data/auth-demo.sqlite";
+    public static final Duration DEFAULT_LOCAL_SESSION_TTL = Duration.ofMinutes(5);
+    public static final Duration DEFAULT_LOCAL_SESSION_MAX_TTL = Duration.ofMinutes(5);
 
     public static final String MODE_DEMO = "demo";
     public static final String MODE_STRICT = "strict";
@@ -73,6 +91,10 @@ public record AuthConfig(
     public static final String ENV_DEMO_TGS_SECRET = "AUTH_DEMO_TGS_SECRET";
     public static final String ENV_DEMO_SERVICE_SECRET = "AUTH_DEMO_SERVICE_SECRET";
     public static final String ENV_DEMO_PBKDF2_SALT = "AUTH_DEMO_PBKDF2_SALT";
+    public static final String ENV_SESSION_TTL_SECONDS = "AUTH_SESSION_TTL_SECONDS";
+    public static final String ENV_SESSION_MAX_TTL_SECONDS = "AUTH_SESSION_MAX_TTL_SECONDS";
+    public static final String ENV_SESSION_STORAGE_MODE = "AUTH_SESSION_STORAGE_MODE";
+    public static final String ENV_REQUIRE_SESSION_VERIFY = "AUTH_REQUIRE_SESSION_VERIFY";
 
     private static final String DEMO_WARNING =
             "[auth-config] AUTH_MODE=demo permite secretos demo por defecto; no usar en produccion critica.";
@@ -97,7 +119,11 @@ public record AuthConfig(
                 DEFAULT_LOCAL_DEMO_SERVICE_SECRET,
                 DEFAULT_LOCAL_DEMO_PBKDF2_SALT,
                 DEFAULT_LOCAL_STORAGE_MODE,
-                DEFAULT_LOCAL_SQLITE_PATH);
+                DEFAULT_LOCAL_SQLITE_PATH,
+                DEFAULT_LOCAL_SESSION_TTL,
+                DEFAULT_LOCAL_SESSION_MAX_TTL,
+                DEFAULT_LOCAL_STORAGE_MODE,
+                true);
     }
 
     public static AuthConfig fromEnvironment() {
@@ -107,6 +133,7 @@ public record AuthConfig(
     public static AuthConfig fromEnvironment(Map<String, String> environment) {
         AuthConfig defaults = localDemo();
 
+        String resolvedStorageMode = storageMode(environment);
         AuthConfig config = new AuthConfig(
                 value(environment, ENV_CLIENT_ID, defaults.defaultClientId()),
                 value(environment, ENV_TGS_ID, defaults.defaultTicketGrantingServerId()),
@@ -125,8 +152,14 @@ public record AuthConfig(
                 value(environment, ENV_DEMO_TGS_SECRET, defaults.demoTicketGrantingServerSecret()),
                 value(environment, ENV_DEMO_SERVICE_SECRET, defaults.demoServiceSecret()),
                 value(environment, ENV_DEMO_PBKDF2_SALT, defaults.demoPbkdf2Salt()),
-                storageMode(environment),
-                value(environment, ENV_SQLITE_PATH, defaults.sqlitePath()));
+                resolvedStorageMode,
+                value(environment, ENV_SQLITE_PATH, defaults.sqlitePath()),
+                Duration.ofSeconds(longValue(environment, ENV_SESSION_TTL_SECONDS,
+                        defaults.sessionTtl().toSeconds())),
+                Duration.ofSeconds(longValue(environment, ENV_SESSION_MAX_TTL_SECONDS,
+                        defaults.sessionMaxTtl().toSeconds())),
+                sessionStorageMode(environment, resolvedStorageMode),
+                requireSessionVerify(environment));
 
         if (isStrictMode(environment)) {
             validateStrictMode(environment, config);
@@ -170,8 +203,28 @@ public record AuthConfig(
                 ENV_STORAGE_MODE + " debe ser '" + STORAGE_MODE_MEMORY + "' o '" + STORAGE_MODE_SQLITE + "'");
     }
 
+    public static String sessionStorageMode(Map<String, String> environment, String resolvedStorageMode) {
+        String configured = value(environment, ENV_SESSION_STORAGE_MODE, resolvedStorageMode).trim().toLowerCase();
+        if (STORAGE_MODE_MEMORY.equals(configured) || STORAGE_MODE_SQLITE.equals(configured)) {
+            return configured;
+        }
+        throw new IllegalArgumentException(
+                ENV_SESSION_STORAGE_MODE + " debe ser '" + STORAGE_MODE_MEMORY + "' o '" + STORAGE_MODE_SQLITE + "'");
+    }
+
+    public static boolean requireSessionVerify(Map<String, String> environment) {
+        if (isStrictMode(environment)) {
+            return true;
+        }
+        return booleanValue(environment, ENV_REQUIRE_SESSION_VERIFY, true);
+    }
+
     public boolean usesSqliteStorage() {
         return STORAGE_MODE_SQLITE.equals(storageMode());
+    }
+
+    public boolean usesSqliteSessionStorage() {
+        return STORAGE_MODE_SQLITE.equals(sessionStorageMode());
     }
 
     public boolean usesDemoSecrets() {
@@ -233,5 +286,19 @@ public record AuthConfig(
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
+    }
+
+    private static boolean booleanValue(Map<String, String> environment, String key, boolean defaultValue) {
+        String configured = environment.get(key);
+        if (configured == null || configured.isBlank()) {
+            return defaultValue;
+        }
+        if ("true".equalsIgnoreCase(configured)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(configured)) {
+            return false;
+        }
+        return defaultValue;
     }
 }

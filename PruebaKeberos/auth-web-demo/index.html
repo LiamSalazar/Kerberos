@@ -110,10 +110,26 @@
                   <dd data-result-message>Run a flow to see the protected response.</dd>
                 </div>
                 <div>
+                  <dt>Session ID</dt>
+                  <dd data-result-session>none</dd>
+                </div>
+                <div>
+                  <dt>Session expires</dt>
+                  <dd data-result-session-expires-at>not available</dd>
+                </div>
+                <div>
+                  <dt>Session state</dt>
+                  <dd data-result-session-state>not available</dd>
+                </div>
+                <div>
                   <dt>Latency</dt>
                   <dd data-result-latency>not available</dd>
                 </div>
               </dl>
+              <div class="session-actions">
+                <button type="button" class="button" data-action="verify-session">Verify Session</button>
+                <button type="button" class="button quiet" data-action="logout-session">Logout Session</button>
+              </div>
             </article>
 
             <article class="panel error-panel">

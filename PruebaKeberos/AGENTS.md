@@ -22,6 +22,10 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
   backend y comunicandose solo con `auth-websocket-gateway`.
 - `sample-login-app` es una mini app vanilla para integradores; mantenerla
   desacoplada del backend y sin frameworks frontend salvo autorizacion futura.
+- Las apps externas no deben conceder acceso solo por `FLOW_RESULT.success=true`;
+  deben usar `VERIFY_SESSION` y aceptar acceso solo con `SESSION_VALID`.
+- Mantener sesiones opacas del Gateway sin RSA, sin JWT, sin CA y sin exponer
+  secretos, tickets, ciphertexts ni claves al frontend.
 - Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo
   AS -> TGS -> Service cuando sea viable.
 - Mantener `docs/audits/legacy-dependency-audit.md` actualizado cuando se toque
@@ -45,6 +49,7 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Mantener ejecucion local sin Docker como requisito actual.
 - Docker y Docker Compose estan autorizados solo como despliegue local
   reproducible; no presentarlos como produccion.
+- No versionar herramientas portables locales como `tools/`.
 - No introducir Spring Boot. No agregar frameworks frontend salvo que una fase
   futura lo autorice explicitamente.
 - No agregar npm ni frameworks a `sample-login-app` sin autorizacion explicita.

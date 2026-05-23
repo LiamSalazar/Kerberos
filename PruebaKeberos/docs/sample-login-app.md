@@ -1,17 +1,25 @@
 # Sample Login App
 
-`sample-login-app` es una mini aplicacion HTML/CSS/JS vanilla que simula como
-una app real puede usar `auth-websocket-gateway` como capa de autenticacion
-distribuida local.
+`sample-login-app` es una mini app HTML/CSS/JS vanilla para integradores. No usa
+React, Vite, TypeScript, npm ni dependencias externas.
 
-No usa React, Vite, TypeScript, npm ni dependencias externas. Es distinta de
-`auth-web-demo`: la demo tecnica muestra etapas AS -> TGS -> Service; esta mini
-app muestra una pantalla de login y una zona protegida.
+La app solo habla con `auth-websocket-gateway`. No abre SQLite, no importa
+codigo backend y no administra clientes o servicios.
 
-La app solo habla con el WebSocket Gateway. No abre SQLite, no importa codigo
-backend y no administra clientes o servicios directamente.
+## Flow
 
-## Ejecutar Backend
+1. La app envia `START_AUTH_FLOW`.
+2. Si recibe `FLOW_RESULT success=true` con `sessionId`, guarda la sesion solo en
+   memoria del navegador.
+3. La app envia `VERIFY_SESSION`.
+4. Solo si recibe `SESSION_VALID`, muestra el dashboard protegido.
+5. Si recibe `SESSION_INVALID` o `ERROR`, mantiene el acceso cerrado.
+6. En logout, envia `LOGOUT_SESSION` y limpia estado local.
+
+Esto evita que una manipulacion local de `success=true` desbloquee la UI sin una
+validacion server-side del Gateway.
+
+## Run Backend
 
 Windows:
 
@@ -31,24 +39,7 @@ scripts/run-service.sh
 scripts/run-websocket-gateway.sh
 ```
 
-El Gateway escucha por defecto en:
-
-```text
-ws://127.0.0.1:2800
-```
-
-## Ejecutar Con SQLite
-
-```cmd
-scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
-set AUTH_STORAGE_MODE=sqlite
-set AUTH_SQLITE_PATH=data\auth-demo.sqlite
-```
-
-Usa esas variables al levantar AS, TGS, Service y Gateway. En modo SQLite, el
-Gateway registra eventos en `auth_audit_events`.
-
-## Ejecutar Sample App
+## Run App
 
 Windows:
 
@@ -68,30 +59,7 @@ Abrir:
 http://127.0.0.1:5174
 ```
 
-El puerto puede cambiar con:
-
-```text
-AUTH_SAMPLE_LOGIN_PORT=5175
-```
-
-## Ejecutar Con Docker
-
-Con Docker Desktop:
-
-```cmd
-copy .env.example .env
-scripts\docker-up.bat
-```
-
-Abrir:
-
-```text
-http://localhost:5174
-```
-
-La app sigue consumiendo solo `ws://localhost:2800`.
-
-## Login Exitoso
+## Expected Success
 
 Usar:
 
@@ -101,52 +69,31 @@ clientId: 1
 serviceId: 1
 ```
 
-Resultado esperado:
+Resultado:
 
 - `FLOW_RESULT success=true`;
-- `errorType` ausente o `null`;
-- pantalla protegida `Welcome to MelodyFinder`;
-- `requestId` visible;
-- estado autenticado visible;
-- mensaje del servicio visible;
-- sin claves, tickets ni ciphertexts.
+- `sessionId` enmascarado en UI;
+- `VERIFY_SESSION` enviado automaticamente;
+- dashboard solo visible despues de `SESSION_VALID`;
+- `LOGOUT_SESSION` enviado en logout;
+- sin secretos, tickets, claves ni ciphertexts.
 
-## Login Fallido
+## Expected Failure
 
-Usar un `serviceId` inexistente, por ejemplo:
+Usar `serviceId=missing-service`.
 
-```text
-serviceId: missing-service
+Resultado:
+
+- `FLOW_RESULT success=false` o `ERROR`;
+- dashboard oculto;
+- sin `sessionId` valido;
+- sin desbloqueo por estado local.
+
+## Docker
+
+```bash
+cp .env.example .env
+docker compose up -d --build
 ```
 
-Resultado esperado:
-
-- `FLOW_RESULT success=false`;
-- `errorType=SERVICE_NOT_FOUND` o `FLOW_FAILED`, segun el punto de fallo;
-- error claro en la pantalla de login;
-- zona protegida oculta;
-- sin secretos ni payloads sensibles.
-
-## How to secure your own app with this project
-
-1. Registrar el cliente real con `scripts\sqlite-admin.bat ... clients add`.
-2. Registrar el servicio real con `scripts\sqlite-admin.bat ... services add`.
-3. Levantar AS/TGS/Service/Gateway en modo SQLite.
-4. En la app, abrir WebSocket al Gateway.
-5. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
-6. Conceder acceso solo si `FLOW_RESULT.success === true`.
-7. Guardar una sesion propia de la app si corresponde.
-8. Consultar auditoria con `scripts\sqlite-admin.bat ... audit list`,
-   `audit by-request`, `audit by-client` o `audit by-service`.
-
-La app real sigue siendo responsable de TLS, sesiones web, logout, autorizacion
-de negocio, expiracion de sesion y manejo de usuarios.
-
-SQLite sigue siendo interno del sistema de autenticacion. Una app real no debe
-conectarse directamente a la base local para validar acceso.
-
-## Validacion Sin npm
-
-La app se valida sirviendo archivos estaticos con Python via
-`scripts\run-sample-login-app.bat` o `scripts/run-sample-login-app.sh`. No hay
-`package.json`, build step ni dependencias npm.
+Abrir `http://localhost:5174`. La app consume `ws://localhost:2800` en local.

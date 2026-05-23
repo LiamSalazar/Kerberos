@@ -4,8 +4,11 @@ import com.portfolio.auth.client.AuthClient;
 import com.portfolio.auth.core.audit.AuthEventRepository;
 import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.session.InMemorySessionRepository;
+import com.portfolio.auth.core.session.SessionRepository;
 import com.portfolio.auth.storage.sqlite.SQLiteAuditRepository;
 import com.portfolio.auth.storage.sqlite.SQLiteMigrationRunner;
+import com.portfolio.auth.storage.sqlite.SQLiteSessionRepository;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -30,6 +33,8 @@ public final class WebSocketGatewayApp {
 
         AuthClient authClient = new AuthClient(config);
         AuthEventRepository auditRepository = auditRepository(config);
+        SessionRepository sessionRepository = sessionRepository(config);
+        GatewaySessionService sessionService = new GatewaySessionService(config, sessionRepository);
         WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
                 allowedOrigins(value(ENV_ALLOWED_ORIGINS, "")),
                 WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
@@ -38,11 +43,12 @@ public final class WebSocketGatewayApp {
         GatewayAuthFlowService flowService = new GatewayAuthFlowService(
                 config,
                 new DefaultGatewayAuthClient(config, authClient),
-                auditRepository);
+                auditRepository,
+                sessionService);
         AuthWebSocketServer server = new AuthWebSocketServer(
                 new InetSocketAddress(host, port),
                 new WebSocketMessageCodec(),
-                new WebSocketMessageProcessor(flowService),
+                new WebSocketMessageProcessor(flowService, sessionService),
                 policy);
 
         server.start();
@@ -57,6 +63,15 @@ public final class WebSocketGatewayApp {
         Path databasePath = Path.of(config.sqlitePath());
         SQLiteMigrationRunner.applyMigrations(databasePath);
         return new SQLiteAuditRepository(databasePath);
+    }
+
+    private static SessionRepository sessionRepository(AuthConfig config) throws Exception {
+        if (!config.usesSqliteSessionStorage()) {
+            return new InMemorySessionRepository();
+        }
+        Path databasePath = Path.of(config.sqlitePath());
+        SQLiteMigrationRunner.applyMigrations(databasePath);
+        return new SQLiteSessionRepository(databasePath);
     }
 
     private static String value(String key, String defaultValue) {

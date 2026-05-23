@@ -1,25 +1,24 @@
 # Frontend Demo
 
-`auth-web-demo` es una demo web local para visualizar el flujo modular
+`auth-web-demo` es la demo tecnica local para observar el flujo modular
 AS -> TGS -> Service a traves de `auth-websocket-gateway`.
 
-Para una pantalla tipo login orientada a integradores, usar `sample-login-app`.
-Esa mini app no reemplaza `auth-web-demo`; demuestra como una app podria abrir
-una zona protegida tras `FLOW_RESULT success=true`.
+No es la app de login. Para el ejemplo de integracion con zona protegida, usar
+`sample-login-app`.
 
-No usa React, Vite, TypeScript, bundler ni dependencias npm externas. Es HTML,
-CSS y JavaScript vanilla con scripts Node propios para servir y validar archivos
-estaticos.
+## What It Shows
 
-## Requisitos
+- conexion al Gateway;
+- `START_AUTH_FLOW`;
+- eventos `FLOW_EVENT`;
+- `FLOW_RESULT`;
+- `sessionId` enmascarado;
+- `sessionExpiresAt`;
+- verificacion manual con `VERIFY_SESSION`;
+- cierre manual con `LOGOUT_SESSION`;
+- errores de protocolo sin mostrar secretos.
 
-- Java 17+ y Maven para el backend.
-- Node.js 18+ y npm para la demo web.
-- Cinco terminales locales.
-- Docker es opcional para despliegue local reproducible; la ejecucion sin
-  Docker sigue soportada.
-
-## Ejecutar Backend Y Gateway
+## Run
 
 Windows:
 
@@ -28,6 +27,7 @@ scripts\run-as.bat
 scripts\run-tgs.bat
 scripts\run-service.bat
 scripts\run-websocket-gateway.bat
+scripts\run-web-demo.bat
 ```
 
 Linux/macOS:
@@ -37,103 +37,16 @@ scripts/run-as.sh
 scripts/run-tgs.sh
 scripts/run-service.sh
 scripts/run-websocket-gateway.sh
-```
-
-El gateway escucha por defecto en:
-
-```text
-ws://127.0.0.1:2800
-```
-
-La demo frontend no distingue entre `AUTH_STORAGE_MODE=memory` y
-`AUTH_STORAGE_MODE=sqlite`; esa decision pertenece a AS, TGS y Service. El
-frontend solo habla con el Gateway WebSocket.
-
-## Ejecutar Frontend
-
-Primera vez:
-
-```bash
-cd auth-web-demo
-npm install
-npm run build
-```
-
-Ejecutar desde la raiz del proyecto:
-
-```cmd
-scripts\run-web-demo.bat
-```
-
-Linux/macOS:
-
-```bash
 scripts/run-web-demo.sh
-```
-
-Default:
-
-```text
-http://127.0.0.1:5173
-```
-
-## Ejecutar Con Docker
-
-Con Docker Desktop:
-
-```cmd
-copy .env.example .env
-scripts\docker-up.bat
 ```
 
 Abrir:
 
 ```text
-http://localhost:5173
+http://127.0.0.1:5173
 ```
 
-El frontend sigue comunicandose solo con `auth-websocket-gateway`.
-
-## Flujo Manual
-
-1. Levanta AS, TGS y Service.
-2. Levanta `auth-websocket-gateway`.
-3. Levanta `auth-web-demo`.
-4. Abre `http://127.0.0.1:5173`.
-5. Usa `ws://127.0.0.1:2800`.
-6. Pulsa `Connect`.
-7. Pulsa `Start Auth Flow`.
-8. Verifica eventos `FLOW_*`.
-9. Verifica `FLOW_RESULT success=true`.
-10. Verifica que el servicio concedido sea visible en `Final Result`.
-
-## Eventos Esperados
-
-- `FLOW_STARTED`
-- `AS_REQUEST_SENT`
-- `AS_RESPONSE_RECEIVED`
-- `TGS_REQUEST_SENT`
-- `TGS_RESPONSE_RECEIVED`
-- `SERVICE_REQUEST_SENT`
-- `SERVICE_RESPONSE_RECEIVED`
-- `FLOW_SUCCESS`
-- `FLOW_RESULT`
-
-## Errores Comunes
-
-- Gateway no disponible: la UI muestra error de conexion.
-- WebSocket cerrado durante el flujo: la UI marca el flujo como error.
-- JSON invalido desde el servidor: la UI registra error de protocolo.
-- Respuesta `ERROR`: la UI la muestra en el panel de errores.
-- Timeout sin `FLOW_RESULT`: la UI marca timeout de flujo.
-
-## Seguridad De Visualizacion
-
-La UI muestra solo etapa, estado, mensaje resumido, `requestId`, latencias y
-resultado final del servicio. No renderiza secretos, claves, tickets completos,
-ciphertexts, `CryptoEnvelope` ni payloads internos.
-
-## Validacion
+## Build Validation
 
 ```bash
 cd auth-web-demo
@@ -141,13 +54,13 @@ npm install
 npm run build
 ```
 
-El build valida que existan los archivos estaticos principales y copia la demo a
-`auth-web-demo/dist/`, carpeta generada que no se versiona.
+`auth-web-demo/dist/` es generado y no debe versionarse.
 
-## Relacion Con sample-login-app
+## Security Display
 
-- `auth-web-demo`: observa el flujo tecnico y sus etapas.
-- `sample-login-app`: simula login y dashboard protegido.
+La UI muestra solo estado, etapas, mensajes de alto nivel, latencias y sesion
+opaca enmascarada. No renderiza secretos, tickets completos, claves,
+ciphertexts, `CryptoEnvelope` ni payloads internos.
 
-Ambas consumen solamente `auth-websocket-gateway` y no muestran secretos,
-tickets completos, claves ni ciphertexts.
+`FLOW_RESULT.success=true` no debe interpretarse como autorizacion final en una
+app real. La autorizacion practica requiere `VERIFY_SESSION` y `SESSION_VALID`.

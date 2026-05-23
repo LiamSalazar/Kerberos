@@ -1,5 +1,8 @@
 package com.portfolio.auth.gateway;
 
+import com.portfolio.auth.core.session.AuthSession;
+import com.portfolio.auth.core.session.SessionValidationStatus;
+
 import java.util.Objects;
 
 public record WebSocketMessage(
@@ -12,6 +15,11 @@ public record WebSocketMessage(
         Boolean success,
         String errorType,
         String serviceMessage,
+        String sessionId,
+        String sessionExpiresAt,
+        Boolean valid,
+        String reason,
+        String expiresAt,
         Long asMillis,
         Long tgsMillis,
         Long serviceMillis,
@@ -39,6 +47,38 @@ public record WebSocketMessage(
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WebSocketMessage sessionInbound(
+            WebSocketMessageType type,
+            String requestId,
+            String sessionId,
+            String clientId,
+            String serviceId) {
+        return new WebSocketMessage(
+                type,
+                requestId,
+                clientId,
+                serviceId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null);
     }
 
@@ -50,6 +90,11 @@ public record WebSocketMessage(
                 null,
                 null,
                 "pong",
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -77,6 +122,11 @@ public record WebSocketMessage(
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null);
     }
 
@@ -85,6 +135,8 @@ public record WebSocketMessage(
             boolean success,
             WebSocketErrorType errorType,
             String serviceMessage,
+            String sessionId,
+            java.time.Instant sessionExpiresAt,
             long asMillis,
             long tgsMillis,
             long serviceMillis,
@@ -94,6 +146,8 @@ public record WebSocketMessage(
                 success,
                 errorType,
                 serviceMessage,
+                sessionId,
+                sessionExpiresAt,
                 asMillis,
                 tgsMillis,
                 serviceMillis,
@@ -111,10 +165,81 @@ public record WebSocketMessage(
                 result.success(),
                 result.errorType() == null ? null : result.errorType().name(),
                 result.serviceMessage(),
+                result.sessionId(),
+                result.sessionExpiresAt() == null ? null : result.sessionExpiresAt().toString(),
+                null,
+                null,
+                null,
                 result.asMillis(),
                 result.tgsMillis(),
                 result.serviceMillis(),
                 result.totalMillis());
+    }
+
+    public static WebSocketMessage sessionValid(String requestId, AuthSession session) {
+        return new WebSocketMessage(
+                WebSocketMessageType.SESSION_VALID,
+                requestId,
+                session.clientId(),
+                session.serviceId(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                session.sessionId(),
+                null,
+                true,
+                null,
+                session.expiresAt().toString(),
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WebSocketMessage sessionInvalid(String requestId, SessionValidationStatus status) {
+        return new WebSocketMessage(
+                WebSocketMessageType.SESSION_INVALID,
+                requestId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                status.name(),
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WebSocketMessage sessionLoggedOut(String requestId) {
+        return new WebSocketMessage(
+                WebSocketMessageType.SESSION_LOGGED_OUT,
+                requestId,
+                null,
+                null,
+                null,
+                "Sesion revocada",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     public static WebSocketMessage error(String requestId, WebSocketErrorType errorType, String message) {
@@ -131,6 +256,11 @@ public record WebSocketMessage(
                 error.message(),
                 false,
                 error.errorType().name(),
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,

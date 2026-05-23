@@ -31,6 +31,10 @@ La ruta modular es la ruta principal:
   el Gateway WebSocket.
 - agrega `sample-login-app` como mini app vanilla para demostrar integracion
   tipo login.
+- agrega sesiones opacas verificables en el Gateway para que una app externa no
+  conceda acceso solamente por `FLOW_RESULT.success=true`.
+- agrega `VERIFY_SESSION` y `LOGOUT_SESSION`, con sesiones en memoria o SQLite
+  segun configuracion.
 
 El codigo legacy fisico ya fue retirado del proyecto principal. Fase 9 retiro
 tambien `auth-transport/javaio` y `auth-transport/legacy`. El contexto
@@ -55,6 +59,10 @@ historico queda documentado en `docs/legacy-summary.md`.
   cliente WebSocket y servidores modulares levantados dentro de Maven.
 - La demo web no muestra secretos, tickets completos, ciphertexts ni material
   criptografico sensible.
+- La comunicacion `ws://` sigue siendo solo local. Para cloud se requiere
+  `wss://`, terminacion TLS y hardening operativo.
+- No se agrego RSA, JWT ni autoridad certificadora; el modelo actual usa sesion
+  opaca validada server-side por el Gateway.
 
 ## Prioridad Siguiente
 
@@ -64,8 +72,9 @@ historico queda documentado en `docs/legacy-summary.md`.
 3. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
    fuera de su alcance acotado.
 4. Agregar TLS o una capa de transporte autenticada para la ruta modular.
-5. Docker y Docker Compose solo en una fase futura de despliegue.
+5. Validar Docker Compose en Linux y documentar evidencia real.
 6. Agregar pruebas E2E de navegador para la demo web si se autoriza tooling.
+7. Evaluar TLS/WSS y gestion de secretos antes de cualquier despliegue cloud.
 
 ## Dependencia WebSocket
 

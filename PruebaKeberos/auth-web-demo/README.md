@@ -48,8 +48,12 @@ El build valida los archivos estaticos y copia la demo a `dist/`.
 4. Mantener `ws://127.0.0.1:2800`.
 5. Presionar `Connect`.
 6. Presionar `Start Auth Flow`.
-7. Verificar eventos `FLOW_*` y `FLOW_RESULT success`.
+7. Verificar eventos `FLOW_*`, `FLOW_RESULT success`, `sessionId` enmascarado y
+   `sessionExpiresAt`.
+8. Usar `Verify Session` para enviar `VERIFY_SESSION`.
+9. Usar `Logout Session` para enviar `LOGOUT_SESSION`.
 
 La UI muestra solo etapa, estado, mensaje resumido, `requestId`, latencias y
 resultado final. No muestra secretos, claves, tickets completos, ciphertexts ni
-material criptografico sensible.
+material criptografico sensible. `FLOW_RESULT.success=true` no debe usarse como
+autorizacion final en una app real; se requiere `SESSION_VALID`.

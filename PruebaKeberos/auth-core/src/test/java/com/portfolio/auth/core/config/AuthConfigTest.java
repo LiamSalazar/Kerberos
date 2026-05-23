@@ -23,21 +23,28 @@ class AuthConfigTest {
         assertEquals(AuthConfig.DEFAULT_LOCAL_DEMO_CLIENT_SECRET, config.demoClientSecret());
         assertEquals(AuthConfig.STORAGE_MODE_MEMORY, config.storageMode());
         assertEquals(AuthConfig.DEFAULT_LOCAL_SQLITE_PATH, config.sqlitePath());
+        assertEquals(AuthConfig.DEFAULT_LOCAL_SESSION_TTL, config.sessionTtl());
+        assertEquals(AuthConfig.DEFAULT_LOCAL_SESSION_MAX_TTL, config.sessionMaxTtl());
+        assertEquals(AuthConfig.STORAGE_MODE_MEMORY, config.sessionStorageMode());
+        assertTrue(config.requireSessionVerify());
         assertTrue(config.usesDemoSecrets());
         assertTrue(AuthConfig.demoWarning(Map.of(), config).contains(AuthConfig.ENV_AUTH_MODE));
     }
 
     @Test
     void shouldOverrideBasicRuntimeValuesFromEnvironment() {
-        AuthConfig config = AuthConfig.fromEnvironment(Map.of(
-                AuthConfig.ENV_AS_PORT, "2100",
-                AuthConfig.ENV_TGS_PORT, "2101",
-                AuthConfig.ENV_SERVICE_PORT, "2102",
-                AuthConfig.ENV_TICKET_TTL_MINUTES, "9",
-                AuthConfig.ENV_ALLOWED_SKEW_SECONDS, "30",
-                AuthConfig.ENV_REPLAY_WINDOW_SECONDS, "45",
-                AuthConfig.ENV_STORAGE_MODE, AuthConfig.STORAGE_MODE_SQLITE,
-                AuthConfig.ENV_SQLITE_PATH, "target/test-auth.sqlite"));
+        AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
+                Map.entry(AuthConfig.ENV_AS_PORT, "2100"),
+                Map.entry(AuthConfig.ENV_TGS_PORT, "2101"),
+                Map.entry(AuthConfig.ENV_SERVICE_PORT, "2102"),
+                Map.entry(AuthConfig.ENV_TICKET_TTL_MINUTES, "9"),
+                Map.entry(AuthConfig.ENV_ALLOWED_SKEW_SECONDS, "30"),
+                Map.entry(AuthConfig.ENV_REPLAY_WINDOW_SECONDS, "45"),
+                Map.entry(AuthConfig.ENV_STORAGE_MODE, AuthConfig.STORAGE_MODE_SQLITE),
+                Map.entry(AuthConfig.ENV_SQLITE_PATH, "target/test-auth.sqlite"),
+                Map.entry(AuthConfig.ENV_SESSION_TTL_SECONDS, "120"),
+                Map.entry(AuthConfig.ENV_SESSION_MAX_TTL_SECONDS, "180"),
+                Map.entry(AuthConfig.ENV_REQUIRE_SESSION_VERIFY, "false")));
 
         assertEquals(2100, config.authenticationServerPort());
         assertEquals(2101, config.ticketGrantingServerPort());
@@ -48,6 +55,11 @@ class AuthConfigTest {
         assertEquals(AuthConfig.STORAGE_MODE_SQLITE, config.storageMode());
         assertEquals("target/test-auth.sqlite", config.sqlitePath());
         assertTrue(config.usesSqliteStorage());
+        assertEquals(Duration.ofSeconds(120), config.sessionTtl());
+        assertEquals(Duration.ofSeconds(180), config.sessionMaxTtl());
+        assertEquals(AuthConfig.STORAGE_MODE_SQLITE, config.sessionStorageMode());
+        assertTrue(config.usesSqliteSessionStorage());
+        assertFalse(config.requireSessionVerify());
     }
 
     @Test
@@ -83,6 +95,7 @@ class AuthConfigTest {
         assertEquals("service-secret-from-env", config.demoServiceSecret());
         assertFalse(config.usesDemoSecrets());
         assertEquals("", AuthConfig.demoWarning(Map.of(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT), config));
+        assertTrue(config.requireSessionVerify());
     }
 
     @Test
@@ -99,5 +112,13 @@ class AuthConfigTest {
                 () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_STORAGE_MODE, "postgres")));
 
         assertTrue(error.getMessage().contains(AuthConfig.ENV_STORAGE_MODE));
+    }
+
+    @Test
+    void shouldRejectUnknownSessionStorageMode() {
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_SESSION_STORAGE_MODE, "redis")));
+
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_SESSION_STORAGE_MODE));
     }
 }

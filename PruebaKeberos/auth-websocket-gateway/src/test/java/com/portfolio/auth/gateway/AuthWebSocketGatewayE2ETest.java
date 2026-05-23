@@ -3,6 +3,7 @@ package com.portfolio.auth.gateway;
 import com.portfolio.auth.as.AuthenticationHandler;
 import com.portfolio.auth.as.InMemoryPrincipalRepository;
 import com.portfolio.auth.client.AuthClient;
+import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
 import com.portfolio.auth.core.repository.InMemoryServiceRegistry;
 import com.portfolio.auth.core.replay.InMemoryReplayCache;
@@ -61,10 +62,22 @@ class AuthWebSocketGatewayE2ETest {
             assertEquals("e2e-test-1", result.requestId());
             assertTrue(result.success());
             assertEquals(null, result.errorType());
+            assertNotNull(result.sessionId());
+            assertNotNull(result.sessionExpiresAt());
             assertTrue(result.serviceMessage().contains("MODULAR AUTH EXITOSO"));
             assertNotNull(result.totalMillis());
             assertRequiredStages(messages);
             assertNoSensitiveLeak(messages);
+
+            client.send("""
+                    {"type":"VERIFY_SESSION","requestId":"verify-e2e-1","sessionId":"%s","clientId":"1","serviceId":"1"}
+                    """.formatted(result.sessionId()));
+
+            WebSocketMessage valid = client.awaitType(WebSocketMessageType.SESSION_VALID);
+            assertEquals("verify-e2e-1", valid.requestId());
+            assertEquals(true, valid.valid());
+            assertEquals("1", valid.clientId());
+            assertEquals("1", valid.serviceId());
         }
     }
 
@@ -131,6 +144,7 @@ class AuthWebSocketGatewayE2ETest {
             WebSocketMessage result = client.awaitType(WebSocketMessageType.FLOW_RESULT);
             assertFalse(result.success());
             assertEquals(WebSocketErrorType.CLIENT_NOT_FOUND.name(), result.errorType());
+            assertEquals(null, result.sessionId());
             assertTrue(result.serviceMessage().contains("Cliente no registrado"));
         }
     }
@@ -148,7 +162,34 @@ class AuthWebSocketGatewayE2ETest {
             WebSocketMessage result = client.awaitType(WebSocketMessageType.FLOW_RESULT);
             assertFalse(result.success());
             assertEquals(WebSocketErrorType.SERVICE_NOT_FOUND.name(), result.errorType());
+            assertEquals(null, result.sessionId());
             assertTrue(result.serviceMessage().contains("TGS_UNKNOWN_SERVICE"));
+        }
+    }
+
+    @Test
+    void shouldLogoutSessionThroughGateway() throws Exception {
+        try (ModularServers servers = ModularServers.start();
+                GatewayServer gateway = GatewayServer.start(servers.client());
+                RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
+
+            client.send("""
+                    {"type":"START_AUTH_FLOW","requestId":"logout-flow","clientId":"1","serviceId":"1"}
+                    """);
+            WebSocketMessage result = client.awaitType(WebSocketMessageType.FLOW_RESULT);
+            assertTrue(result.success());
+
+            client.send("""
+                    {"type":"LOGOUT_SESSION","requestId":"logout-session","sessionId":"%s"}
+                    """.formatted(result.sessionId()));
+            WebSocketMessage loggedOut = client.awaitType(WebSocketMessageType.SESSION_LOGGED_OUT);
+            assertEquals("logout-session", loggedOut.requestId());
+
+            client.send("""
+                    {"type":"VERIFY_SESSION","requestId":"verify-after-logout","sessionId":"%s","clientId":"1","serviceId":"1"}
+                    """.formatted(result.sessionId()));
+            WebSocketMessage invalid = client.awaitType(WebSocketMessageType.SESSION_INVALID);
+            assertEquals("REVOKED", invalid.reason());
         }
     }
 
@@ -165,6 +206,7 @@ class AuthWebSocketGatewayE2ETest {
 
             assertFalse(result.success());
             assertEquals(WebSocketErrorType.FLOW_FAILED.name(), result.errorType());
+            assertEquals(null, result.sessionId());
             assertTrue(messages.stream().anyMatch(message -> "FLOW_ERROR".equals(message.stage())));
             assertNoSensitiveLeak(messages);
         }
@@ -427,13 +469,16 @@ class AuthWebSocketGatewayE2ETest {
         private static GatewayServer start(GatewayAuthClient client, WebSocketGatewayPolicy policy) throws IOException {
             int port = freePort();
             AuthConfig config = AuthConfig.localDemo();
+            GatewaySessionService sessionService = GatewaySessionService.inMemory(config);
             GatewayAuthFlowService flowService = new GatewayAuthFlowService(
                     config,
-                    client);
+                    client,
+                    NoOpAuthEventRepository.INSTANCE,
+                    sessionService);
             AuthWebSocketServer server = new AuthWebSocketServer(
                     new InetSocketAddress(AuthConfig.DEFAULT_LOCAL_HOST, port),
                     new WebSocketMessageCodec(),
-                    new WebSocketMessageProcessor(flowService),
+                    new WebSocketMessageProcessor(flowService, sessionService),
                     policy);
             server.start();
             return new GatewayServer(server);

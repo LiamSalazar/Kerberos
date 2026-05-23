@@ -70,6 +70,8 @@ Resultado final:
   "type": "FLOW_RESULT",
   "requestId": "manual-1",
   "success": true,
+  "sessionId": "opaque-session-id",
+  "sessionExpiresAt": "2026-05-23T17:00:00Z",
   "serviceMessage": "MODULAR AUTH EXITOSO",
   "asMillis": 1,
   "tgsMillis": 1,
@@ -77,6 +79,9 @@ Resultado final:
   "totalMillis": 3
 }
 ```
+
+La app externa debe enviar `VERIFY_SESSION` y esperar `SESSION_VALID` antes de
+conceder acceso propio. `FLOW_RESULT.success=true` no es autorizacion final.
 
 ## Errores Controlados
 
@@ -99,6 +104,8 @@ Casos cubiertos por pruebas unitarias, de componente o de integracion:
 - multiples clientes concurrentes;
 - mensajes WebSocket validos, tipo desconocido, JSON invalido y servicios no
   disponibles a nivel de gateway.
+- sesiones opacas del Gateway: creacion, verificacion, expiracion, revocacion y
+  mismatch de cliente/servicio.
 - flujo WebSocket E2E real con AS, TGS, Service y Gateway levantados en pruebas
   Maven.
 - concurrencia con multiples clientes y flujos simultaneos;

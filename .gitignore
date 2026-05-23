@@ -1,10 +1,23 @@
+# Local tools and portable runtimes
+tools/
+node-*-win-x64/
+node-v*-win-x64/
+v*-win-x64.zip
+
 # Build and generated artifacts
 build/
 target/
 *.class
 *.ser
 *.log
+*.db
+*.sqlite
+*.sqlite3
 sources.txt
+
+# Environment and dependency folders
+.env
+node_modules/
 
 # IDE metadata
 .vscode/

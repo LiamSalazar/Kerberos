@@ -6,10 +6,10 @@ inspirado en Kerberos 4, con una arquitectura modular propia bajo `auth-*`.
 Este repositorio no es MIT Kerberos oficial y no debe presentarse como un
 sistema listo para produccion critica. Es una base local para estudiar
 protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
-reproducibles sin Docker.
+reproducibles con o sin Docker.
 
-Fase actual: **Fase 15: auditoria persistente, migraciones SQLite, validacion
-Maven/POM, administracion local y mini app de login integradora**.
+Fase actual: **Fase 16 + Fase 17: seguridad operativa, API integrable y
+despliegue local reproducible con Docker**.
 
 ## Que Problema Resuelve
 
@@ -118,6 +118,34 @@ http://127.0.0.1:5174
 Usar `clientId=1`, `serviceId=1` para un flujo exitoso. Usar un `serviceId`
 invalido para verificar acceso denegado.
 
+## Ejecutar Con Docker Compose
+
+Docker es opcional para levantar la demo local completa sin abrir cinco
+terminales. Requiere Docker Desktop:
+
+```cmd
+copy .env.example .env
+scripts\docker-up.bat
+```
+
+Linux/macOS:
+
+```bash
+cp .env.example .env
+scripts/docker-up.sh
+```
+
+Abrir:
+
+```text
+http://localhost:5173
+http://localhost:5174
+ws://localhost:2800
+```
+
+AS, TGS y Service quedan en una red interna de Docker; solo se publican Gateway,
+web demo y sample-login-app. Ver [docs/docker-deployment.md](docs/docker-deployment.md).
+
 ## SQLite Local
 
 Modo demo por defecto:
@@ -179,7 +207,9 @@ Consultar auditoria:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --request-id sample-login-1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-id sample-login-1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id 1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id 1
 ```
 
 La salida no imprime secretos, tickets, claves ni ciphertexts.
@@ -195,12 +225,14 @@ La salida no imprime secretos, tickets, claves ni ciphertexts.
 7. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
 8. Validar `FLOW_RESULT`: solo conceder acceso si `success=true`.
 9. Mostrar datos de alto nivel como `requestId` y mensaje del servicio.
-10. Consultar auditoria en `auth_audit_events` o con `sqlite-admin ... audit list`.
+10. Consultar auditoria con `sqlite-admin ... audit list`, `by-request`,
+    `by-client` o `by-service`.
 
 La app conserva responsabilidad sobre UI, sesiones propias, autorizacion de
 negocio, expiracion de sesion web, TLS y almacenamiento de usuario. Este sistema
 asume la validacion modular AS -> TGS -> Service y la auditoria local SQLite del
-flujo cuando el Gateway corre en modo SQLite.
+flujo cuando el Gateway corre en modo SQLite. SQLite pertenece al sistema de
+autenticacion; la app externa no debe conectarse directamente a esa base.
 
 ## API De Integracion
 
@@ -219,7 +251,7 @@ APIs externas reales.
 
 - No es MIT Kerberos oficial.
 - No esta listo para produccion critica.
-- No hay Docker, Spring Boot, PostgreSQL, ORM pesado, React ni Next.js.
+- Docker local es opcional; no hay Spring Boot, PostgreSQL, ORM pesado, React ni Next.js.
 - SQLite es persistencia local verificable, no una base productiva.
 - No hay TLS ni autenticacion mutua en TCP/WebSocket.
 - Los secretos demo no deben usarse fuera de ejecucion local.
@@ -231,7 +263,7 @@ APIs externas reales.
 2. Separar secretos demo de secretos operativos con vault o mecanismo externo.
 3. Agregar politicas de autorizacion por recurso.
 4. Evaluar parser JSON mantenido si el codec propio crece.
-5. Introducir Docker solo cuando una fase futura lo autorice.
+5. Agregar TLS/mTLS y gestion operativa de secretos.
 
 ## Mas Documentacion
 
@@ -239,7 +271,9 @@ APIs externas reales.
 - [docs/architecture.md](docs/architecture.md)
 - [docs/sqlite-integration.md](docs/sqlite-integration.md)
 - [docs/integration-api.md](docs/integration-api.md)
+- [docs/using-auth-api.md](docs/using-auth-api.md)
 - [docs/sample-login-app.md](docs/sample-login-app.md)
+- [docs/docker-deployment.md](docs/docker-deployment.md)
 - [docs/websocket-gateway.md](docs/websocket-gateway.md)
 - [docs/frontend-demo.md](docs/frontend-demo.md)
 - [docs/concurrency.md](docs/concurrency.md)

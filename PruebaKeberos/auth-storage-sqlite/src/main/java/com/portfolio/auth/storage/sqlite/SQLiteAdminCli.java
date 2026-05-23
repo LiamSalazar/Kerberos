@@ -87,14 +87,14 @@ public final class SQLiteAdminCli {
 
     private static void handleAudit(Path database, List<String> command, CliArgs cli) {
         String action = first(command, "audit action");
-        if (!"list".equals(action)) {
-            throw new IllegalArgumentException("Unknown audit action: " + action);
-        }
-
         SQLiteAuditRepository audit = new SQLiteAuditRepository(database);
-        List<AuthAuditEvent> events = cli.value("--request-id", null) == null
-                ? audit.findRecent(cli.intValue("--limit", 20))
-                : audit.findByRequestId(cli.value("--request-id", null));
+        List<AuthAuditEvent> events = switch (action) {
+            case "list" -> audit.findRecent(cli.intValue("--limit", 20));
+            case "by-request" -> audit.findByRequestId(cli.require("--request-id"));
+            case "by-client" -> audit.findByClientId(cli.require("--client-id"));
+            case "by-service" -> audit.findByServiceId(cli.require("--service-id"));
+            default -> throw new IllegalArgumentException("Unknown audit action: " + action);
+        };
         System.out.println("Audit events:");
         for (AuthAuditEvent event : events) {
             System.out.println("- requestId=" + event.requestId()
@@ -134,7 +134,10 @@ public final class SQLiteAdminCli {
                   SQLiteAdminCli [--db <path>] services list
                   SQLiteAdminCli [--db <path>] services enable --id <id>
                   SQLiteAdminCli [--db <path>] services disable --id <id>
-                  SQLiteAdminCli [--db <path>] audit list [--limit <n>|--request-id <id>]
+                  SQLiteAdminCli [--db <path>] audit list [--limit <n>]
+                  SQLiteAdminCli [--db <path>] audit by-request --request-id <id>
+                  SQLiteAdminCli [--db <path>] audit by-client --client-id <id>
+                  SQLiteAdminCli [--db <path>] audit by-service --service-id <id>
                 """);
     }
 

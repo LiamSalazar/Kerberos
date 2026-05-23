@@ -8,6 +8,9 @@ No usa React, Vite, TypeScript, npm ni dependencias externas. Es distinta de
 `auth-web-demo`: la demo tecnica muestra etapas AS -> TGS -> Service; esta mini
 app muestra una pantalla de login y una zona protegida.
 
+La app solo habla con el WebSocket Gateway. No abre SQLite, no importa codigo
+backend y no administra clientes o servicios directamente.
+
 ## Ejecutar Backend
 
 Windows:
@@ -71,6 +74,23 @@ El puerto puede cambiar con:
 AUTH_SAMPLE_LOGIN_PORT=5175
 ```
 
+## Ejecutar Con Docker
+
+Con Docker Desktop:
+
+```cmd
+copy .env.example .env
+scripts\docker-up.bat
+```
+
+Abrir:
+
+```text
+http://localhost:5174
+```
+
+La app sigue consumiendo solo `ws://localhost:2800`.
+
 ## Login Exitoso
 
 Usar:
@@ -84,6 +104,7 @@ serviceId: 1
 Resultado esperado:
 
 - `FLOW_RESULT success=true`;
+- `errorType` ausente o `null`;
 - pantalla protegida `Welcome to MelodyFinder`;
 - `requestId` visible;
 - estado autenticado visible;
@@ -101,11 +122,12 @@ serviceId: missing-service
 Resultado esperado:
 
 - `FLOW_RESULT success=false`;
+- `errorType=SERVICE_NOT_FOUND` o `FLOW_FAILED`, segun el punto de fallo;
 - error claro en la pantalla de login;
 - zona protegida oculta;
 - sin secretos ni payloads sensibles.
 
-## Adaptar A Una App Real
+## How to secure your own app with this project
 
 1. Registrar el cliente real con `scripts\sqlite-admin.bat ... clients add`.
 2. Registrar el servicio real con `scripts\sqlite-admin.bat ... services add`.
@@ -114,10 +136,14 @@ Resultado esperado:
 5. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
 6. Conceder acceso solo si `FLOW_RESULT.success === true`.
 7. Guardar una sesion propia de la app si corresponde.
-8. Consultar auditoria con `scripts\sqlite-admin.bat ... audit list`.
+8. Consultar auditoria con `scripts\sqlite-admin.bat ... audit list`,
+   `audit by-request`, `audit by-client` o `audit by-service`.
 
 La app real sigue siendo responsable de TLS, sesiones web, logout, autorizacion
 de negocio, expiracion de sesion y manejo de usuarios.
+
+SQLite sigue siendo interno del sistema de autenticacion. Una app real no debe
+conectarse directamente a la base local para validar acceso.
 
 ## Validacion Sin npm
 

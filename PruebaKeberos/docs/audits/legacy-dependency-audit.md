@@ -26,7 +26,7 @@ rg -n "\bKerberos[.]|\bSeguridad[.]|AESUtils|SealedObject|ObjectInputStream|Obje
 Busqueda adicional de cierre Fase 9:
 
 ```powershell
-rg -n "AUTH_LEGACY_|legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObject|AESUtils|com\.portfolio\.auth\.transport\.legacy|Legacy.*Mapper|transport\.legacy" auth-as auth-tgs auth-service auth-client-sdk auth-core auth-crypto auth-transport auth-websocket-gateway README.md requirements.txt docs AGENTS.md
+rg -n "legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObject|AESUtils|com\.portfolio\.auth\.transport\.legacy|Legacy.*Mapper|transport\.legacy" auth-as auth-tgs auth-service auth-client-sdk auth-core auth-crypto auth-transport auth-websocket-gateway README.md requirements.txt docs AGENTS.md
 ```
 
 ## Resultado Maven
@@ -45,7 +45,7 @@ rg -n "AUTH_LEGACY_|legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObjec
   `AESUtils` en la ruta modular.
 - `auth-transport/javaio` y `auth-transport/legacy` no existen en el arbol
   fuente actual.
-- No quedan alias `AUTH_LEGACY_*` en `AuthConfig`.
+- No quedan alias historicos de configuracion en `AuthConfig`.
 - Los nombres principales de secretos son `AUTH_DEMO_*`.
 
 ## Referencias Eliminadas
@@ -79,4 +79,4 @@ En Fase 9 se retiraron tambien:
 El legacy fisico fue eliminado del proyecto principal despues de pasar compile,
 tests Maven y auditoria textual. Fase 9 retiro tambien los adaptadores internos
 que conservaban Java serialization o mappers historicos. Fase 11 retiro los
-alias `AUTH_LEGACY_*` y valido el gateway con E2E WebSocket real.
+alias historicos de configuracion y valido el gateway con E2E WebSocket real.

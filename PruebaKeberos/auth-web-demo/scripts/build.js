@@ -38,7 +38,6 @@ const renderer = fs.readFileSync(path.join(root, "src/renderer.js"), "utf8");
 const requiredContractTokens = [
   "WebSocket",
   "START_AUTH_FLOW",
-  "GATEWAY_READY",
   "FLOW_EVENT",
   "FLOW_RESULT",
   "FLOW_SUCCESS",

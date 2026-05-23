@@ -15,6 +15,7 @@ public final class AuthenticationServerApp {
 
     public static void main(String[] args) throws Exception {
         AuthConfig config = AuthConfig.fromEnvironment();
+        AuthConfig.printDemoWarningIfNeeded(System.getenv(), config);
         JsonMessageCodec codec = new JsonMessageCodec();
         PrincipalRepository principals = config.usesSqliteStorage()
                 ? new SQLitePrincipalRepository(java.nio.file.Path.of(config.sqlitePath()))

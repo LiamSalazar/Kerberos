@@ -9,10 +9,14 @@ import com.portfolio.auth.storage.sqlite.SQLiteMigrationRunner;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class WebSocketGatewayApp {
     public static final String ENV_WEBSOCKET_HOST = "AUTH_WS_HOST";
     public static final String ENV_WEBSOCKET_PORT = "AUTH_WS_PORT";
+    public static final String ENV_ALLOWED_ORIGINS = "AUTH_ALLOWED_ORIGINS";
     public static final int DEFAULT_WEBSOCKET_PORT = 2800;
 
     private WebSocketGatewayApp() {
@@ -20,11 +24,17 @@ public final class WebSocketGatewayApp {
 
     public static void main(String[] args) throws Exception {
         AuthConfig config = AuthConfig.fromEnvironment();
+        AuthConfig.printDemoWarningIfNeeded(System.getenv(), config);
         String host = value(ENV_WEBSOCKET_HOST, AuthConfig.DEFAULT_LOCAL_HOST);
         int port = intValue(ENV_WEBSOCKET_PORT, DEFAULT_WEBSOCKET_PORT);
 
         AuthClient authClient = new AuthClient(config);
         AuthEventRepository auditRepository = auditRepository(config);
+        WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
+                allowedOrigins(value(ENV_ALLOWED_ORIGINS, "")),
+                WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
+                WebSocketGatewayPolicy.DEFAULT_RATE_LIMIT_WINDOW,
+                WebSocketGatewayPolicy.DEFAULT_FLOW_TIMEOUT);
         GatewayAuthFlowService flowService = new GatewayAuthFlowService(
                 config,
                 new DefaultGatewayAuthClient(config, authClient),
@@ -32,7 +42,8 @@ public final class WebSocketGatewayApp {
         AuthWebSocketServer server = new AuthWebSocketServer(
                 new InetSocketAddress(host, port),
                 new WebSocketMessageCodec(),
-                new WebSocketMessageProcessor(flowService));
+                new WebSocketMessageProcessor(flowService),
+                policy);
 
         server.start();
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
@@ -66,5 +77,15 @@ public final class WebSocketGatewayApp {
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
+    }
+
+    private static Set<String> allowedOrigins(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return Set.of();
+        }
+        return Arrays.stream(rawValue.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

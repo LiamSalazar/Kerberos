@@ -1,0 +1,10 @@
+.git
+.env
+target/
+**/target/
+auth-web-demo/dist/
+auth-web-demo/node_modules/
+*.db
+*.sqlite
+*.sqlite3
+*.log

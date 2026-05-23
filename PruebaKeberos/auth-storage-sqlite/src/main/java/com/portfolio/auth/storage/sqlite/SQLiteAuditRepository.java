@@ -83,23 +83,37 @@ public final class SQLiteAuditRepository implements AuthEventRepository {
 
     @Override
     public List<AuthAuditEvent> findByRequestId(String requestId) {
-        if (requestId == null || requestId.isBlank()) {
+        return findByField("request_id", requestId, "requestId");
+    }
+
+    @Override
+    public List<AuthAuditEvent> findByClientId(String clientId) {
+        return findByField("client_id", clientId, "clientId");
+    }
+
+    @Override
+    public List<AuthAuditEvent> findByServiceId(String serviceId) {
+        return findByField("service_id", serviceId, "serviceId");
+    }
+
+    private List<AuthAuditEvent> findByField(String column, String value, String label) {
+        if (value == null || value.isBlank()) {
             return List.of();
         }
         String sql = """
                 SELECT request_id, client_id, service_id, event_type, status, error_type, latency_ms, created_at
                 FROM auth_audit_events
-                WHERE request_id = ?
+                WHERE %s = ?
                 ORDER BY id ASC
-                """;
+                """.formatted(column);
         try (Connection connection = connectionFactory.open();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, requestId);
+            statement.setString(1, value);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return events(resultSet);
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read SQLite audit events for requestId=" + requestId, exception);
+            throw new IllegalStateException("Could not read SQLite audit events for " + label + "=" + value, exception);
         }
     }
 

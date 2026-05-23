@@ -23,8 +23,10 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -49,8 +51,6 @@ class AuthWebSocketGatewayE2ETest {
         try (ModularServers servers = ModularServers.start();
                 GatewayServer gateway = GatewayServer.start(servers.client());
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            assertEquals(WebSocketMessageType.GATEWAY_READY, client.awaitType(WebSocketMessageType.GATEWAY_READY).type());
-
             client.send("""
                     {"type":"START_AUTH_FLOW","requestId":"e2e-test-1","clientId":"1","serviceId":"1"}
                     """);
@@ -60,6 +60,7 @@ class AuthWebSocketGatewayE2ETest {
 
             assertEquals("e2e-test-1", result.requestId());
             assertTrue(result.success());
+            assertEquals(null, result.errorType());
             assertTrue(result.serviceMessage().contains("MODULAR AUTH EXITOSO"));
             assertNotNull(result.totalMillis());
             assertRequiredStages(messages);
@@ -71,11 +72,10 @@ class AuthWebSocketGatewayE2ETest {
     void shouldReturnErrorForInvalidJson() throws Exception {
         try (GatewayServer gateway = GatewayServer.startUnavailable();
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
-
             client.send("{\"type\":");
 
             WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.INVALID_JSON.name(), error.errorType());
             assertTrue(error.message().contains("JSON") || error.message().contains("Se esperaba"));
         }
     }
@@ -84,11 +84,10 @@ class AuthWebSocketGatewayE2ETest {
     void shouldReturnErrorForUnknownMessageType() throws Exception {
         try (GatewayServer gateway = GatewayServer.startUnavailable();
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
-
             client.send("{\"type\":\"UNKNOWN\",\"requestId\":\"bad-type\"}");
 
             WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.UNKNOWN_MESSAGE_TYPE.name(), error.errorType());
             assertTrue(error.message().contains("WebSocketMessageType no soportado"));
         }
     }
@@ -97,12 +96,25 @@ class AuthWebSocketGatewayE2ETest {
     void shouldReturnErrorWhenTypeIsMissing() throws Exception {
         try (GatewayServer gateway = GatewayServer.startUnavailable();
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
-
             client.send("{}");
 
             WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.MISSING_REQUIRED_FIELD.name(), error.errorType());
             assertTrue(error.message().contains("type"));
+        }
+    }
+
+    @Test
+    void shouldRejectMissingStartAuthFlowFields() throws Exception {
+        try (GatewayServer gateway = GatewayServer.startUnavailable();
+                RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
+            client.send("""
+                    {"type":"START_AUTH_FLOW","requestId":"missing-fields","clientId":"1"}
+                    """);
+
+            WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.MISSING_REQUIRED_FIELD.name(), error.errorType());
+            assertTrue(error.message().contains("serviceId"));
         }
     }
 
@@ -111,7 +123,6 @@ class AuthWebSocketGatewayE2ETest {
         try (ModularServers servers = ModularServers.start();
                 GatewayServer gateway = GatewayServer.start(servers.client());
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
 
             client.send("""
                     {"type":"START_AUTH_FLOW","requestId":"unknown-client","clientId":"missing","serviceId":"1"}
@@ -119,6 +130,7 @@ class AuthWebSocketGatewayE2ETest {
 
             WebSocketMessage result = client.awaitType(WebSocketMessageType.FLOW_RESULT);
             assertFalse(result.success());
+            assertEquals(WebSocketErrorType.CLIENT_NOT_FOUND.name(), result.errorType());
             assertTrue(result.serviceMessage().contains("Cliente no registrado"));
         }
     }
@@ -128,7 +140,6 @@ class AuthWebSocketGatewayE2ETest {
         try (ModularServers servers = ModularServers.start();
                 GatewayServer gateway = GatewayServer.start(servers.client());
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
 
             client.send("""
                     {"type":"START_AUTH_FLOW","requestId":"unknown-service","clientId":"1","serviceId":"missing"}
@@ -136,6 +147,7 @@ class AuthWebSocketGatewayE2ETest {
 
             WebSocketMessage result = client.awaitType(WebSocketMessageType.FLOW_RESULT);
             assertFalse(result.success());
+            assertEquals(WebSocketErrorType.SERVICE_NOT_FOUND.name(), result.errorType());
             assertTrue(result.serviceMessage().contains("TGS_UNKNOWN_SERVICE"));
         }
     }
@@ -144,8 +156,6 @@ class AuthWebSocketGatewayE2ETest {
     void shouldReturnControlledFailureWhenServicesAreUnavailable() throws Exception {
         try (GatewayServer gateway = GatewayServer.startUnavailable();
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
-
             client.send("""
                     {"type":"START_AUTH_FLOW","requestId":"services-down","clientId":"1","serviceId":"1"}
                     """);
@@ -154,32 +164,89 @@ class AuthWebSocketGatewayE2ETest {
             WebSocketMessage result = messages.get(messages.size() - 1);
 
             assertFalse(result.success());
+            assertEquals(WebSocketErrorType.FLOW_FAILED.name(), result.errorType());
             assertTrue(messages.stream().anyMatch(message -> "FLOW_ERROR".equals(message.stage())));
             assertNoSensitiveLeak(messages);
         }
     }
 
     @Test
-    void shouldGenerateRequestIdWhenEmptyOrNull() throws Exception {
-        try (ModularServers servers = ModularServers.start();
-                GatewayServer gateway = GatewayServer.start(servers.client());
+    void shouldAcceptAllowedOrigin() throws Exception {
+        WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
+                Set.of("http://allowed.local"),
+                WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
+                WebSocketGatewayPolicy.DEFAULT_RATE_LIMIT_WINDOW,
+                WebSocketGatewayPolicy.DEFAULT_FLOW_TIMEOUT);
+        try (GatewayServer gateway = GatewayServer.startUnavailable(policy);
+                RecordingWebSocketClient client = RecordingWebSocketClient.connect(
+                        gateway.port(),
+                        codec,
+                        Map.of("Origin", "http://allowed.local"))) {
+            client.send("""
+                    {"type":"PING","requestId":"origin-ok"}
+                    """);
+
+            WebSocketMessage pong = client.awaitType(WebSocketMessageType.PONG);
+            assertEquals("origin-ok", pong.requestId());
+        }
+    }
+
+    @Test
+    void shouldRejectDisallowedOrigin() throws Exception {
+        WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
+                Set.of("http://allowed.local"),
+                WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
+                WebSocketGatewayPolicy.DEFAULT_RATE_LIMIT_WINDOW,
+                WebSocketGatewayPolicy.DEFAULT_FLOW_TIMEOUT);
+        try (GatewayServer gateway = GatewayServer.startUnavailable(policy);
+                RecordingWebSocketClient client = RecordingWebSocketClient.connect(
+                        gateway.port(),
+                        codec,
+                        Map.of("Origin", "http://blocked.local"))) {
+            WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.ORIGIN_NOT_ALLOWED.name(), error.errorType());
+        }
+    }
+
+    @Test
+    void shouldRateLimitConnection() throws Exception {
+        WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
+                Set.of(),
+                1,
+                Duration.ofSeconds(10),
+                WebSocketGatewayPolicy.DEFAULT_FLOW_TIMEOUT);
+        try (GatewayServer gateway = GatewayServer.startUnavailable(policy);
                 RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
-            client.awaitType(WebSocketMessageType.GATEWAY_READY);
+            client.send("""
+                    {"type":"PING","requestId":"rate-1"}
+                    """);
+            assertEquals(WebSocketMessageType.PONG, client.awaitType(WebSocketMessageType.PONG).type());
 
             client.send("""
-                    {"type":"START_AUTH_FLOW","requestId":"","clientId":"1","serviceId":"1"}
+                    {"type":"PING","requestId":"rate-2"}
                     """);
-            WebSocketMessage blankResult = client.awaitType(WebSocketMessageType.FLOW_RESULT);
 
+            WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.RATE_LIMITED.name(), error.errorType());
+        }
+    }
+
+    @Test
+    void shouldTimeoutLongRunningFlow() throws Exception {
+        WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
+                Set.of(),
+                WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
+                WebSocketGatewayPolicy.DEFAULT_RATE_LIMIT_WINDOW,
+                Duration.ofMillis(50));
+        try (GatewayServer gateway = GatewayServer.start(newSlowGatewayClient(), policy);
+                RecordingWebSocketClient client = RecordingWebSocketClient.connect(gateway.port(), codec)) {
             client.send("""
-                    {"type":"START_AUTH_FLOW","requestId":null,"clientId":"1","serviceId":"1"}
+                    {"type":"START_AUTH_FLOW","requestId":"flow-timeout","clientId":"1","serviceId":"1"}
                     """);
-            WebSocketMessage nullResult = client.awaitType(WebSocketMessageType.FLOW_RESULT);
 
-            assertTrue(blankResult.success());
-            assertTrue(blankResult.requestId().startsWith("ws-"));
-            assertTrue(nullResult.success());
-            assertTrue(nullResult.requestId().startsWith("ws-"));
+            WebSocketMessage error = client.awaitType(WebSocketMessageType.ERROR);
+            assertEquals(WebSocketErrorType.FLOW_FAILED.name(), error.errorType());
+            assertTrue(error.message().contains("Timeout"));
         }
     }
 
@@ -216,6 +283,41 @@ class AuthWebSocketGatewayE2ETest {
             assertFalse(text.contains("contrasenia"), "No se deben exponer secretos demo");
             assertFalse(text.contains("contraseña"), "No se deben exponer secretos demo");
         }
+    }
+
+    private static GatewayAuthClient newSlowGatewayClient() {
+        return new GatewayAuthClient() {
+            @Override
+            public String configuredClientId() {
+                return "1";
+            }
+
+            @Override
+            public com.portfolio.auth.transport.secure.SecureAsResponse requestTicketGrantingTicket(String requestId)
+                    throws Exception {
+                Thread.sleep(1_000);
+                throw new IOException("slow flow interrupted");
+            }
+
+            @Override
+            public com.portfolio.auth.transport.secure.SecureTgsResponse requestServiceTicket(
+                    com.portfolio.auth.transport.secure.SecureAsResponse asResponse,
+                    String serviceId,
+                    String requestId,
+                    String authenticatorId,
+                    Instant authenticatorIssuedAt) {
+                throw new UnsupportedOperationException("not used");
+            }
+
+            @Override
+            public com.portfolio.auth.core.protocol.dto.ServiceResponse requestProtectedService(
+                    com.portfolio.auth.transport.secure.SecureTgsResponse tgsResponse,
+                    String requestId,
+                    String authenticatorId,
+                    Instant authenticatorIssuedAt) {
+                throw new UnsupportedOperationException("not used");
+            }
+        };
     }
 
     private static int freePort() throws IOException {
@@ -314,20 +416,34 @@ class AuthWebSocketGatewayE2ETest {
         }
 
         private static GatewayServer start(AuthClient client) throws IOException {
+            return start(client, WebSocketGatewayPolicy.defaults());
+        }
+
+        private static GatewayServer start(AuthClient client, WebSocketGatewayPolicy policy) throws IOException {
+            AuthConfig config = AuthConfig.localDemo();
+            return start(new DefaultGatewayAuthClient(config, client), policy);
+        }
+
+        private static GatewayServer start(GatewayAuthClient client, WebSocketGatewayPolicy policy) throws IOException {
             int port = freePort();
             AuthConfig config = AuthConfig.localDemo();
             GatewayAuthFlowService flowService = new GatewayAuthFlowService(
                     config,
-                    new DefaultGatewayAuthClient(config, client));
+                    client);
             AuthWebSocketServer server = new AuthWebSocketServer(
                     new InetSocketAddress(AuthConfig.DEFAULT_LOCAL_HOST, port),
                     new WebSocketMessageCodec(),
-                    new WebSocketMessageProcessor(flowService));
+                    new WebSocketMessageProcessor(flowService),
+                    policy);
             server.start();
             return new GatewayServer(server);
         }
 
         private static GatewayServer startUnavailable() throws IOException {
+            return startUnavailable(WebSocketGatewayPolicy.defaults());
+        }
+
+        private static GatewayServer startUnavailable(WebSocketGatewayPolicy policy) throws IOException {
             AuthConfig config = AuthConfig.localDemo();
             AuthClient client = new AuthClient(
                     config,
@@ -335,7 +451,7 @@ class AuthWebSocketGatewayE2ETest {
                     freePort(),
                     freePort(),
                     freePort());
-            return start(client);
+            return start(client, policy);
         }
 
         private int port() {
@@ -359,13 +475,25 @@ class AuthWebSocketGatewayE2ETest {
             this.codec = codec;
         }
 
+        private RecordingWebSocketClient(URI serverUri, WebSocketMessageCodec codec, Map<String, String> headers) {
+            super(serverUri, headers);
+            this.codec = codec;
+        }
+
         private static RecordingWebSocketClient connect(int port, WebSocketMessageCodec codec) throws Exception {
+            return connect(port, codec, Map.of());
+        }
+
+        private static RecordingWebSocketClient connect(
+                int port,
+                WebSocketMessageCodec codec,
+                Map<String, String> headers) throws Exception {
             URI uri = URI.create("ws://" + AuthConfig.DEFAULT_LOCAL_HOST + ":" + port);
             long deadline = System.nanoTime() + TIMEOUT.toNanos();
             Exception lastError = null;
 
             while (System.nanoTime() < deadline) {
-                RecordingWebSocketClient client = new RecordingWebSocketClient(uri, codec);
+                RecordingWebSocketClient client = new RecordingWebSocketClient(uri, codec, headers);
                 try {
                     if (client.connectBlocking(250, TimeUnit.MILLISECONDS)
                             && client.openLatch.await(250, TimeUnit.MILLISECONDS)) {

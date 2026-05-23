@@ -1,0 +1,184 @@
+x-auth-common-env: &auth-common-env
+  AUTH_MODE: ${AUTH_MODE:-demo}
+  AUTH_STORAGE_MODE: ${AUTH_STORAGE_MODE:-sqlite}
+  AUTH_SQLITE_PATH: ${AUTH_SQLITE_PATH:-/data/auth-demo.sqlite}
+  AUTH_DEMO_CLIENT_SECRET: ${AUTH_DEMO_CLIENT_SECRET:-ContraseniaCliente}
+  AUTH_DEMO_TGS_SECRET: ${AUTH_DEMO_TGS_SECRET:-contraseñaTGS}
+  AUTH_DEMO_SERVICE_SECRET: ${AUTH_DEMO_SERVICE_SECRET:-contraseñaServidor}
+
+services:
+  auth-storage-init:
+    image: prueba-auth-gateway:local
+    build:
+      context: .
+      dockerfile: docker/gateway/Dockerfile
+    entrypoint:
+      - java
+      - -cp
+      - /app/classes:/app/dependency/*
+      - com.portfolio.auth.storage.sqlite.SQLiteDemoDatabaseInitializer
+      - --db
+      - /data/auth-demo.sqlite
+      - --migrations
+      - /app/scripts/sqlite/migrations
+    environment:
+      <<: *auth-common-env
+    volumes:
+      - auth-sqlite-data:/data
+    networks:
+      - auth-internal
+    restart: "no"
+
+  auth-as:
+    image: prueba-auth-as:local
+    build:
+      context: .
+      dockerfile: docker/as/Dockerfile
+    depends_on:
+      auth-storage-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *auth-common-env
+      AUTH_AS_HOST: 0.0.0.0
+      AUTH_AS_PORT: ${AUTH_AS_PORT:-2000}
+    expose:
+      - "2000"
+    volumes:
+      - auth-sqlite-data:/data
+    networks:
+      - auth-internal
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  auth-tgs:
+    image: prueba-auth-tgs:local
+    build:
+      context: .
+      dockerfile: docker/tgs/Dockerfile
+    depends_on:
+      auth-storage-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *auth-common-env
+      AUTH_TGS_HOST: 0.0.0.0
+      AUTH_TGS_PORT: ${AUTH_TGS_PORT:-2001}
+    expose:
+      - "2001"
+    volumes:
+      - auth-sqlite-data:/data
+    networks:
+      - auth-internal
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  auth-service:
+    image: prueba-auth-service:local
+    build:
+      context: .
+      dockerfile: docker/service/Dockerfile
+    depends_on:
+      auth-storage-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *auth-common-env
+      AUTH_SERVICE_HOST: 0.0.0.0
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-2002}
+    expose:
+      - "2002"
+    volumes:
+      - auth-sqlite-data:/data
+    networks:
+      - auth-internal
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  auth-websocket-gateway:
+    image: prueba-auth-gateway:local
+    build:
+      context: .
+      dockerfile: docker/gateway/Dockerfile
+    depends_on:
+      auth-storage-init:
+        condition: service_completed_successfully
+      auth-as:
+        condition: service_started
+      auth-tgs:
+        condition: service_started
+      auth-service:
+        condition: service_started
+    environment:
+      <<: *auth-common-env
+      AUTH_AS_HOST: ${AUTH_AS_HOST:-auth-as}
+      AUTH_AS_PORT: ${AUTH_AS_PORT:-2000}
+      AUTH_TGS_HOST: ${AUTH_TGS_HOST:-auth-tgs}
+      AUTH_TGS_PORT: ${AUTH_TGS_PORT:-2001}
+      AUTH_SERVICE_HOST: ${AUTH_SERVICE_HOST:-auth-service}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-2002}
+      AUTH_WS_HOST: ${AUTH_WS_HOST:-0.0.0.0}
+      AUTH_WS_PORT: ${AUTH_WS_PORT:-2800}
+      AUTH_ALLOWED_ORIGINS: ${AUTH_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5174}
+    ports:
+      - "2800:2800"
+    volumes:
+      - auth-sqlite-data:/data
+    networks:
+      - auth-internal
+      - auth-public
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  auth-web-demo:
+    image: prueba-auth-web-demo:local
+    build:
+      context: .
+      dockerfile: docker/web-demo/Dockerfile
+    ports:
+      - "5173:5173"
+    networks:
+      - auth-public
+    depends_on:
+      auth-websocket-gateway:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:5173', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  sample-login-app:
+    image: prueba-sample-login-app:local
+    build:
+      context: .
+      dockerfile: docker/sample-login-app/Dockerfile
+    ports:
+      - "5174:5174"
+    networks:
+      - auth-public
+    depends_on:
+      auth-websocket-gateway:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5174', timeout=2).close()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  auth-sqlite-data:
+
+networks:
+  auth-internal:
+    internal: true
+  auth-public:

@@ -5,7 +5,7 @@ No reemplaza los servicios modulares principales: AS, TGS y Service siguen
 ejecutandose como procesos TCP/JSON.
 
 `auth-web-demo` consume este gateway como demo local desacoplada. El gateway no
-incluye Docker ni Spring Boot.
+usa Spring Boot y puede ejecutarse sin Docker o dentro de Docker Compose local.
 
 ## Dependencia
 
@@ -20,11 +20,10 @@ mal tipados.
 ## Flujo
 
 1. Un cliente WebSocket conecta al gateway.
-2. El gateway responde `GATEWAY_READY`.
-3. El cliente envia `START_AUTH_FLOW`.
-4. El gateway usa `AuthClient` para ejecutar AS -> TGS -> Service por TCP/JSON.
-5. El gateway emite `FLOW_EVENT` por etapa.
-6. El gateway responde `FLOW_RESULT` con estado final y latencias.
+2. El cliente envia `START_AUTH_FLOW`.
+3. El gateway usa `AuthClient` para ejecutar AS -> TGS -> Service por TCP/JSON.
+4. El gateway emite `FLOW_EVENT` por etapa.
+5. El gateway responde `FLOW_RESULT` con estado final y latencias.
 
 El contrato WebSocket es transparente al modo de storage. Si AS, TGS y Service
 se levantan con `AUTH_STORAGE_MODE=sqlite`, el Gateway mantiene el mismo
@@ -35,12 +34,10 @@ contrato y ademas registra auditoria persistente local en SQLite.
 Entrada:
 
 - `START_AUTH_FLOW`
-- `RUN_AUDIT_FLOW`
 - `PING`
 
 Salida:
 
-- `GATEWAY_READY`
 - `FLOW_EVENT`
 - `FLOW_RESULT`
 - `ERROR`
@@ -51,6 +48,24 @@ Ejemplo:
 ```json
 {"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
 ```
+
+Campos requeridos para `START_AUTH_FLOW`:
+
+- `type`
+- `requestId`
+- `clientId`
+- `serviceId`
+
+Errores tipados:
+
+- `INVALID_JSON`
+- `UNKNOWN_MESSAGE_TYPE`
+- `MISSING_REQUIRED_FIELD`
+- `CLIENT_NOT_FOUND`
+- `SERVICE_NOT_FOUND`
+- `FLOW_FAILED`
+- `RATE_LIMITED`
+- `ORIGIN_NOT_ALLOWED`
 
 Eventos esperados:
 
@@ -93,6 +108,8 @@ Variables:
 
 - `AUTH_WS_HOST`: default `127.0.0.1`.
 - `AUTH_WS_PORT`: default `2800`.
+- `AUTH_ALLOWED_ORIGINS`: lista separada por comas. Si se configura, el
+  `Origin` WebSocket debe coincidir exactamente.
 
 ## Prueba Manual
 
@@ -121,11 +138,9 @@ mvn -pl auth-websocket-gateway -am test
 ```
 
 La suite cubre serializacion de mensajes, tipos desconocidos, JSON invalido,
-flujo exitoso con cliente falso y error controlado cuando los servicios no estan
-disponibles. Fase 11 agrego prueba E2E real con un cliente WebSocket de
-Java-WebSocket, AS/TGS/Service modulares en puertos de prueba y validacion de
-eventos `FLOW_*` mas `FLOW_RESULT`. Fase 12 + Fase 13 agregan `auth-web-demo`
-como consumidor frontend local.
+campos faltantes, origen permitido/rechazado, rate limit, timeout, flujo exitoso
+con cliente real WebSocket y error controlado cuando los servicios no estan
+disponibles.
 
 ## Seguridad Del Contrato
 
@@ -150,8 +165,8 @@ Luego abrir:
 http://127.0.0.1:5173
 ```
 
-La UI envia `START_AUTH_FLOW`, procesa `GATEWAY_READY`, `FLOW_EVENT`,
-`FLOW_RESULT`, `ERROR` y `PONG`, y muestra solo informacion de alto nivel.
+La UI envia `START_AUTH_FLOW`, procesa `FLOW_EVENT`, `FLOW_RESULT`, `ERROR` y
+`PONG`, y muestra solo informacion de alto nivel.
 
 ## Sample Login App
 

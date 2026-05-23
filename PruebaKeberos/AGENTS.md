@@ -36,15 +36,15 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
 - Mantener `docs/audits/sqlite-audit-sample.md` y
   `docs/audits/sqlite-audit-sample.json` sincronizados cuando cambie el formato
   de auditoria SQLite.
-- Respetar `AUTH_MODE=demo/local` para demo y `AUTH_MODE=strict` para
+- Respetar `AUTH_MODE=demo` para demo y `AUTH_MODE=strict` para
   validacion sin secretos por defecto.
 - Mantener `AUTH_STORAGE_MODE=memory` como modo demo por defecto y
   `AUTH_STORAGE_MODE=sqlite` como integracion local verificable.
 - No versionar bases generadas `*.db`, `*.sqlite` ni `*.sqlite3`.
 - Preferir documentacion honesta sobre afirmaciones exageradas.
 - Mantener ejecucion local sin Docker como requisito actual.
-- Dejar Docker y Docker Compose como trabajo futuro hasta que se autorice
-  explicitamente.
+- Docker y Docker Compose estan autorizados solo como despliegue local
+  reproducible; no presentarlos como produccion.
 - No introducir Spring Boot. No agregar frameworks frontend salvo que una fase
   futura lo autorice explicitamente.
 - No agregar npm ni frameworks a `sample-login-app` sin autorizacion explicita.

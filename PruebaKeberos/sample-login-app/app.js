@@ -90,11 +90,6 @@ function handleGatewayMessage(rawMessage) {
     return;
   }
 
-  if (message.type === "GATEWAY_READY") {
-    addEvent("GATEWAY_READY", message.message || "Ready");
-    return;
-  }
-
   if (message.type === "FLOW_EVENT") {
     addEvent(message.stage || "FLOW_EVENT", message.message || "");
     return;

@@ -1,7 +1,7 @@
 # Frontend Contract
 
-Este contrato describe como `auth-web-demo`, `sample-login-app` y cualquier futura interfaz web
-deben comunicarse con `auth-websocket-gateway`.
+Este contrato describe como `auth-web-demo`, `sample-login-app` y cualquier
+futura interfaz web deben comunicarse con `auth-websocket-gateway`.
 
 El gateway es una capa de integracion: no reemplaza `auth-as`, `auth-tgs` ni
 `auth-service`, y no expone tickets, claves ni ciphertexts al cliente.
@@ -18,6 +18,8 @@ Variables:
 
 - `AUTH_WS_HOST`: host del gateway. Default `127.0.0.1`.
 - `AUTH_WS_PORT`: puerto del gateway. Default `2800`.
+- `AUTH_ALLOWED_ORIGINS`: lista separada por comas para validar el header
+  `Origin`. Si esta vacia, se permite ejecucion local sin restriccion de origen.
 
 ## Mensajes De Entrada
 
@@ -34,17 +36,12 @@ Ejecuta AS -> TGS -> Service mediante la ruta TCP modular.
 }
 ```
 
-Campos:
+Campos requeridos:
 
-- `type`: requerido.
-- `requestId`: recomendado. Si llega vacio o `null`, el gateway genera uno.
-- `clientId`: recomendado. Actualmente debe coincidir con el cliente configurado.
-- `serviceId`: recomendado. Default `1` si se omite.
-
-### RUN_AUDIT_FLOW
-
-Usa el mismo contrato de `START_AUTH_FLOW` para ejecutar un flujo observable.
-No reemplaza el audit runner de consola.
+- `type`
+- `requestId`
+- `clientId`
+- `serviceId`
 
 ### PING
 
@@ -58,17 +55,6 @@ No reemplaza el audit runner de consola.
 Respuesta esperada: `PONG`.
 
 ## Mensajes De Salida
-
-### GATEWAY_READY
-
-Se envia al abrir la conexion.
-
-```json
-{
-  "type": "GATEWAY_READY",
-  "message": "WebSocket Gateway listo"
-}
-```
 
 ### FLOW_EVENT
 
@@ -112,14 +98,27 @@ Resultado terminal del flujo.
 }
 ```
 
+Cuando `success=false`, el mensaje incluye `errorType`:
+
+```json
+{
+  "type": "FLOW_RESULT",
+  "requestId": "front-req-2",
+  "success": false,
+  "errorType": "SERVICE_NOT_FOUND",
+  "serviceMessage": "TGS_UNKNOWN_SERVICE: TGS o servicio no registrado"
+}
+```
+
 ### ERROR
 
-Error de contrato o mensaje invalido.
+Error de contrato, origen, rate limit o JSON invalido.
 
 ```json
 {
   "type": "ERROR",
-  "message": "WebSocketMessageType no soportado: UNKNOWN",
+  "errorType": "MISSING_REQUIRED_FIELD",
+  "message": "Campo requerido faltante: serviceId",
   "success": false
 }
 ```
@@ -134,25 +133,24 @@ Error de contrato o mensaje invalido.
 }
 ```
 
-## Errores Esperados
+## Error Types
 
-- JSON invalido: `ERROR`.
-- `type` faltante: `ERROR`.
-- tipo desconocido: `ERROR`.
-- `clientId` inexistente: `FLOW_EVENT` con `FLOW_ERROR` y `FLOW_RESULT` con
-  `success=false`.
-- `serviceId` inexistente: `FLOW_EVENT` con `FLOW_ERROR` y `FLOW_RESULT` con
-  `success=false`.
-- AS/TGS/Service no disponibles: `FLOW_EVENT` con `FLOW_ERROR` y `FLOW_RESULT`
-  con `success=false`.
+- `INVALID_JSON`
+- `UNKNOWN_MESSAGE_TYPE`
+- `MISSING_REQUIRED_FIELD`
+- `CLIENT_NOT_FOUND`
+- `SERVICE_NOT_FOUND`
+- `FLOW_FAILED`
+- `RATE_LIMITED`
+- `ORIGIN_NOT_ALLOWED`
 
 ## Flujo Recomendado Para Frontend
 
 1. Abrir `ws://127.0.0.1:2800`.
-2. Esperar `GATEWAY_READY`.
-3. Enviar `START_AUTH_FLOW` con `requestId` generado por el frontend.
-4. Renderizar cada `FLOW_EVENT` como progreso.
-5. Al recibir `FLOW_RESULT`, cerrar o reutilizar la conexion segun la pantalla.
+2. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
+3. Renderizar cada `FLOW_EVENT` como progreso.
+4. Al recibir `FLOW_RESULT`, cerrar o reutilizar la conexion segun la pantalla.
+5. Conceder acceso solo si `FLOW_RESULT.success === true`.
 6. Mostrar `ERROR` como fallo de contrato del gateway.
 
 ## Seguridad

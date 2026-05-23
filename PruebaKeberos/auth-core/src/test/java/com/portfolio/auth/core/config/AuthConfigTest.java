@@ -24,6 +24,7 @@ class AuthConfigTest {
         assertEquals(AuthConfig.STORAGE_MODE_MEMORY, config.storageMode());
         assertEquals(AuthConfig.DEFAULT_LOCAL_SQLITE_PATH, config.sqlitePath());
         assertTrue(config.usesDemoSecrets());
+        assertTrue(AuthConfig.demoWarning(Map.of(), config).contains(AuthConfig.ENV_AUTH_MODE));
     }
 
     @Test
@@ -65,6 +66,7 @@ class AuthConfigTest {
                 () -> AuthConfig.fromEnvironment(Map.of(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT)));
 
         assertTrue(error.getMessage().contains(AuthConfig.ENV_DEMO_CLIENT_SECRET));
+        assertTrue(error.getMessage().contains(AuthConfig.ENV_DEMO_TGS_SECRET));
         assertTrue(error.getMessage().contains(AuthConfig.ENV_DEMO_SERVICE_SECRET));
     }
 
@@ -73,15 +75,14 @@ class AuthConfigTest {
         AuthConfig config = AuthConfig.fromEnvironment(Map.ofEntries(
                 Map.entry(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT),
                 Map.entry(AuthConfig.ENV_DEMO_CLIENT_SECRET, "client-secret-from-env"),
-                Map.entry(AuthConfig.ENV_DEMO_CLIENT_TGS_KEY, "client-tgs-key-from-env"),
                 Map.entry(AuthConfig.ENV_DEMO_TGS_SECRET, "tgs-secret-from-env"),
-                Map.entry(AuthConfig.ENV_DEMO_CLIENT_SERVICE_KEY, "client-service-key-from-env"),
-                Map.entry(AuthConfig.ENV_DEMO_SERVICE_SECRET, "service-secret-from-env"),
-                Map.entry(AuthConfig.ENV_DEMO_PBKDF2_SALT, "salt-from-env")));
+                Map.entry(AuthConfig.ENV_DEMO_SERVICE_SECRET, "service-secret-from-env")));
 
         assertEquals("client-secret-from-env", config.demoClientSecret());
+        assertEquals("tgs-secret-from-env", config.demoTicketGrantingServerSecret());
         assertEquals("service-secret-from-env", config.demoServiceSecret());
         assertFalse(config.usesDemoSecrets());
+        assertEquals("", AuthConfig.demoWarning(Map.of(AuthConfig.ENV_AUTH_MODE, AuthConfig.MODE_STRICT), config));
     }
 
     @Test

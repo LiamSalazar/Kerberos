@@ -3,6 +3,7 @@ package com.portfolio.auth.gateway;
 public record WebSocketFlowResult(
         String requestId,
         boolean success,
+        WebSocketErrorType errorType,
         String serviceMessage,
         long asMillis,
         long tgsMillis,
@@ -15,6 +16,9 @@ public record WebSocketFlowResult(
         }
         if (serviceMessage == null || serviceMessage.isBlank()) {
             throw new IllegalArgumentException("serviceMessage es requerido para resultados de flujo");
+        }
+        if (!success && errorType == null) {
+            throw new IllegalArgumentException("errorType es requerido cuando success=false");
         }
         if (asMillis < 0 || tgsMillis < 0 || serviceMillis < 0 || totalMillis < 0) {
             throw new IllegalArgumentException("Las latencias no pueden ser negativas");

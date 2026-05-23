@@ -2,17 +2,11 @@
 
 Fecha: 2026-05-22
 
-Comandos ejecutados:
+Comando ejecutado para esta revision:
 
 - `mvn dependency:tree`
-- `mvn -q -DskipTests compile`
-- `mvn test`
-- `mvn -pl auth-storage-sqlite -am test`
-- `mvn -pl auth-websocket-gateway -am test`
 
-Nota: un intento inicial de `dependency:tree` con `-DoutputFile` fallo por
-quoting de PowerShell. El comando requerido `mvn dependency:tree` se ejecuto
-despues y termino en `BUILD SUCCESS`.
+Resultado: `BUILD SUCCESS`.
 
 ## Modulos Revisados
 
@@ -46,37 +40,40 @@ No se detectaron ciclos Maven entre modulos.
 - `org.junit.jupiter:junit-jupiter:5.10.2` en scope `test`.
 - `org.xerial:sqlite-jdbc:3.45.3.0` en `auth-storage-sqlite`.
 - `org.java-websocket:Java-WebSocket:1.5.6` en `auth-websocket-gateway`.
-- `org.slf4j:slf4j-api` llega transitivamente por SQLite JDBC y Java-WebSocket.
-
-Las versiones principales siguen centralizadas en el `dependencyManagement` del
-POM raiz.
+- `org.slf4j:slf4j-simple:1.7.36` en `auth-storage-sqlite` con scope `runtime`.
+- `org.slf4j:slf4j-simple:2.0.6` en `auth-websocket-gateway` con scope `runtime`.
 
 ## Dependencias Agregadas
 
-- Se agrego dependencia interna `auth-storage-sqlite` en
-  `auth-websocket-gateway` para poder instanciar `SQLiteAuditRepository` y
-  aplicar migraciones cuando `AUTH_STORAGE_MODE=sqlite`.
+- `slf4j-simple:1.7.36` se agrego para cubrir el `slf4j-api:1.7.36`
+  transitivo de `sqlite-jdbc` y limpiar warnings en storage, AS, TGS, Service y
+  pruebas que usan SQLite.
+- `slf4j-simple:2.0.6` se agrego al Gateway para cubrir el `slf4j-api:2.0.6`
+  transitivo de `Java-WebSocket`.
+- `auth-websocket-gateway` excluye el binding SLF4J 1.7 transitivo desde
+  `auth-storage-sqlite` para evitar mezclar providers SLF4J en el runtime del
+  Gateway.
 
-No se agregaron dependencias externas nuevas durante Fase 15.
+## Validacion De Scope
 
-## Dependencias Eliminadas
-
-No se eliminaron dependencias. No se identificaron duplicados o dependencias no
-usadas con claridad suficiente para retirarlas sin riesgo.
+- Dependencias JUnit permanecen en `test`.
+- `sqlite-jdbc` es compile/runtime solo donde se necesita modo SQLite.
+- Los bindings SLF4J se mantienen en `runtime`; no cambian codigo de negocio ni
+  imprimen secretos.
+- No se agrego Spring Boot, PostgreSQL ni ORM.
 
 ## Riesgos Detectados
 
-- `sqlite-jdbc` y `Java-WebSocket` traen `slf4j-api` transitivo; la suite muestra
-  advertencias por ausencia de provider/binding SLF4J. Es ruido conocido y no
-  afecta el resultado funcional de pruebas, pero conviene decidir un binding o
-  excluir logging transitorio en una fase futura.
-- `auth-as`, `auth-tgs` y `auth-service` dependen de `auth-storage-sqlite` para
-  soportar `AUTH_STORAGE_MODE=sqlite`; se mantiene el modo `memory` como default.
-- `auth-websocket-gateway` ahora depende de `auth-storage-sqlite` para auditoria
+- El proyecto usa dos lineas SLF4J porque `sqlite-jdbc` trae API 1.7 y
+  `Java-WebSocket` trae API 2.0. El Gateway excluye el binding 1.7 para que su
+  runtime use el provider 2.0.
+- AS/TGS/Service dependen de `auth-storage-sqlite` para soportar
+  `AUTH_STORAGE_MODE=sqlite`; `AUTH_STORAGE_MODE=memory` sigue siendo default.
+- `auth-websocket-gateway` depende de `auth-storage-sqlite` para auditoria
   persistente opcional. No acopla WebSockets dentro de AS/TGS/Service.
 
 ## Conclusion
 
-El estado Maven queda consistente para Fase 15. Las referencias internas usan
+El estado Maven queda consistente para Fase 16. Las referencias internas usan
 `groupId=com.portfolio.auth`, `artifactId` correcto y `${project.version}`. Las
 dependencias de test permanecen en scope `test`. No hay ciclos Maven observados.

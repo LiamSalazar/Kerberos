@@ -17,6 +17,7 @@ public final class ProtectedServiceApp {
 
     public static void main(String[] args) throws Exception {
         AuthConfig config = AuthConfig.fromEnvironment();
+        AuthConfig.printDemoWarningIfNeeded(System.getenv(), config);
         JsonMessageCodec codec = new JsonMessageCodec();
         ServiceRegistry registry = config.usesSqliteStorage()
                 ? new SQLiteServiceRegistry(java.nio.file.Path.of(config.sqlitePath()))

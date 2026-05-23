@@ -1,6 +1,6 @@
 # This is not a Python dependency file.
 # It is an environment requirements checklist for running the Java project locally.
-# Docker is not required for the current version.
+# Docker is optional for the local Compose demo.
 # The current runtime is the modular Java runtime under auth-*.
 
 # Java
@@ -67,11 +67,21 @@
 #   python3 --version
 
 # Configuration modes
-#   AUTH_MODE=demo or AUTH_MODE=local permits demo-only default secrets.
+#   AUTH_MODE=demo permits demo-only default secrets and prints a warning.
 #   AUTH_MODE=strict requires explicit secrets and rejects defaults.
 #   AUTH_STORAGE_MODE=memory uses in-memory demo repositories.
 #   AUTH_STORAGE_MODE=sqlite uses SQLite through org.xerial:sqlite-jdbc.
 #   AUTH_SQLITE_PATH points to the local SQLite database file.
+#   AUTH_ALLOWED_ORIGINS restricts browser WebSocket origins when set.
+
+# Docker
+# Optional for running the full local stack with Compose.
+# Verify:
+#   docker --version
+#   docker compose version
+# Run:
+#   copy .env.example .env
+#   scripts\docker-up.bat
 
 # Operating system
 # Tested/recommended local execution targets:
@@ -81,11 +91,9 @@
 # Notes
 # Do not run: pip install -r requirements.txt
 # This file is only a checklist for the local Java environment.
-# Docker is not required for the current phase.
-# Docker and Docker Compose are planned as future deployment work.
 # Current modular runtime keeps local execution without Docker as the supported
-# path. A separate WebSocket Gateway exists for web integration.
-# Docker work remains a future phase.
+# path. A separate WebSocket Gateway exists for web integration. Docker Compose
+# is now available as an optional reproducible local demo path.
 # Phase 8 adds reproducible audit output in docs/audits/latest-run.md and
 # docs/audits/latest-run.json when scripts\run-audit.bat or
 # ModularAuthAuditRunner is executed against running modular services.
@@ -101,3 +109,6 @@
 # Phase 15 adds SQLite migrations, persistent Gateway audit, sqlite-admin local
 # administration, Maven dependency audit evidence, and sample-login-app without
 # npm dependencies.
+# Phase 16 tightens demo/strict configuration, WebSocket API errors, origin
+# checks, rate limits, flow timeouts, ProtectedResource tests, and audit queries.
+# Phase 17 adds Docker Compose for local reproducible demo deployment.

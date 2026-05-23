@@ -41,5 +41,8 @@ class SQLiteAuditRepositoryTest {
         assertEquals("TGS_UNKNOWN_SERVICE", events.get(1).errorType());
         assertEquals(12, events.get(1).latencyMs());
         assertEquals(2, repository.findRecent(10).size());
+        assertEquals(2, repository.findByClientId("client-1").size());
+        assertEquals(2, repository.findByServiceId("service-1").size());
+        assertEquals(0, repository.findByClientId("missing-client").size());
     }
 }

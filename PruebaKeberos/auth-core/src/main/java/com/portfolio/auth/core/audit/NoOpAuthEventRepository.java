@@ -19,4 +19,14 @@ public enum NoOpAuthEventRepository implements AuthEventRepository {
     public List<AuthAuditEvent> findByRequestId(String requestId) {
         return List.of();
     }
+
+    @Override
+    public List<AuthAuditEvent> findByClientId(String clientId) {
+        return List.of();
+    }
+
+    @Override
+    public List<AuthAuditEvent> findByServiceId(String serviceId) {
+        return List.of();
+    }
 }

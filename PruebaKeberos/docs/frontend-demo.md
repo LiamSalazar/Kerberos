@@ -16,7 +16,8 @@ estaticos.
 - Java 17+ y Maven para el backend.
 - Node.js 18+ y npm para la demo web.
 - Cinco terminales locales.
-- Docker no es requisito y queda para una fase futura.
+- Docker es opcional para despliegue local reproducible; la ejecucion sin
+  Docker sigue soportada.
 
 ## Ejecutar Backend Y Gateway
 
@@ -76,6 +77,23 @@ Default:
 http://127.0.0.1:5173
 ```
 
+## Ejecutar Con Docker
+
+Con Docker Desktop:
+
+```cmd
+copy .env.example .env
+scripts\docker-up.bat
+```
+
+Abrir:
+
+```text
+http://localhost:5173
+```
+
+El frontend sigue comunicandose solo con `auth-websocket-gateway`.
+
 ## Flujo Manual
 
 1. Levanta AS, TGS y Service.
@@ -91,7 +109,6 @@ http://127.0.0.1:5173
 
 ## Eventos Esperados
 
-- `GATEWAY_READY`
 - `FLOW_STARTED`
 - `AS_REQUEST_SENT`
 - `AS_RESPONSE_RECEIVED`

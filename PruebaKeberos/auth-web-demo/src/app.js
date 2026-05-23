@@ -131,14 +131,6 @@ function startAuthFlow() {
 
 function handleGatewayMessage(message) {
   switch (message.type) {
-    case "GATEWAY_READY":
-      state.connection.status = "ready";
-      state.connection.label = "Gateway ready";
-      addEvent({
-        type: "GATEWAY_READY",
-        message: message.message || "Gateway listo."
-      });
-      break;
     case "FLOW_EVENT":
       handleFlowEvent(message);
       break;

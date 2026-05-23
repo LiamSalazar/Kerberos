@@ -25,9 +25,7 @@ public record AuthConfig(
         Duration allowedClockSkew,
         Duration replayWindow,
         String demoClientSecret,
-        String demoClientTgsSessionKey,
         String demoTicketGrantingServerSecret,
-        String demoClientServiceSessionKey,
         String demoServiceSecret,
         String demoPbkdf2Salt,
         String storageMode,
@@ -44,16 +42,13 @@ public record AuthConfig(
     public static final Duration DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW = Duration.ofMinutes(2);
     public static final Duration DEFAULT_LOCAL_REPLAY_WINDOW = Duration.ofMinutes(5);
     public static final String DEFAULT_LOCAL_DEMO_CLIENT_SECRET = "ContraseniaCliente";
-    public static final String DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY = "contraseña_C-TGS";
     public static final String DEFAULT_LOCAL_DEMO_TGS_SECRET = "contraseñaTGS";
-    public static final String DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY = "contraseñaClienteServidor";
     public static final String DEFAULT_LOCAL_DEMO_SERVICE_SECRET = "contraseñaServidor";
     public static final String DEFAULT_LOCAL_DEMO_PBKDF2_SALT = "12345678";
     public static final String DEFAULT_LOCAL_STORAGE_MODE = "memory";
     public static final String DEFAULT_LOCAL_SQLITE_PATH = "data/auth-demo.sqlite";
 
     public static final String MODE_DEMO = "demo";
-    public static final String MODE_LOCAL = "local";
     public static final String MODE_STRICT = "strict";
     public static final String STORAGE_MODE_MEMORY = "memory";
     public static final String STORAGE_MODE_SQLITE = "sqlite";
@@ -75,11 +70,12 @@ public record AuthConfig(
     public static final String ENV_ALLOWED_SKEW_SECONDS = "AUTH_ALLOWED_SKEW_SECONDS";
     public static final String ENV_REPLAY_WINDOW_SECONDS = "AUTH_REPLAY_WINDOW_SECONDS";
     public static final String ENV_DEMO_CLIENT_SECRET = "AUTH_DEMO_CLIENT_SECRET";
-    public static final String ENV_DEMO_CLIENT_TGS_KEY = "AUTH_DEMO_CLIENT_TGS_KEY";
     public static final String ENV_DEMO_TGS_SECRET = "AUTH_DEMO_TGS_SECRET";
-    public static final String ENV_DEMO_CLIENT_SERVICE_KEY = "AUTH_DEMO_CLIENT_SERVICE_KEY";
     public static final String ENV_DEMO_SERVICE_SECRET = "AUTH_DEMO_SERVICE_SECRET";
     public static final String ENV_DEMO_PBKDF2_SALT = "AUTH_DEMO_PBKDF2_SALT";
+
+    private static final String DEMO_WARNING =
+            "[auth-config] AUTH_MODE=demo permite secretos demo por defecto; no usar en produccion critica.";
 
     public static AuthConfig localDemo() {
         return new AuthConfig(
@@ -97,9 +93,7 @@ public record AuthConfig(
                 DEFAULT_LOCAL_ALLOWED_CLOCK_SKEW,
                 DEFAULT_LOCAL_REPLAY_WINDOW,
                 DEFAULT_LOCAL_DEMO_CLIENT_SECRET,
-                DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY,
                 DEFAULT_LOCAL_DEMO_TGS_SECRET,
-                DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY,
                 DEFAULT_LOCAL_DEMO_SERVICE_SECRET,
                 DEFAULT_LOCAL_DEMO_PBKDF2_SALT,
                 DEFAULT_LOCAL_STORAGE_MODE,
@@ -128,9 +122,7 @@ public record AuthConfig(
                 Duration.ofSeconds(longValue(environment, ENV_ALLOWED_SKEW_SECONDS, defaults.allowedClockSkew().toSeconds())),
                 Duration.ofSeconds(longValue(environment, ENV_REPLAY_WINDOW_SECONDS, defaults.replayWindow().toSeconds())),
                 value(environment, ENV_DEMO_CLIENT_SECRET, defaults.demoClientSecret()),
-                value(environment, ENV_DEMO_CLIENT_TGS_KEY, defaults.demoClientTgsSessionKey()),
                 value(environment, ENV_DEMO_TGS_SECRET, defaults.demoTicketGrantingServerSecret()),
-                value(environment, ENV_DEMO_CLIENT_SERVICE_KEY, defaults.demoClientServiceSessionKey()),
                 value(environment, ENV_DEMO_SERVICE_SECRET, defaults.demoServiceSecret()),
                 value(environment, ENV_DEMO_PBKDF2_SALT, defaults.demoPbkdf2Salt()),
                 storageMode(environment),
@@ -146,13 +138,27 @@ public record AuthConfig(
         return MODE_STRICT.equals(mode(environment));
     }
 
+    public static String demoWarning(Map<String, String> environment, AuthConfig config) {
+        if (MODE_DEMO.equals(mode(environment)) && config.usesDemoSecrets()) {
+            return DEMO_WARNING;
+        }
+        return "";
+    }
+
+    public static void printDemoWarningIfNeeded(Map<String, String> environment, AuthConfig config) {
+        String warning = demoWarning(environment, config);
+        if (!warning.isBlank()) {
+            System.err.println(warning);
+        }
+    }
+
     public static String mode(Map<String, String> environment) {
         String configured = value(environment, ENV_AUTH_MODE, MODE_DEMO).trim().toLowerCase();
-        if (MODE_DEMO.equals(configured) || MODE_LOCAL.equals(configured) || MODE_STRICT.equals(configured)) {
+        if (MODE_DEMO.equals(configured) || MODE_STRICT.equals(configured)) {
             return configured;
         }
         throw new IllegalArgumentException(
-                ENV_AUTH_MODE + " debe ser '" + MODE_DEMO + "', '" + MODE_LOCAL + "' o '" + MODE_STRICT + "'");
+                ENV_AUTH_MODE + " debe ser '" + MODE_DEMO + "' o '" + MODE_STRICT + "'");
     }
 
     public static String storageMode(Map<String, String> environment) {
@@ -170,27 +176,18 @@ public record AuthConfig(
 
     public boolean usesDemoSecrets() {
         return DEFAULT_LOCAL_DEMO_CLIENT_SECRET.equals(demoClientSecret())
-                || DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY.equals(demoClientTgsSessionKey())
                 || DEFAULT_LOCAL_DEMO_TGS_SECRET.equals(demoTicketGrantingServerSecret())
-                || DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY.equals(demoClientServiceSessionKey())
-                || DEFAULT_LOCAL_DEMO_SERVICE_SECRET.equals(demoServiceSecret())
-                || DEFAULT_LOCAL_DEMO_PBKDF2_SALT.equals(demoPbkdf2Salt());
+                || DEFAULT_LOCAL_DEMO_SERVICE_SECRET.equals(demoServiceSecret());
     }
 
     private static void validateStrictMode(Map<String, String> environment, AuthConfig config) {
         StringBuilder missing = new StringBuilder();
         requireSecret(environment, config.demoClientSecret(), ENV_DEMO_CLIENT_SECRET,
                 DEFAULT_LOCAL_DEMO_CLIENT_SECRET, missing);
-        requireSecret(environment, config.demoClientTgsSessionKey(), ENV_DEMO_CLIENT_TGS_KEY,
-                DEFAULT_LOCAL_DEMO_CLIENT_TGS_KEY, missing);
         requireSecret(environment, config.demoTicketGrantingServerSecret(), ENV_DEMO_TGS_SECRET,
                 DEFAULT_LOCAL_DEMO_TGS_SECRET, missing);
-        requireSecret(environment, config.demoClientServiceSessionKey(), ENV_DEMO_CLIENT_SERVICE_KEY,
-                DEFAULT_LOCAL_DEMO_CLIENT_SERVICE_KEY, missing);
         requireSecret(environment, config.demoServiceSecret(), ENV_DEMO_SERVICE_SECRET,
                 DEFAULT_LOCAL_DEMO_SERVICE_SECRET, missing);
-        requireSecret(environment, config.demoPbkdf2Salt(), ENV_DEMO_PBKDF2_SALT,
-                DEFAULT_LOCAL_DEMO_PBKDF2_SALT, missing);
 
         if (!missing.isEmpty()) {
             throw new IllegalStateException(

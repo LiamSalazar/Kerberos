@@ -38,7 +38,7 @@ historico queda documentado en `docs/legacy-summary.md`.
 
 ## Riesgos Modulares Abiertos
 
-- Los secretos por defecto siguen existiendo en modo `demo/local`.
+- Los secretos por defecto siguen existiendo en modo `demo`.
 - `AUTH_MODE=strict` valida presencia de secretos, pero no agrega vault ni
   rotacion real.
 - `InMemoryReplayCache` no es compartida entre procesos.
@@ -81,6 +81,6 @@ JSON malformado, campos faltantes, tipos incorrectos y payload invalido.
 ## Dependencia SQLite
 
 Se agrego `org.xerial:sqlite-jdbc` en `auth-storage-sqlite` para probar
-persistencia local sin Docker, sin servidor externo y sin ORM. La dependencia no
+persistencia local sin servidor externo y sin ORM. La dependencia no
 se usa para guardar secretos de produccion; solo habilita una integracion local
 verificable con schema y seed demo.

@@ -16,6 +16,7 @@ public final class WebSocketMessageCodec {
         putIfPresent(fields, "stage", message.stage());
         putIfPresent(fields, "message", message.message());
         putIfPresent(fields, "success", message.success());
+        putIfPresent(fields, "errorType", message.errorType());
         putIfPresent(fields, "serviceMessage", message.serviceMessage());
         putIfPresent(fields, "asMillis", message.asMillis());
         putIfPresent(fields, "tgsMillis", message.tgsMillis());
@@ -35,6 +36,7 @@ public final class WebSocketMessageCodec {
                 stringOrNull(fields, "stage"),
                 stringOrNull(fields, "message"),
                 boolOrNull(fields, "success"),
+                stringOrNull(fields, "errorType"),
                 stringOrNull(fields, "serviceMessage"),
                 longOrNull(fields, "asMillis"),
                 longOrNull(fields, "tgsMillis"),

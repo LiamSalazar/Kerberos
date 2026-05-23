@@ -10,6 +10,7 @@ public record WebSocketMessage(
         String stage,
         String message,
         Boolean success,
+        String errorType,
         String serviceMessage,
         Long asMillis,
         Long tgsMillis,
@@ -25,17 +26,14 @@ public record WebSocketMessage(
             String requestId,
             String clientId,
             String serviceId) {
-        return new WebSocketMessage(type, requestId, clientId, serviceId, null, null, null, null, null, null, null, null);
-    }
-
-    public static WebSocketMessage ready() {
         return new WebSocketMessage(
-                WebSocketMessageType.GATEWAY_READY,
+                type,
+                requestId,
+                clientId,
+                serviceId,
                 null,
                 null,
                 null,
-                null,
-                "WebSocket Gateway listo",
                 null,
                 null,
                 null,
@@ -52,6 +50,7 @@ public record WebSocketMessage(
                 null,
                 null,
                 "pong",
+                null,
                 null,
                 null,
                 null,
@@ -77,12 +76,14 @@ public record WebSocketMessage(
                 null,
                 null,
                 null,
+                null,
                 null);
     }
 
     public static WebSocketMessage flowResult(
             String requestId,
             boolean success,
+            WebSocketErrorType errorType,
             String serviceMessage,
             long asMillis,
             long tgsMillis,
@@ -91,6 +92,7 @@ public record WebSocketMessage(
         return flowResult(new WebSocketFlowResult(
                 requestId,
                 success,
+                errorType,
                 serviceMessage,
                 asMillis,
                 tgsMillis,
@@ -107,6 +109,7 @@ public record WebSocketMessage(
                 null,
                 null,
                 result.success(),
+                result.errorType() == null ? null : result.errorType().name(),
                 result.serviceMessage(),
                 result.asMillis(),
                 result.tgsMillis(),
@@ -114,8 +117,8 @@ public record WebSocketMessage(
                 result.totalMillis());
     }
 
-    public static WebSocketMessage error(String requestId, String message) {
-        return error(new WebSocketErrorResponse(requestId, message));
+    public static WebSocketMessage error(String requestId, WebSocketErrorType errorType, String message) {
+        return error(new WebSocketErrorResponse(requestId, errorType, message));
     }
 
     public static WebSocketMessage error(WebSocketErrorResponse error) {
@@ -127,6 +130,7 @@ public record WebSocketMessage(
                 null,
                 error.message(),
                 false,
+                error.errorType().name(),
                 null,
                 null,
                 null,

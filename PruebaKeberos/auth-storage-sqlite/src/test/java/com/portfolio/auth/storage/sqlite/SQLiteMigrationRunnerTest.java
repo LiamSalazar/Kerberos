@@ -26,14 +26,14 @@ class SQLiteMigrationRunnerTest {
                 database,
                 SQLiteTestSupport.migrationsDirectory());
 
-        assertEquals(3, first.appliedCount());
+        assertEquals(4, first.appliedCount());
         assertEquals(0, first.skippedCount());
         assertEquals(0, second.appliedCount());
-        assertEquals(3, second.skippedCount());
+        assertEquals(4, second.skippedCount());
 
         SQLiteConnectionFactory connectionFactory = new SQLiteConnectionFactory(database);
         try (Connection connection = connectionFactory.open()) {
-            assertEquals(3, count(connection, "schema_version"));
+            assertEquals(4, count(connection, "schema_version"));
             assertEquals(
                     AuthConfig.DEFAULT_LOCAL_DEMO_CLIENT_SECRET,
                     scalar(connection,

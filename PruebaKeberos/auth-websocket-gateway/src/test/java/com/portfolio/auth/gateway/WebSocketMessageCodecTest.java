@@ -45,25 +45,45 @@ class WebSocketMessageCodecTest {
 
     @Test
     void shouldEncodeFlowResultTimings() {
-        WebSocketMessage result = WebSocketMessage.flowResult("ws-1", true, "ok", 1, 2, 3, 6);
+        WebSocketMessage result = WebSocketMessage.flowResult("ws-1", true, null, "ok", 1, 2, 3, 6);
 
         String json = codec.encode(result);
 
         assertTrue(json.contains("\"success\":true"));
+        assertTrue(!json.contains("\"errorType\""));
         assertTrue(json.contains("\"asMillis\":1"));
         assertTrue(json.contains("\"totalMillis\":6"));
     }
 
     @Test
+    void shouldEncodeErrorTypeForFailedFlow() {
+        WebSocketMessage result = WebSocketMessage.flowResult(
+                "ws-1",
+                false,
+                WebSocketErrorType.SERVICE_NOT_FOUND,
+                "service missing",
+                1,
+                2,
+                0,
+                3);
+
+        String json = codec.encode(result);
+
+        assertTrue(json.contains("\"success\":false"));
+        assertTrue(json.contains("\"errorType\":\"SERVICE_NOT_FOUND\""));
+    }
+
+    @Test
     void shouldRoundTripOutputContractFields() {
         WebSocketMessage original = WebSocketMessage.flowResult(
-                new WebSocketFlowResult("ws-result", true, "service granted", 10, 20, 30, 60));
+                new WebSocketFlowResult("ws-result", true, null, "service granted", 10, 20, 30, 60));
 
         WebSocketMessage decoded = codec.decode(codec.encode(original));
 
         assertEquals(WebSocketMessageType.FLOW_RESULT, decoded.type());
         assertEquals("ws-result", decoded.requestId());
         assertEquals(true, decoded.success());
+        assertEquals(null, decoded.errorType());
         assertEquals("service granted", decoded.serviceMessage());
         assertEquals(10L, decoded.asMillis());
         assertEquals(60L, decoded.totalMillis());

@@ -38,5 +38,11 @@ CREATE TABLE IF NOT EXISTS auth_audit_events (
 CREATE INDEX IF NOT EXISTS idx_auth_audit_events_request_id
 ON auth_audit_events (request_id);
 
+CREATE INDEX IF NOT EXISTS idx_auth_audit_events_client_id
+ON auth_audit_events (client_id);
+
+CREATE INDEX IF NOT EXISTS idx_auth_audit_events_service_id
+ON auth_audit_events (service_id);
+
 CREATE INDEX IF NOT EXISTS idx_auth_audit_events_created_at
 ON auth_audit_events (created_at);

@@ -17,6 +17,8 @@ Aqui se concentrara la documentacion viva del proyecto:
 - concurrencia en `concurrency.md`
 - integracion SQLite local en `sqlite-integration.md`
 - API interna de integracion en `integration-api.md`
+- guia de uso de la API en `using-auth-api.md`
+- despliegue Docker local en `docker-deployment.md`
 - mini app de login integradora en `sample-login-app.md`
 - auditoria Maven en `audits/maven-dependency-audit.md`
 - ejemplo seguro de auditoria SQLite en `audits/sqlite-audit-sample.md`

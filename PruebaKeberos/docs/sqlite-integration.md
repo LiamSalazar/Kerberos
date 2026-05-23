@@ -2,8 +2,9 @@
 
 Fase 15 convierte SQLite en una capa local mas seria: migraciones versionadas,
 repositorios de clientes/servicios, auditoria persistente y administracion por
-CLI. Sigue siendo una integracion local sin Docker, sin servidor externo y sin
-ORM.
+CLI. Sigue siendo una integracion local sin servidor externo y sin ORM. Docker
+local es opcional para reproducibilidad, pero SQLite sigue siendo interno del
+sistema de autenticacion.
 
 SQLite no es una base productiva para despliegue critico. PostgreSQL, replicas,
 vaults y migraciones avanzadas quedan fuera de esta fase.
@@ -154,7 +155,9 @@ Consultar:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --request-id sample-login-1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-id sample-login-1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id 1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id 1
 ```
 
 No se registran secretos, claves, tickets descifrados completos, ciphertexts ni
@@ -177,6 +180,18 @@ Cobertura agregada:
 - administracion de clientes y servicios;
 - flujo AS -> TGS -> Service respaldado por SQLite.
 
+## Docker
+
+`docker-compose.yml` usa el volumen `auth-sqlite-data` y la ruta
+`/data/auth-demo.sqlite`. El servicio `auth-storage-init` aplica migraciones
+antes de levantar AS/TGS/Service/Gateway.
+
+Limpiar el volumen:
+
+```bash
+docker compose down -v
+```
+
 ## Dependencia
 
 `org.xerial:sqlite-jdbc` es la unica dependencia externa nueva para SQLite. No
@@ -188,4 +203,4 @@ se agrego ORM.
 - No hay cifrado de secretos en repositorio.
 - No hay rotacion de secretos.
 - No hay API HTTP de administracion.
-- No hay PostgreSQL ni Docker.
+- No hay PostgreSQL.

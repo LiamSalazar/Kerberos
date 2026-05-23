@@ -27,9 +27,12 @@ class WebSocketMessageProcessorTest {
     void shouldReturnErrorForOutputOnlyMessageType() {
         WebSocketMessageProcessor processor = new WebSocketMessageProcessor(newFlowService());
 
-        WebSocketMessage output = processor.process(WebSocketMessage.ready(), ignored -> { });
+        WebSocketMessage output = processor.process(
+                WebSocketMessage.flowEvent("ws-output", WebSocketFlowStage.FLOW_STARTED, "not input"),
+                ignored -> { });
 
         assertEquals(WebSocketMessageType.ERROR, output.type());
+        assertEquals(WebSocketErrorType.UNKNOWN_MESSAGE_TYPE.name(), output.errorType());
         assertFalse(output.success());
     }
 
@@ -45,6 +48,18 @@ class WebSocketMessageProcessorTest {
         assertEquals(WebSocketMessageType.FLOW_RESULT, output.type());
         assertFalse(output.success());
         assertEquals(2, events.size());
+    }
+
+    @Test
+    void shouldRejectMissingStartAuthFlowFields() {
+        WebSocketMessageProcessor processor = new WebSocketMessageProcessor(newFlowService());
+
+        WebSocketMessage output = processor.process(
+                WebSocketMessage.inbound(WebSocketMessageType.START_AUTH_FLOW, "ws-missing", "1", ""),
+                ignored -> { });
+
+        assertEquals(WebSocketMessageType.ERROR, output.type());
+        assertEquals(WebSocketErrorType.MISSING_REQUIRED_FIELD.name(), output.errorType());
     }
 
     private static GatewayAuthFlowService newFlowService() {

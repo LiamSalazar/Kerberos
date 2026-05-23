@@ -1,6 +1,7 @@
 # Execution Guide
 
-Guia para compilar, probar, ejecutar y auditar localmente sin Docker.
+Guia para compilar, probar, ejecutar y auditar localmente. La ejecucion sin
+Docker sigue soportada; Docker Compose es opcional para demo reproducible.
 
 ## Requisitos
 
@@ -9,7 +10,7 @@ Guia para compilar, probar, ejecutar y auditar localmente sin Docker.
 - Node.js 18+ y npm para `auth-web-demo`.
 - Python 3 para servir `sample-login-app` con los scripts locales.
 - Git.
-- Docker no es requisito.
+- Docker Desktop es opcional para `docker-compose.yml`.
 
 ## Maven
 
@@ -312,7 +313,7 @@ Validar flujo exitoso con `clientId=1` y `serviceId=1`. Validar fallo con un
 
 Variables comunes:
 
-- `AUTH_MODE`: `demo`, `local` o `strict`.
+- `AUTH_MODE`: `demo` o `strict`.
 - `AUTH_AS_PORT`
 - `AUTH_TGS_PORT`
 - `AUTH_SERVICE_PORT`
@@ -325,14 +326,56 @@ Variables comunes:
 - `AUTH_STORAGE_MODE`: `memory` o `sqlite`.
 - `AUTH_SQLITE_PATH`: ruta SQLite local.
 - `AUTH_DEMO_CLIENT_SECRET`
-- `AUTH_DEMO_CLIENT_TGS_KEY`
 - `AUTH_DEMO_TGS_SECRET`
-- `AUTH_DEMO_CLIENT_SERVICE_KEY`
 - `AUTH_DEMO_SERVICE_SECRET`
 - `AUTH_DEMO_PBKDF2_SALT`
+- `AUTH_ALLOWED_ORIGINS`
 
-`AUTH_MODE=demo` o `AUTH_MODE=local` permite defaults de demo local.
-`AUTH_MODE=strict` exige secretos explicitos y rechaza defaults.
+`AUTH_MODE=demo` permite defaults de demo local y muestra una advertencia.
+`AUTH_MODE=strict` exige `AUTH_DEMO_CLIENT_SECRET`,
+`AUTH_DEMO_TGS_SECRET` y `AUTH_DEMO_SERVICE_SECRET` explicitos y rechaza
+defaults. `AUTH_DEMO_PBKDF2_SALT` es un parametro local de derivacion, no un
+secreto de la app externa.
+
+## Docker Compose
+
+Preparar:
+
+```cmd
+copy .env.example .env
+scripts\docker-up.bat
+```
+
+Linux/macOS:
+
+```bash
+cp .env.example .env
+scripts/docker-up.sh
+```
+
+Abrir:
+
+```text
+http://localhost:5173
+http://localhost:5174
+ws://localhost:2800
+```
+
+Ver logs:
+
+```cmd
+scripts\docker-logs.bat
+```
+
+Bajar:
+
+```cmd
+scripts\docker-down.bat
+```
+
+AS/TGS/Service no publican puertos al host en Compose. El volumen
+`auth-sqlite-data` conserva `/data/auth-demo.sqlite` hasta ejecutar
+`docker compose down -v`.
 
 ## Estado Legacy
 
@@ -341,5 +384,4 @@ para ejecutarla. Ver `docs/legacy-summary.md` para contexto historico.
 
 ## Futuro
 
-Docker y Docker Compose quedan fuera de esta fase y solo deben introducirse
-cuando se autorice una fase especifica.
+TLS/mTLS, vault de secretos y despliegue cloud quedan fuera de esta fase.

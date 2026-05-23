@@ -35,6 +35,7 @@ class GatewayAuthFlowServiceTest {
 
         assertEquals(WebSocketMessageType.FLOW_RESULT, result.type());
         assertTrue(result.success());
+        assertEquals(null, result.errorType());
         assertEquals("MODULAR AUTH EXITOSO", result.serviceMessage());
         assertTrue(result.totalMillis() >= 0);
         assertEquals(1, client.asCalls);
@@ -59,6 +60,7 @@ class GatewayAuthFlowServiceTest {
                 events::add);
 
         assertFalse(result.success());
+        assertEquals(WebSocketErrorType.CLIENT_NOT_FOUND.name(), result.errorType());
         assertEquals(0, client.asCalls);
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
         assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());
@@ -77,6 +79,7 @@ class GatewayAuthFlowServiceTest {
                 events::add);
 
         assertFalse(result.success());
+        assertEquals(WebSocketErrorType.FLOW_FAILED.name(), result.errorType());
         assertTrue(result.serviceMessage().contains("AS no disponible"));
         assertTrue(events.stream().anyMatch(event -> "FLOW_ERROR".equals(event.stage())));
         assertEquals(AuthEventStatus.FAILURE, audit.events.get(1).status());
@@ -100,6 +103,20 @@ class GatewayAuthFlowServiceTest {
         public List<AuthAuditEvent> findByRequestId(String requestId) {
             return events.stream()
                     .filter(event -> event.requestId().equals(requestId))
+                    .toList();
+        }
+
+        @Override
+        public List<AuthAuditEvent> findByClientId(String clientId) {
+            return events.stream()
+                    .filter(event -> clientId.equals(event.clientId()))
+                    .toList();
+        }
+
+        @Override
+        public List<AuthAuditEvent> findByServiceId(String serviceId) {
+            return events.stream()
+                    .filter(event -> serviceId.equals(event.serviceId()))
                     .toList();
         }
     }

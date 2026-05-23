@@ -17,4 +17,7 @@ Consulta local:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-id sample-login-1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id 1
+scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id 1
 ```

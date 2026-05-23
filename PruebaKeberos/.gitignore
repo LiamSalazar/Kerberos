@@ -7,6 +7,7 @@ target/
 *.db
 *.sqlite
 *.sqlite3
+.env
 sources.txt
 auth-web-demo/dist/
 auth-web-demo/node_modules/

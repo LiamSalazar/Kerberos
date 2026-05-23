@@ -8,7 +8,9 @@ agregan `auth-web-demo`, una demo web local que consume el gateway sin acoplarse
 al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
 `auth-storage-sqlite` como primera integracion persistente local. Fase 15 agrega
 migraciones SQLite, auditoria persistente, administracion local y
-`sample-login-app`.
+`sample-login-app`. Fase 16 endurece configuracion, Gateway y auditoria
+consultable; Fase 17 agrega Docker Compose local sin reemplazar la ejecucion sin
+Docker.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -99,12 +101,10 @@ modular.
 Mensajes de entrada soportados:
 
 - `START_AUTH_FLOW`
-- `RUN_AUDIT_FLOW`
 - `PING`
 
 Mensajes de salida:
 
-- `GATEWAY_READY`
 - `FLOW_EVENT`
 - `FLOW_RESULT`
 - `ERROR`
@@ -159,7 +159,7 @@ Se cifran con AES-GCM:
 
 `AuthConfig` soporta:
 
-- `AUTH_MODE=demo` o `AUTH_MODE=local`: permite secretos por defecto para demo.
+- `AUTH_MODE=demo`: permite secretos por defecto para demo y muestra advertencia.
 - `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
 - `AUTH_STORAGE_MODE=memory|sqlite`: selecciona repositorios en memoria o
   SQLite local.

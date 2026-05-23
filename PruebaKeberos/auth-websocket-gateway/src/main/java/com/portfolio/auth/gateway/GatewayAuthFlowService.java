@@ -67,6 +67,7 @@ public final class GatewayAuthFlowService {
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,
+                    WebSocketErrorType.CLIENT_NOT_FOUND,
                     "Cliente no registrado en la configuracion local",
                     asMillis,
                     tgsMillis,
@@ -122,6 +123,7 @@ public final class GatewayAuthFlowService {
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     serviceResponse.accessGranted(),
+                    serviceResponse.accessGranted() ? null : WebSocketErrorType.FLOW_FAILED,
                     serviceResponse.serviceMessage(),
                     asMillis,
                     tgsMillis,
@@ -141,6 +143,7 @@ public final class GatewayAuthFlowService {
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,
+                    flowErrorType(e),
                     message,
                     asMillis,
                     tgsMillis,
@@ -183,5 +186,17 @@ public final class GatewayAuthFlowService {
             return authError.errorResponse().errorCode();
         }
         return e.getClass().getSimpleName();
+    }
+
+    private static WebSocketErrorType flowErrorType(Exception e) {
+        if (e instanceof AuthClientException authError
+                && "TGS_UNKNOWN_SERVICE".equals(authError.errorResponse().errorCode())) {
+            return WebSocketErrorType.SERVICE_NOT_FOUND;
+        }
+        if (e instanceof AuthClientException authError
+                && "AS_UNKNOWN_PRINCIPAL".equals(authError.errorResponse().errorCode())) {
+            return WebSocketErrorType.CLIENT_NOT_FOUND;
+        }
+        return WebSocketErrorType.FLOW_FAILED;
     }
 }

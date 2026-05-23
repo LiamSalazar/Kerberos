@@ -2,17 +2,20 @@ x-auth-common-env: &auth-common-env
   AUTH_MODE: ${AUTH_MODE:-demo}
   AUTH_STORAGE_MODE: ${AUTH_STORAGE_MODE:-sqlite}
   AUTH_SQLITE_PATH: ${AUTH_SQLITE_PATH:-/data/auth-demo.sqlite}
-  AUTH_DEMO_CLIENT_SECRET: ${AUTH_DEMO_CLIENT_SECRET:-ContraseniaCliente}
-  AUTH_DEMO_TGS_SECRET: ${AUTH_DEMO_TGS_SECRET:-contraseñaTGS}
-  AUTH_DEMO_SERVICE_SECRET: ${AUTH_DEMO_SERVICE_SECRET:-contraseñaServidor}
   AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-300}
-  AUTH_SESSION_MAX_TTL_SECONDS: ${AUTH_SESSION_MAX_TTL_SECONDS:-300}
+  AUTH_SESSION_MAX_TTL_SECONDS: ${AUTH_SESSION_MAX_TTL_SECONDS:-900}
   AUTH_SESSION_STORAGE_MODE: ${AUTH_SESSION_STORAGE_MODE:-sqlite}
   AUTH_REQUIRE_SESSION_VERIFY: ${AUTH_REQUIRE_SESSION_VERIFY:-true}
 
+x-auth-process-healthcheck: &auth-process-healthcheck
+  test: ["CMD-SHELL", "kill -0 1"]
+  interval: 10s
+  timeout: 3s
+  retries: 3
+
 services:
   auth-storage-init:
-    image: prueba-auth-gateway:local
+    image: kerberos-auth-gateway:local
     build:
       context: .
       dockerfile: docker/gateway/Dockerfile
@@ -34,7 +37,7 @@ services:
     restart: "no"
 
   auth-as:
-    image: prueba-auth-as:local
+    image: kerberos-auth-as:local
     build:
       context: .
       dockerfile: docker/as/Dockerfile
@@ -51,14 +54,10 @@ services:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck:
-      test: ["CMD-SHELL", "kill -0 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+    healthcheck: *auth-process-healthcheck
 
   auth-tgs:
-    image: prueba-auth-tgs:local
+    image: kerberos-auth-tgs:local
     build:
       context: .
       dockerfile: docker/tgs/Dockerfile
@@ -75,14 +74,10 @@ services:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck:
-      test: ["CMD-SHELL", "kill -0 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+    healthcheck: *auth-process-healthcheck
 
   auth-service:
-    image: prueba-auth-service:local
+    image: kerberos-auth-service:local
     build:
       context: .
       dockerfile: docker/service/Dockerfile
@@ -99,14 +94,10 @@ services:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck:
-      test: ["CMD-SHELL", "kill -0 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+    healthcheck: *auth-process-healthcheck
 
   auth-websocket-gateway:
-    image: prueba-auth-gateway:local
+    image: kerberos-auth-gateway:local
     build:
       context: .
       dockerfile: docker/gateway/Dockerfile
@@ -137,24 +128,20 @@ services:
     networks:
       - auth-internal
       - auth-public
-    healthcheck:
-      test: ["CMD-SHELL", "kill -0 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+    healthcheck: *auth-process-healthcheck
 
   auth-web-demo:
-    image: prueba-auth-web-demo:local
+    image: kerberos-auth-web-demo:local
     build:
       context: .
       dockerfile: docker/web-demo/Dockerfile
+    depends_on:
+      auth-websocket-gateway:
+        condition: service_started
     ports:
       - "5173:5173"
     networks:
       - auth-public
-    depends_on:
-      auth-websocket-gateway:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:5173', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 10s
@@ -162,17 +149,17 @@ services:
       retries: 3
 
   sample-login-app:
-    image: prueba-sample-login-app:local
+    image: kerberos-sample-login-app:local
     build:
       context: .
       dockerfile: docker/sample-login-app/Dockerfile
+    depends_on:
+      auth-websocket-gateway:
+        condition: service_started
     ports:
       - "5174:5174"
     networks:
       - auth-public
-    depends_on:
-      auth-websocket-gateway:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5174', timeout=2).close()\""]
       interval: 10s

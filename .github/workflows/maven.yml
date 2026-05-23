@@ -8,10 +8,6 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: PruebaKeberos
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-          cache-dependency-path: PruebaKeberos/**/pom.xml
+          cache-dependency-path: "**/pom.xml"
 
       - name: Compile
         run: mvn -q -DskipTests compile

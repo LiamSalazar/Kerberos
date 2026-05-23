@@ -1,7 +1,8 @@
 # Docker Deployment
 
-Fase 17 agrega despliegue local reproducible con Docker Compose. No es un
-despliegue productivo ni reemplaza la ejecucion local sin Docker.
+Fase 19 deja Docker Compose listo para validacion en Linux desde la raiz del
+repositorio. No es un despliegue productivo ni reemplaza la ejecucion local sin
+Docker.
 
 ## Requisitos
 
@@ -22,14 +23,14 @@ Linux/macOS:
 cp .env.example .env
 ```
 
-`.env.example` usa `AUTH_MODE=demo`, `AUTH_STORAGE_MODE=sqlite` y secretos demo
-documentados como no productivos.
+`.env.example` usa `AUTH_MODE=demo`, `AUTH_STORAGE_MODE=sqlite` y no contiene
+secretos reales.
 
 Tambien define sesiones opacas del Gateway:
 
 ```text
 AUTH_SESSION_TTL_SECONDS=300
-AUTH_SESSION_MAX_TTL_SECONDS=300
+AUTH_SESSION_MAX_TTL_SECONDS=900
 AUTH_SESSION_STORAGE_MODE=sqlite
 AUTH_REQUIRE_SESSION_VERIFY=true
 ```
@@ -159,10 +160,11 @@ AS/TGS/Service porque esos procesos exponen TCP/JSON interno.
 - No hay escalado ni alta disponibilidad.
 - No se debe presentar como production-ready.
 
-## Estado De Validacion En Este Entorno
+## Validacion Requerida
 
-En este entorno `docker` y `docker-compose` no estan disponibles en PATH. Por
-eso quedan pendientes para una maquina con Docker Desktop:
+Si `docker compose` no esta disponible en el entorno actual, no se debe inventar
+resultado. La validacion queda pendiente para una maquina Linux o Docker
+Desktop:
 
 ```bash
 docker compose config
@@ -170,7 +172,7 @@ docker compose build
 docker compose up
 ```
 
-En Linux, la validacion recomendada para Fase 18 es:
+En Linux, la validacion recomendada para Fase 19 es:
 
 ```bash
 cp .env.example .env

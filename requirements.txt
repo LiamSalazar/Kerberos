@@ -120,3 +120,6 @@
 # Phase 18 adds opaque Gateway sessions, VERIFY_SESSION, LOGOUT_SESSION,
 # SQLite-backed auth_sessions, a root README, cleaner CI/Compose files, and
 # removes the versioned portable tools directory.
+# Phase 19 moves the real project to the repository root, prepares Linux Docker
+# validation, and adds AWS deployment readiness docs/skeletons without applying
+# cloud infrastructure.

@@ -20,6 +20,10 @@ Aqui se concentrara la documentacion viva del proyecto:
 - guia de uso de la API en `using-auth-api.md`
 - modelo de sesion opaca verificable en `session-model.md`
 - despliegue Docker local en `docker-deployment.md`
+- validacion Docker Linux en `linux-docker-validation.md`
+- preparacion AWS en `aws-deployment.md`
+- checklist cloud en `production-readiness-checklist.md`
+- plan de migracion PostgreSQL en `postgres-migration-plan.md`
 - mini app de login integradora en `sample-login-app.md`
 - auditoria Maven en `audits/maven-dependency-audit.md`
 - ejemplo seguro de auditoria SQLite en `audits/sqlite-audit-sample.md`

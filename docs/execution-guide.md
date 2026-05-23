@@ -14,7 +14,7 @@ Docker sigue soportada; Docker Compose es opcional para demo reproducible.
 
 ## Maven
 
-Desde `PruebaKeberos`:
+Desde la raiz del repositorio:
 
 ```bash
 mvn -q -DskipTests compile

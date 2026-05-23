@@ -10,8 +10,9 @@ al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
 migraciones SQLite, auditoria persistente, administracion local y
 `sample-login-app`. Fase 16 endurece configuracion, Gateway y auditoria
 consultable; Fase 17 agrega Docker Compose local sin reemplazar la ejecucion sin
-Docker. Fase 18 agrega sesiones opacas verificables en el Gateway, corrige la
-presentacion publica del repositorio y prepara pruebas Docker/cloud.
+Docker. Fase 18 agrega sesiones opacas verificables en el Gateway. Fase 19
+mueve el proyecto real a la raiz y prepara validacion Docker Linux y AWS sin
+desplegar infraestructura.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -201,7 +202,7 @@ La demo web se valida por separado con `npm install` y `npm run build` dentro de
 `auth-web-demo`.
 
 GitHub Actions vive en la raiz del repositorio Git en
-`../.github/workflows/maven.yml` y ejecuta desde `PruebaKeberos`:
+`.github/workflows/maven.yml` y ejecuta desde la raiz del repositorio:
 
 - `mvn -q -DskipTests compile`
 - `mvn test`

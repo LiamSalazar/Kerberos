@@ -1,6 +1,6 @@
 # Maven Dependency Audit
 
-Fecha: 2026-05-22
+Fecha: 2026-05-23
 
 Comando ejecutado para esta revision:
 
@@ -74,6 +74,7 @@ No se detectaron ciclos Maven entre modulos.
 
 ## Conclusion
 
-El estado Maven queda consistente para Fase 16. Las referencias internas usan
+El estado Maven queda consistente para Fase 19. La mudanza del proyecto a la
+raiz no agrega dependencias Maven. Las referencias internas usan
 `groupId=com.portfolio.auth`, `artifactId` correcto y `${project.version}`. Las
 dependencias de test permanecen en scope `test`. No hay ciclos Maven observados.

@@ -1,24 +1,46 @@
 # auth-storage-postgres
 
-Placeholder documental para una fase futura. No contiene codigo ni dependencia
-PostgreSQL todavia.
+Modulo PostgreSQL para Fase 20. Implementa los contratos de `auth-core` sin
+ORM pesado y prepara el uso de RDS como almacenamiento cloud compartido.
 
-## Estado
+## Incluye
 
-- `AUTH_STORAGE_MODE=postgres` esta planificado, no implementado.
-- No hay driver PostgreSQL agregado.
-- No hay migraciones PostgreSQL activas.
-- No hay pruebas PostgreSQL todavia.
+- `PostgresPrincipalRepository`
+- `PostgresServiceRegistry`
+- `PostgresAuditRepository`
+- `PostgresSessionRepository`
+- `PostgresMigrationRunner`
+- migraciones en `scripts/postgres/migrations/`
 
-## Alcance Futuro
+## Configuracion
 
-El modulo deberia implementar los mismos contratos que `auth-storage-sqlite`:
+```text
+AUTH_STORAGE_MODE=postgres
+AUTH_SESSION_STORAGE_MODE=postgres
+AUTH_POSTGRES_URL=jdbc:postgresql://<host>:5432/kerberos_auth
+AUTH_POSTGRES_USER=<user>
+AUTH_POSTGRES_PASSWORD=<local-only-password>
+AUTH_POSTGRES_SSL_MODE=require
+```
 
-- repositorio de clientes;
-- registro de servicios;
-- auditoria persistente;
-- sesiones opacas distribuidas;
-- migraciones versionadas.
+En cloud, usar `AUTH_SECRET_PROVIDER=aws-secrets-manager` y
+`AUTH_SECRET_POSTGRES_PASSWORD_ID` en lugar de versionar passwords.
 
-La implementacion debe usar RDS PostgreSQL en AWS y secretos desde Secrets
-Manager para un production-like deployment posterior.
+## Pruebas
+
+Las pruebas normales no requieren un PostgreSQL real:
+
+```bash
+mvn -pl auth-storage-postgres -am test
+```
+
+La prueba real futura queda deshabilitada por defecto:
+
+```bash
+AUTH_POSTGRES_URL=jdbc:postgresql://localhost:5432/kerberos_auth \
+AUTH_POSTGRES_USER=kerberos_demo \
+AUTH_POSTGRES_PASSWORD=<password> \
+mvn -pl auth-storage-postgres -am -Ppostgres-it -Dpostgres.it=true test
+```
+
+No ejecutar esta prueba con credenciales reales versionadas.

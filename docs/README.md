@@ -24,6 +24,10 @@ Aqui se concentrara la documentacion viva del proyecto:
 - preparacion AWS en `aws-deployment.md`
 - checklist cloud en `production-readiness-checklist.md`
 - plan de migracion PostgreSQL en `postgres-migration-plan.md`
+- readiness RDS/PostgreSQL en `rds-postgres-readiness.md`
+- gestion de secretos en `secrets-management.md`
+- health checks en `health-checks.md`
+- observabilidad en `observability.md`
 - mini app de login integradora en `sample-login-app.md`
 - auditoria Maven en `audits/maven-dependency-audit.md`
 - ejemplo seguro de auditoria SQLite en `audits/sqlite-audit-sample.md`

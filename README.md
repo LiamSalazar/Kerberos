@@ -8,8 +8,8 @@ sistema listo para produccion critica. Es una base local para estudiar
 protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
 reproducibles con o sin Docker.
 
-Fase actual: **Fase 19: root cleanup, Docker validation readiness and AWS
-deployment readiness**.
+Fase actual: **Fase 20: cloud-production readiness, PostgreSQL/RDS,
+SecretsProvider, health checks, logs, metrics and AWS readiness**.
 
 La raiz del repositorio ahora es directamente la raiz Maven, Docker, docs,
 scripts e infra. Ya no se requiere entrar a una subcarpeta.
@@ -32,6 +32,7 @@ No implementa login tradicional con password de usuario final. La demo usa
 | `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion |
 | `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros |
 | `auth-storage-sqlite/` | Repositorios SQLite, migraciones, auditoria y CLI local |
+| `auth-storage-postgres/` | Repositorios PostgreSQL/RDS-ready, migraciones SQL y pruebas sin Postgres externo por defecto |
 | `auth-as/` | Authentication Server modular |
 | `auth-tgs/` | Ticket Granting Server modular |
 | `auth-service/` | Servicio protegido y `ProtectedResource` |
@@ -70,6 +71,7 @@ sequenceDiagram
 mvn -q -DskipTests compile
 mvn test
 mvn -pl auth-storage-sqlite -am test
+mvn -pl auth-storage-postgres -am test
 mvn -pl auth-websocket-gateway -am test
 ```
 
@@ -165,8 +167,10 @@ web demo y sample-login-app. Ver [docs/docker-deployment.md](docs/docker-deploym
 La carpeta `infra/aws/terraform/` contiene un skeleton Terraform para preparar
 un production-like deployment posterior en AWS con ECS Fargate, ECR, ALB con
 HTTPS/WSS, VPC publica/privada, Security Groups, Secrets Manager, CloudWatch,
-IAM minimo y una ruta preparada para RDS PostgreSQL. No se debe ejecutar
-`terraform apply` todavia ni usar credenciales reales en esta fase.
+IAM minimo y una ruta preparada para RDS PostgreSQL. Fase 20 agrega el modulo
+`auth-storage-postgres`, health HTTP ligero, logs JSON sanitizados, metricas
+basicas y referencias a Secrets Manager. No se debe ejecutar `terraform apply`
+todavia ni usar credenciales reales en esta fase.
 
 Documentacion relacionada:
 
@@ -175,6 +179,10 @@ Documentacion relacionada:
 - [docs/production-readiness-checklist.md](docs/production-readiness-checklist.md)
 - [docs/linux-docker-validation.md](docs/linux-docker-validation.md)
 - [docs/postgres-migration-plan.md](docs/postgres-migration-plan.md)
+- [docs/rds-postgres-readiness.md](docs/rds-postgres-readiness.md)
+- [docs/secrets-management.md](docs/secrets-management.md)
+- [docs/health-checks.md](docs/health-checks.md)
+- [docs/observability.md](docs/observability.md)
 
 ## SQLite Local
 
@@ -209,6 +217,24 @@ scripts\run-websocket-gateway.bat
 
 Las migraciones viven en `scripts/sqlite/migrations/` y registran versiones en
 `schema_version`.
+
+## PostgreSQL / RDS Readiness
+
+Modo cloud recomendado para persistencia compartida:
+
+```text
+AUTH_STORAGE_MODE=postgres
+AUTH_SESSION_STORAGE_MODE=postgres
+AUTH_POSTGRES_URL=jdbc:postgresql://<rds-endpoint>:5432/kerberos_auth
+AUTH_POSTGRES_USER=<user>
+AUTH_POSTGRES_SSL_MODE=require
+```
+
+`AUTH_POSTGRES_PASSWORD` se acepta para validacion local, pero en cloud debe
+resolverse mediante `AUTH_SECRET_POSTGRES_PASSWORD_ID` y
+`AUTH_SECRET_PROVIDER=aws-secrets-manager`. Las migraciones PostgreSQL viven en
+`scripts/postgres/migrations/`. Las pruebas normales no requieren PostgreSQL
+externo; el perfil `postgres-it` queda reservado para una prueba real futura.
 
 ## Administracion Local
 
@@ -286,11 +312,11 @@ APIs externas reales.
 
 - No es MIT Kerberos oficial.
 - No esta listo para produccion critica.
-- Docker local es opcional; no hay Spring Boot, modulo PostgreSQL implementado,
-  ORM pesado, React ni Next.js.
+- Docker local es opcional; no hay Spring Boot, ORM pesado, React ni Next.js.
 - No hay RSA, JWT ni autoridad certificadora en el modelo actual.
 - `ws://` es solo para desarrollo local; en cloud se requiere `wss://`.
-- SQLite es persistencia local verificable, no una base productiva.
+- SQLite es persistencia local verificable, no una base recomendada para cloud.
+- PostgreSQL/RDS esta preparado para cloud readiness, no validado contra AWS real.
 - AWS queda preparado como cloud deployment ready after validation, no aplicado.
 - No hay TLS ni autenticacion mutua en TCP/WebSocket.
 - Los secretos demo no deben usarse fuera de ejecucion local.
@@ -300,9 +326,10 @@ APIs externas reales.
 
 1. Endurecer transporte con TLS/autenticacion mutua.
 2. Separar secretos demo de secretos operativos con vault o mecanismo externo.
-3. Agregar politicas de autorizacion por recurso.
-4. Evaluar parser JSON mantenido si el codec propio crece.
-5. Agregar TLS/mTLS y gestion operativa de secretos.
+3. Ejecutar validacion Docker en Linux y prueba PostgreSQL real controlada.
+4. Agregar politicas de autorizacion por recurso.
+5. Evaluar parser JSON mantenido si el codec propio crece.
+6. Agregar TLS/mTLS y gestion operativa de secretos.
 
 ## Mas Documentacion
 
@@ -318,6 +345,10 @@ APIs externas reales.
 - [docs/frontend-demo.md](docs/frontend-demo.md)
 - [docs/concurrency.md](docs/concurrency.md)
 - [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
+- [docs/secrets-management.md](docs/secrets-management.md)
+- [docs/observability.md](docs/observability.md)
+- [docs/health-checks.md](docs/health-checks.md)
+- [docs/rds-postgres-readiness.md](docs/rds-postgres-readiness.md)
 - [docs/audits/maven-dependency-audit.md](docs/audits/maven-dependency-audit.md)
 - [docs/aws-deployment.md](docs/aws-deployment.md)
 - [docs/cloud-production-readiness.md](docs/cloud-production-readiness.md)

@@ -18,8 +18,8 @@ La ruta modular es la ruta principal:
 - tiene modo `AUTH_MODE=strict` para rechazar secretos demo;
 - incluye auditoria reproducible de ejecucion/desempeno.
 - incluye prueba y auditoria de concurrencia con evidencia versionada.
-- soporta `AUTH_STORAGE_MODE=memory|sqlite`; SQLite es local y sin servidor
-  externo.
+- soporta `AUTH_STORAGE_MODE=memory|sqlite|postgres`; SQLite es local y
+  PostgreSQL queda preparado para RDS/cloud.
 - incluye migraciones SQLite versionadas y `schema_version`.
 - registra auditoria persistente local de flujos WebSocket en SQLite cuando se
   usa `AUTH_STORAGE_MODE=sqlite`.
@@ -33,8 +33,10 @@ La ruta modular es la ruta principal:
   tipo login.
 - agrega sesiones opacas verificables en el Gateway para que una app externa no
   conceda acceso solamente por `FLOW_RESULT.success=true`.
-- agrega `VERIFY_SESSION` y `LOGOUT_SESSION`, con sesiones en memoria o SQLite
-  segun configuracion.
+- agrega `VERIFY_SESSION` y `LOGOUT_SESSION`, con sesiones en memoria, SQLite
+  o PostgreSQL segun configuracion.
+- agrega `SecretsProvider` para variables de entorno y AWS Secrets Manager.
+- agrega health HTTP, logs JSON sanitizados y metricas basicas del Gateway.
 
 El codigo legacy fisico ya fue retirado del proyecto principal. Fase 9 retiro
 tambien `auth-transport/javaio` y `auth-transport/legacy`. El contexto
@@ -43,11 +45,12 @@ historico queda documentado en `docs/legacy-summary.md`.
 ## Riesgos Modulares Abiertos
 
 - Los secretos por defecto siguen existiendo en modo `demo`.
-- `AUTH_MODE=strict` valida presencia de secretos, pero no agrega vault ni
-  rotacion real.
+- `AUTH_MODE=strict` valida secretos explicitos y puede resolver Secrets
+  Manager, pero no agrega rotacion real.
 - `InMemoryReplayCache` no es compartida entre procesos.
 - SQLite local no reemplaza una estrategia productiva de persistencia, cifrado
   de secretos ni rotacion.
+- PostgreSQL/RDS esta preparado, pero falta validarlo contra infraestructura real.
 - La auditoria persistente registra eventos de alto nivel, no trazas completas
   ni observabilidad distribuida.
 - `JsonMessageCodec` es un codec acotado al proyecto, no un parser JSON
@@ -66,13 +69,13 @@ historico queda documentado en `docs/legacy-summary.md`.
 
 ## Prioridad Siguiente
 
-1. Agregar manejo mas serio de secretos si la capa SQLite crece.
+1. Validar Docker en Linux y PostgreSQL real controlado.
 2. Endurecer el canal WebSocket/frontend con TLS o autenticacion local si se
    autoriza.
 3. Evaluar Jackson/Gson u otro JSON parser mantenido si el codec propio crece
    fuera de su alcance acotado.
 4. Agregar TLS o una capa de transporte autenticada para la ruta modular.
-5. Validar Docker Compose en Linux y documentar evidencia real.
+5. Cargar secretos reales en Secrets Manager y definir rotacion.
 6. Agregar pruebas E2E de navegador para la demo web si se autoriza tooling.
 7. Evaluar TLS/WSS y gestion de secretos antes de cualquier despliegue cloud.
 
@@ -86,6 +89,12 @@ aplicacion completo.
 No se agrego Jackson/Gson en esta fase. El codec JSON propio se mantiene porque
 sigue acotado a DTOs del protocolo y mensajes planos del gateway, con pruebas de
 JSON malformado, campos faltantes, tipos incorrectos y payload invalido.
+
+## Dependencias Cloud
+
+Fase 20 agrega `org.postgresql:postgresql` para `auth-storage-postgres` y AWS
+SDK v2 `software.amazon.awssdk:secretsmanager` en `auth-core`. No se agrego ORM,
+Spring Boot, RSA, JWT ni autoridad certificadora.
 
 ## Dependencia SQLite
 

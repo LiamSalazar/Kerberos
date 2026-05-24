@@ -10,6 +10,10 @@ La app externa no se conecta a SQLite. SQLite guarda clientes, servicios,
 secretos demo, auditoria y sesiones del sistema de autenticacion. La app debe
 hablar con el Gateway o con `auth-client-sdk`.
 
+En cloud, la misma regla aplica para PostgreSQL/RDS: la app externa no consulta
+la base compartida. Debe validar sesiones opacas con `VERIFY_SESSION` y aceptar
+acceso solo con `SESSION_VALID`.
+
 ## How To Secure Your Own App With This Project
 
 1. Registrar cliente:
@@ -88,5 +92,6 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-i
 - La autoridad practica de sesion es el Gateway.
 - La sesion opaca no debe guardarse en `localStorage` para esta demo.
 - `ws://` es solo local; en cloud usar `wss://`.
+- Para multiples instancias del Gateway, usar `AUTH_SESSION_STORAGE_MODE=postgres`.
 - No hay RSA, JWT ni CA en esta fase.
 - La app externa sigue a cargo de roles, permisos, cookies, CSRF, TLS y negocio.

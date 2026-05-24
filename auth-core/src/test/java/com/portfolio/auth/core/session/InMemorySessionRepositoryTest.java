@@ -47,6 +47,21 @@ class InMemorySessionRepositoryTest {
     }
 
     @Test
+    void shouldCountAndCleanupActiveSessions() {
+        Instant now = Instant.parse("2026-05-23T00:00:00Z");
+        InMemorySessionRepository repository = new InMemorySessionRepository();
+        repository.save(AuthSession.active("active", "request-1", "client-1", "service-1",
+                now, now.plusSeconds(60)));
+        repository.save(AuthSession.active("expired", "request-2", "client-1", "service-1",
+                now.minusSeconds(120), now.minusSeconds(60)));
+
+        assertEquals(1, repository.activeCount(now));
+        assertEquals(1, repository.cleanupExpired(now));
+        assertEquals(SessionValidationStatus.NOT_FOUND,
+                repository.validate("expired", "client-1", "service-1", now).status());
+    }
+
+    @Test
     void shouldGenerateOpaqueUnpredictableSessionIds() {
         SecureSessionIdGenerator generator = new SecureSessionIdGenerator();
 

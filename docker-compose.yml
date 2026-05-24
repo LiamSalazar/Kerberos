@@ -2,18 +2,40 @@ x-auth-common-env: &auth-common-env
   AUTH_MODE: ${AUTH_MODE:-demo}
   AUTH_STORAGE_MODE: ${AUTH_STORAGE_MODE:-sqlite}
   AUTH_SQLITE_PATH: ${AUTH_SQLITE_PATH:-/data/auth-demo.sqlite}
+  AUTH_POSTGRES_URL: ${AUTH_POSTGRES_URL:-jdbc:postgresql://auth-postgres:5432/kerberos_auth}
+  AUTH_POSTGRES_USER: ${AUTH_POSTGRES_USER:-kerberos_demo}
+  AUTH_POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD:-demo-postgres-password}
+  AUTH_POSTGRES_SSL_MODE: ${AUTH_POSTGRES_SSL_MODE:-disable}
   AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-300}
   AUTH_SESSION_MAX_TTL_SECONDS: ${AUTH_SESSION_MAX_TTL_SECONDS:-900}
   AUTH_SESSION_STORAGE_MODE: ${AUTH_SESSION_STORAGE_MODE:-sqlite}
   AUTH_REQUIRE_SESSION_VERIFY: ${AUTH_REQUIRE_SESSION_VERIFY:-true}
-
-x-auth-process-healthcheck: &auth-process-healthcheck
-  test: ["CMD-SHELL", "kill -0 1"]
-  interval: 10s
-  timeout: 3s
-  retries: 3
+  AUTH_SECRET_PROVIDER: ${AUTH_SECRET_PROVIDER:-env}
+  AUTH_AWS_REGION: ${AUTH_AWS_REGION:-us-east-1}
+  AUTH_SECRET_CLIENT_SECRET_ID: ${AUTH_SECRET_CLIENT_SECRET_ID:-}
+  AUTH_SECRET_TGS_SECRET_ID: ${AUTH_SECRET_TGS_SECRET_ID:-}
+  AUTH_SECRET_SERVICE_SECRET_ID: ${AUTH_SECRET_SERVICE_SECRET_ID:-}
+  AUTH_SECRET_POSTGRES_PASSWORD_ID: ${AUTH_SECRET_POSTGRES_PASSWORD_ID:-}
 
 services:
+  auth-postgres:
+    image: postgres:16-alpine
+    profiles:
+      - postgres-local
+    environment:
+      POSTGRES_DB: ${AUTH_POSTGRES_DB:-kerberos_auth}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER:-kerberos_demo}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD:-demo-postgres-password}
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    networks:
+      - auth-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER:-kerberos_demo} -d ${AUTH_POSTGRES_DB:-kerberos_auth}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   auth-storage-init:
     image: kerberos-auth-gateway:local
     build:
@@ -48,13 +70,20 @@ services:
       <<: *auth-common-env
       AUTH_AS_HOST: 0.0.0.0
       AUTH_AS_PORT: ${AUTH_AS_PORT:-2000}
+      AUTH_HEALTH_HOST: 0.0.0.0
+      AUTH_HEALTH_PORT: ${AUTH_AS_HEALTH_PORT:-2900}
     expose:
       - "2000"
+      - "2900"
     volumes:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck: *auth-process-healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:${AUTH_AS_HEALTH_PORT:-2900}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   auth-tgs:
     image: kerberos-auth-tgs:local
@@ -68,13 +97,20 @@ services:
       <<: *auth-common-env
       AUTH_TGS_HOST: 0.0.0.0
       AUTH_TGS_PORT: ${AUTH_TGS_PORT:-2001}
+      AUTH_HEALTH_HOST: 0.0.0.0
+      AUTH_HEALTH_PORT: ${AUTH_TGS_HEALTH_PORT:-2901}
     expose:
       - "2001"
+      - "2901"
     volumes:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck: *auth-process-healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:${AUTH_TGS_HEALTH_PORT:-2901}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   auth-service:
     image: kerberos-auth-service:local
@@ -88,13 +124,20 @@ services:
       <<: *auth-common-env
       AUTH_SERVICE_HOST: 0.0.0.0
       AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-2002}
+      AUTH_HEALTH_HOST: 0.0.0.0
+      AUTH_HEALTH_PORT: ${AUTH_SERVICE_HEALTH_PORT:-2902}
     expose:
       - "2002"
+      - "2902"
     volumes:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
-    healthcheck: *auth-process-healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:${AUTH_SERVICE_HEALTH_PORT:-2902}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   auth-websocket-gateway:
     image: kerberos-auth-gateway:local
@@ -120,15 +163,22 @@ services:
       AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-2002}
       AUTH_WS_HOST: ${AUTH_WS_HOST:-0.0.0.0}
       AUTH_WS_PORT: ${AUTH_WS_PORT:-2800}
+      AUTH_HEALTH_HOST: 0.0.0.0
+      AUTH_HEALTH_PORT: ${AUTH_GATEWAY_HEALTH_PORT:-2801}
       AUTH_ALLOWED_ORIGINS: ${AUTH_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5174}
     ports:
       - "2800:2800"
+      - "2801:2801"
     volumes:
       - auth-sqlite-data:/data
     networks:
       - auth-internal
       - auth-public
-    healthcheck: *auth-process-healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:${AUTH_GATEWAY_HEALTH_PORT:-2801}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   auth-web-demo:
     image: kerberos-auth-web-demo:local
@@ -168,6 +218,7 @@ services:
 
 volumes:
   auth-sqlite-data:
+  auth-postgres-data:
 
 networks:
   auth-internal:

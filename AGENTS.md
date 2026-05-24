@@ -44,6 +44,14 @@ Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
   validacion sin secretos por defecto.
 - Mantener `AUTH_STORAGE_MODE=memory` como modo demo por defecto y
   `AUTH_STORAGE_MODE=sqlite` como integracion local verificable.
+- Mantener `AUTH_STORAGE_MODE=postgres` como modo cloud/RDS preparado, sin
+  eliminar SQLite ni memory mode.
+- En cloud, preferir `AUTH_SECRET_PROVIDER=aws-secrets-manager` y no versionar
+  secretos reales ni tfvars con passwords.
+- Para multiples instancias del Gateway, usar sesiones opacas persistidas en BD
+  compartida; no depender de memoria local.
+- Mantener health checks, logs estructurados y metricas sin secretos, tickets,
+  ciphertexts, claves ni `sessionId` completo.
 - No versionar bases generadas `*.db`, `*.sqlite` ni `*.sqlite3`.
 - Preferir documentacion honesta sobre afirmaciones exageradas.
 - Mantener ejecucion local sin Docker como requisito actual.

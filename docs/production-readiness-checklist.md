@@ -7,6 +7,7 @@ Checklist para una fase posterior. No marca el sistema como production-ready.
 - [x] Maven corre desde la raiz.
 - [x] CI apunta a la raiz.
 - [x] Docker Compose apunta a la raiz.
+- [x] `auth-storage-postgres` existe en el reactor Maven.
 - [ ] Docker validado en Linux.
 - [ ] Imagenes publicadas en ECR con tags inmutables.
 - [ ] SBOM o auditoria de dependencias automatizada.
@@ -15,7 +16,8 @@ Checklist para una fase posterior. No marca el sistema como production-ready.
 
 - [x] `AUTH_MODE=strict` existe para rechazar secretos demo.
 - [x] `VERIFY_SESSION` existe antes de conceder acceso.
-- [ ] Secrets Manager integrado en tareas ECS.
+- [x] `SecretsProvider` soporta env y AWS Secrets Manager sin llamar AWS en tests normales.
+- [x] Terraform referencia Secrets Manager para tareas ECS.
 - [ ] Secretos reales rotados.
 - [ ] TLS publico con ACM.
 - [ ] mTLS o proteccion equivalente entre Gateway y AS/TGS/Service.
@@ -25,15 +27,17 @@ Checklist para una fase posterior. No marca el sistema como production-ready.
 
 - [x] SQLite local con migraciones.
 - [x] Auditoria persistente local.
-- [ ] PostgreSQL implementado como modulo real.
-- [ ] Migraciones PostgreSQL versionadas.
+- [x] PostgreSQL implementado como modulo real.
+- [x] Migraciones PostgreSQL versionadas.
 - [ ] RDS privado con backups y deletion protection.
-- [ ] Sesiones opacas distribuidas.
+- [x] Sesiones opacas soportan repositorio PostgreSQL compartido.
+- [ ] Sesiones opacas distribuidas validadas contra RDS/PostgreSQL real.
 
 ## Operacion
 
 - [x] CloudWatch Logs previsto en Terraform.
-- [ ] Health endpoints reales.
+- [x] Health endpoints reales para procesos Java y ALB Gateway.
+- [x] Metricas basicas en memoria y `/metrics`.
 - [ ] Alarmas por errores, latencia y tareas reiniciadas.
 - [ ] Runbook de incidentes.
 - [ ] Pruebas de carga.
@@ -42,6 +46,7 @@ Checklist para una fase posterior. No marca el sistema como production-ready.
 ## AWS
 
 - [x] Skeleton Terraform creado.
+- [x] Blueprint actualizado para ALB/WSS, Gateway `/health`, Secrets Manager y RDS.
 - [ ] `terraform fmt` y `terraform validate` ejecutados en entorno con Terraform.
 - [ ] `terraform plan` revisado con variables reales no secretas.
 - [ ] DNS y ACM configurados.

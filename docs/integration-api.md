@@ -1,11 +1,11 @@
 # Integration API
 
 Este documento resume como conectar aplicaciones reales al runtime modular sin
-acoplarlas a la base SQLite interna.
+acoplarlas a la base interna usada por memory, SQLite o PostgreSQL.
 
-SQLite pertenece al sistema de autenticacion. Una app externa no debe abrirla ni
-consultarla directamente; debe usar `auth-websocket-gateway` o `auth-client-sdk`
-en integraciones Java controladas.
+El almacenamiento pertenece al sistema de autenticacion. Una app externa no
+debe abrir ni consultar directamente SQLite/PostgreSQL; debe usar
+`auth-websocket-gateway` o `auth-client-sdk` en integraciones Java controladas.
 
 ## Responsibilities
 
@@ -14,7 +14,8 @@ El sistema de autenticacion:
 - ejecuta AS -> TGS -> Service;
 - valida tickets, autenticadores, expiracion, clock skew y replay local;
 - emite sesiones opacas verificables en el Gateway;
-- registra auditoria SQLite cuando corre con `AUTH_STORAGE_MODE=sqlite`.
+- registra auditoria persistente cuando corre con `AUTH_STORAGE_MODE=sqlite` o
+  `AUTH_STORAGE_MODE=postgres`.
 
 La app integradora:
 
@@ -49,9 +50,10 @@ pudo crear una sesion server-side despues de un flujo exitoso.
 
 ## How To Secure Your Own App With This Project
 
-1. Registrar cliente con `scripts/sqlite-admin.sh ... clients add`.
-2. Registrar servicio con `scripts/sqlite-admin.sh ... services add`.
-3. Configurar `AUTH_STORAGE_MODE=sqlite` y `AUTH_SQLITE_PATH`.
+1. Registrar cliente en el almacenamiento interno elegido.
+2. Registrar servicio en el almacenamiento interno elegido.
+3. Configurar `AUTH_STORAGE_MODE=sqlite` para local o
+   `AUTH_STORAGE_MODE=postgres` para cloud-like/RDS.
 4. Levantar AS, TGS, Service y WebSocket Gateway.
 5. Enviar `START_AUTH_FLOW`.
 6. Si `FLOW_RESULT.success === true`, guardar `sessionId` solo en memoria.
@@ -73,8 +75,8 @@ ProtectedServiceResponse execute(ProtectedServiceRequest request);
 ```
 
 `ProtectedServiceHandler` valida el protocolo antes de invocar el recurso. Un
-servicio real puede vivir detras de `auth-service`; no necesita conectarse a
-SQLite directamente.
+servicio real puede vivir detras de `auth-service`; no necesita conectarse al
+almacenamiento interno directamente.
 
 Implementaciones actuales:
 

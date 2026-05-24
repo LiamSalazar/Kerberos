@@ -4,8 +4,15 @@ import com.portfolio.auth.client.AuthClient;
 import com.portfolio.auth.core.audit.AuthEventRepository;
 import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.health.HealthCheckServer;
+import com.portfolio.auth.core.health.HealthCheckSupport;
+import com.portfolio.auth.core.observability.MetricsRegistry;
 import com.portfolio.auth.core.session.InMemorySessionRepository;
 import com.portfolio.auth.core.session.SessionRepository;
+import com.portfolio.auth.storage.postgres.PostgresAuditRepository;
+import com.portfolio.auth.storage.postgres.PostgresConnectionFactory;
+import com.portfolio.auth.storage.postgres.PostgresMigrationRunner;
+import com.portfolio.auth.storage.postgres.PostgresSessionRepository;
 import com.portfolio.auth.storage.sqlite.SQLiteAuditRepository;
 import com.portfolio.auth.storage.sqlite.SQLiteMigrationRunner;
 import com.portfolio.auth.storage.sqlite.SQLiteSessionRepository;
@@ -20,7 +27,10 @@ public final class WebSocketGatewayApp {
     public static final String ENV_WEBSOCKET_HOST = "AUTH_WS_HOST";
     public static final String ENV_WEBSOCKET_PORT = "AUTH_WS_PORT";
     public static final String ENV_ALLOWED_ORIGINS = "AUTH_ALLOWED_ORIGINS";
+    public static final String ENV_HEALTH_HOST = "AUTH_HEALTH_HOST";
+    public static final String ENV_HEALTH_PORT = "AUTH_HEALTH_PORT";
     public static final int DEFAULT_WEBSOCKET_PORT = 2800;
+    public static final int DEFAULT_HEALTH_PORT = 2801;
 
     private WebSocketGatewayApp() {
     }
@@ -32,9 +42,11 @@ public final class WebSocketGatewayApp {
         int port = intValue(ENV_WEBSOCKET_PORT, DEFAULT_WEBSOCKET_PORT);
 
         AuthClient authClient = new AuthClient(config);
+        MetricsRegistry metricsRegistry = MetricsRegistry.global();
         AuthEventRepository auditRepository = auditRepository(config);
         SessionRepository sessionRepository = sessionRepository(config);
-        GatewaySessionService sessionService = new GatewaySessionService(config, sessionRepository);
+        metricsRegistry.gauge("active_sessions_count", () -> sessionRepository.activeCount(java.time.Instant.now()));
+        GatewaySessionService sessionService = new GatewaySessionService(config, sessionRepository, metricsRegistry);
         WebSocketGatewayPolicy policy = new WebSocketGatewayPolicy(
                 allowedOrigins(value(ENV_ALLOWED_ORIGINS, "")),
                 WebSocketGatewayPolicy.DEFAULT_MAX_MESSAGES_PER_CONNECTION,
@@ -44,7 +56,8 @@ public final class WebSocketGatewayApp {
                 config,
                 new DefaultGatewayAuthClient(config, authClient),
                 auditRepository,
-                sessionService);
+                sessionService,
+                metricsRegistry);
         AuthWebSocketServer server = new AuthWebSocketServer(
                 new InetSocketAddress(host, port),
                 new WebSocketMessageCodec(),
@@ -52,26 +65,44 @@ public final class WebSocketGatewayApp {
                 policy);
 
         server.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
+        HealthCheckServer healthServer = HealthCheckServer.start(
+                value(ENV_HEALTH_HOST, AuthConfig.DEFAULT_LOCAL_HOST),
+                intValue(ENV_HEALTH_PORT, DEFAULT_HEALTH_PORT),
+                new HealthCheckSupport("auth-websocket-gateway", "0.1.0-SNAPSHOT", config.storageMode()),
+                metricsRegistry);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            healthServer.close();
+            server.shutdown();
+        }));
         Thread.currentThread().join();
     }
 
     private static AuthEventRepository auditRepository(AuthConfig config) throws Exception {
-        if (!config.usesSqliteStorage()) {
-            return NoOpAuthEventRepository.INSTANCE;
+        if (config.usesPostgresStorage()) {
+            PostgresConnectionFactory connectionFactory = new PostgresConnectionFactory(config);
+            PostgresMigrationRunner.applyMigrations(connectionFactory);
+            return new PostgresAuditRepository(connectionFactory);
         }
-        Path databasePath = Path.of(config.sqlitePath());
-        SQLiteMigrationRunner.applyMigrations(databasePath);
-        return new SQLiteAuditRepository(databasePath);
+        if (config.usesSqliteStorage()) {
+            Path databasePath = Path.of(config.sqlitePath());
+            SQLiteMigrationRunner.applyMigrations(databasePath);
+            return new SQLiteAuditRepository(databasePath);
+        }
+        return NoOpAuthEventRepository.INSTANCE;
     }
 
     private static SessionRepository sessionRepository(AuthConfig config) throws Exception {
-        if (!config.usesSqliteSessionStorage()) {
-            return new InMemorySessionRepository();
+        if (config.usesPostgresSessionStorage()) {
+            PostgresConnectionFactory connectionFactory = new PostgresConnectionFactory(config);
+            PostgresMigrationRunner.applyMigrations(connectionFactory);
+            return new PostgresSessionRepository(connectionFactory);
         }
-        Path databasePath = Path.of(config.sqlitePath());
-        SQLiteMigrationRunner.applyMigrations(databasePath);
-        return new SQLiteSessionRepository(databasePath);
+        if (config.usesSqliteSessionStorage()) {
+            Path databasePath = Path.of(config.sqlitePath());
+            SQLiteMigrationRunner.applyMigrations(databasePath);
+            return new SQLiteSessionRepository(databasePath);
+        }
+        return new InMemorySessionRepository();
     }
 
     private static String value(String key, String defaultValue) {

@@ -16,7 +16,7 @@ La sesion opaca:
 - no contiene tickets;
 - no contiene ciphertexts;
 - no contiene material criptografico sensible;
-- vive en memoria o SQLite del sistema de autenticacion;
+- vive en memoria, SQLite o PostgreSQL del sistema de autenticacion;
 - se asocia a `requestId`, `clientId` y `serviceId`;
 - expira;
 - puede revocarse con `LOGOUT_SESSION`.
@@ -70,12 +70,18 @@ operativo quedaria en `AUTH_SESSION_MAX_TTL_SECONDS` y debe documentarse.
 
 ## Storage
 
-`AUTH_SESSION_STORAGE_MODE=memory|sqlite` controla donde vive la sesion. Si no
-se configura, sigue el valor de `AUTH_STORAGE_MODE`; por eso `sqlite` persiste
-sesiones en `auth_sessions` cuando el stack local usa SQLite.
+`AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres` controla donde vive la
+sesion. Si no se configura, sigue el valor de `AUTH_STORAGE_MODE`; por eso
+`sqlite` persiste sesiones en `auth_sessions` cuando el stack local usa SQLite
+y `postgres` las guarda en una base compartida apta para multiples instancias
+del Gateway.
 
 SQLite sigue siendo interno al sistema de autenticacion. Una app externa no debe
 abrir esa base para validar sesiones; debe usar `VERIFY_SESSION`.
+
+En cloud, `memory` no sirve para multiples replicas y SQLite no es recomendado
+como almacenamiento compartido. Usar PostgreSQL/RDS para que `VERIFY_SESSION` y
+`LOGOUT_SESSION` sean coherentes entre instancias del Gateway.
 
 ## Limits
 

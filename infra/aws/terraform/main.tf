@@ -18,7 +18,7 @@ locals {
     Project     = "Kerberos"
     Environment = var.environment
     ManagedBy   = "terraform"
-    Phase       = "19"
+    Phase       = "20"
   }
 
   ecr_repositories = toset([
@@ -35,48 +35,65 @@ locals {
   service_definitions = {
     auth-as = {
       port              = 2000
+      health_port       = 2900
       desired_count     = var.desired_count
       image             = "${aws_ecr_repository.services["auth-as"].repository_url}:latest"
       public            = false
+      auth_runtime      = true
       target_group_arn  = null
       discovery_service = aws_service_discovery_service.private_services["auth-as"].arn
       environment = {
-        AUTH_AS_HOST = "0.0.0.0"
-        AUTH_AS_PORT = "2000"
+        AUTH_AS_HOST     = "0.0.0.0"
+        AUTH_AS_PORT     = "2000"
+        AUTH_HEALTH_HOST = "0.0.0.0"
+        AUTH_HEALTH_PORT = "2900"
       }
+      health_command = "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:2900/health"
     }
 
     auth-tgs = {
       port              = 2001
+      health_port       = 2901
       desired_count     = var.desired_count
       image             = "${aws_ecr_repository.services["auth-tgs"].repository_url}:latest"
       public            = false
+      auth_runtime      = true
       target_group_arn  = null
       discovery_service = aws_service_discovery_service.private_services["auth-tgs"].arn
       environment = {
-        AUTH_TGS_HOST = "0.0.0.0"
-        AUTH_TGS_PORT = "2001"
+        AUTH_TGS_HOST    = "0.0.0.0"
+        AUTH_TGS_PORT    = "2001"
+        AUTH_HEALTH_HOST = "0.0.0.0"
+        AUTH_HEALTH_PORT = "2901"
       }
+      health_command = "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:2901/health"
     }
 
     auth-service = {
       port              = 2002
+      health_port       = 2902
       desired_count     = var.desired_count
       image             = "${aws_ecr_repository.services["auth-service"].repository_url}:latest"
       public            = false
+      auth_runtime      = true
       target_group_arn  = null
       discovery_service = aws_service_discovery_service.private_services["auth-service"].arn
       environment = {
         AUTH_SERVICE_HOST = "0.0.0.0"
         AUTH_SERVICE_PORT = "2002"
+        AUTH_HEALTH_HOST  = "0.0.0.0"
+        AUTH_HEALTH_PORT  = "2902"
       }
+      health_command = "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:2902/health"
     }
 
     auth-websocket-gateway = {
       port              = 2800
+      health_port       = 2801
       desired_count     = var.gateway_desired_count
       image             = "${aws_ecr_repository.services["auth-websocket-gateway"].repository_url}:latest"
       public            = true
+      auth_runtime      = true
       target_group_arn  = aws_lb_target_group.public_services["auth-websocket-gateway"].arn
       discovery_service = null
       environment = {
@@ -88,32 +105,41 @@ locals {
         AUTH_SERVICE_PORT             = "2002"
         AUTH_WS_HOST                  = "0.0.0.0"
         AUTH_WS_PORT                  = "2800"
+        AUTH_HEALTH_HOST              = "0.0.0.0"
+        AUTH_HEALTH_PORT              = "2801"
         AUTH_ALLOWED_ORIGINS          = var.allowed_origins
         AUTH_REQUIRE_SESSION_VERIFY   = "true"
         AUTH_SESSION_STORAGE_MODE     = "postgres"
         AUTH_SESSION_TTL_SECONDS      = tostring(var.auth_session_ttl_seconds)
         AUTH_SESSION_MAX_TTL_SECONDS  = tostring(var.auth_session_max_ttl_seconds)
       }
+      health_command = "java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:2801/health"
     }
 
     auth-web-demo = {
       port              = 5173
+      health_port       = 5173
       desired_count     = var.desired_count
       image             = "${aws_ecr_repository.services["auth-web-demo"].repository_url}:latest"
       public            = true
+      auth_runtime      = false
       target_group_arn  = aws_lb_target_group.public_services["auth-web-demo"].arn
       discovery_service = null
       environment       = {}
+      health_command     = "node -e \"require('http').get('http://127.0.0.1:5173', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""
     }
 
     sample-login-app = {
       port              = 5174
+      health_port       = 5174
       desired_count     = var.desired_count
       image             = "${aws_ecr_repository.services["sample-login-app"].repository_url}:latest"
       public            = true
+      auth_runtime      = false
       target_group_arn  = aws_lb_target_group.public_services["sample-login-app"].arn
       discovery_service = null
       environment       = {}
+      health_command     = "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5174', timeout=2).close()\""
     }
   }
 }
@@ -266,6 +292,14 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   ingress {
+    description     = "Gateway health from ALB"
+    from_port       = 2801
+    to_port         = 2801
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  ingress {
     description     = "Web demo from ALB"
     from_port       = 5173
     to_port         = 5173
@@ -346,7 +380,7 @@ resource "aws_secretsmanager_secret" "auth_runtime" {
     "auth-demo-client-secret",
     "auth-demo-tgs-secret",
     "auth-demo-service-secret",
-    "postgres-connection-url"
+    "postgres-password"
   ])
 
   name = "${var.name_prefix}/${var.environment}/${each.key}"
@@ -387,10 +421,9 @@ resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
     Statement = [{
       Effect = "Allow"
       Action = [
-        "secretsmanager:GetSecretValue",
-        "kms:Decrypt"
+        "secretsmanager:GetSecretValue"
       ]
-      Resource = "*"
+      Resource = [for secret in aws_secretsmanager_secret.auth_runtime : secret.arn]
     }]
   })
 }
@@ -412,6 +445,22 @@ resource "aws_iam_role" "ecs_task" {
   tags = local.tags
 }
 
+resource "aws_iam_role_policy" "ecs_task_runtime_secrets" {
+  name = "${var.name_prefix}-ecs-task-runtime-secrets"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue"
+      ]
+      Resource = [for secret in aws_secretsmanager_secret.auth_runtime : secret.arn]
+    }]
+  })
+}
+
 resource "aws_lb" "public" {
   name               = "${var.name_prefix}-alb"
   load_balancer_type = "application"
@@ -424,22 +473,38 @@ resource "aws_lb" "public" {
 
 resource "aws_lb_target_group" "public_services" {
   for_each = {
-    auth-websocket-gateway = 2800
-    auth-web-demo          = 5173
-    sample-login-app       = 5174
+    auth-websocket-gateway = {
+      port        = 2800
+      health_path = "/health"
+      health_port = "2801"
+      matcher     = "200-299"
+    }
+    auth-web-demo = {
+      port        = 5173
+      health_path = "/"
+      health_port = "traffic-port"
+      matcher     = "200-499"
+    }
+    sample-login-app = {
+      port        = 5174
+      health_path = "/"
+      health_port = "traffic-port"
+      matcher     = "200-499"
+    }
   }
 
   name        = substr("${var.name_prefix}-${each.key}", 0, 32)
-  port        = each.value
+  port        = each.value.port
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.main.id
 
   health_check {
     enabled             = true
-    path                = "/"
+    path                = each.value.health_path
+    port                = each.value.health_port
     protocol            = "HTTP"
-    matcher             = "200-499"
+    matcher             = each.value.matcher
     healthy_threshold   = 2
     unhealthy_threshold = 3
     interval            = 30
@@ -565,20 +630,44 @@ resource "aws_ecs_task_definition" "services" {
     image     = each.value.image
     essential = true
 
-    portMappings = [{
-      containerPort = each.value.port
-      hostPort      = each.value.port
-      protocol      = "tcp"
-    }]
+    portMappings = concat(
+      [{
+        containerPort = each.value.port
+        hostPort      = each.value.port
+        protocol      = "tcp"
+      }],
+      each.value.health_port == each.value.port ? [] : [{
+        containerPort = each.value.health_port
+        hostPort      = each.value.health_port
+        protocol      = "tcp"
+      }]
+    )
 
     environment = concat(
-      [
+      each.value.auth_runtime ? [
         { name = "AUTH_MODE", value = "strict" },
         { name = "AUTH_STORAGE_MODE", value = var.enable_rds_postgres ? "postgres" : "sqlite" },
-        { name = "AUTH_SQLITE_PATH", value = "/data/auth-demo.sqlite" }
-      ],
+        { name = "AUTH_SQLITE_PATH", value = "/data/auth-demo.sqlite" },
+        { name = "AUTH_POSTGRES_URL", value = var.enable_rds_postgres ? "jdbc:postgresql://${aws_db_instance.postgres[0].address}:5432/${var.postgres_db_name}" : "jdbc:postgresql://postgres.private:5432/${var.postgres_db_name}" },
+        { name = "AUTH_POSTGRES_USER", value = var.postgres_master_username },
+        { name = "AUTH_POSTGRES_SSL_MODE", value = "require" },
+        { name = "AUTH_SECRET_PROVIDER", value = "aws-secrets-manager" },
+        { name = "AUTH_AWS_REGION", value = var.aws_region },
+        { name = "AUTH_SECRET_CLIENT_SECRET_ID", value = aws_secretsmanager_secret.auth_runtime["auth-demo-client-secret"].arn },
+        { name = "AUTH_SECRET_TGS_SECRET_ID", value = aws_secretsmanager_secret.auth_runtime["auth-demo-tgs-secret"].arn },
+        { name = "AUTH_SECRET_SERVICE_SECRET_ID", value = aws_secretsmanager_secret.auth_runtime["auth-demo-service-secret"].arn },
+        { name = "AUTH_SECRET_POSTGRES_PASSWORD_ID", value = aws_secretsmanager_secret.auth_runtime["postgres-password"].arn }
+      ] : [],
       [for key, value in each.value.environment : { name = key, value = value }]
     )
+
+    healthCheck = {
+      command     = ["CMD-SHELL", each.value.health_command]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 20
+    }
 
     logConfiguration = {
       logDriver = "awslogs"

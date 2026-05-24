@@ -227,4 +227,5 @@ se agrego ORM.
 - No hay cifrado de secretos en repositorio.
 - No hay rotacion de secretos.
 - No hay API HTTP de administracion.
-- No hay PostgreSQL.
+- PostgreSQL/RDS vive en `auth-storage-postgres`; SQLite se mantiene como
+  integracion local/demo.

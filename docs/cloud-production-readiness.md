@@ -1,7 +1,8 @@
 # Cloud Production Readiness
 
-Este proyecto no debe presentarse como production-ready empresarial. Fase 19
-solo prepara un camino cloud y documenta lo que falta para endurecerlo.
+Este proyecto no debe presentarse como production-ready empresarial. Fase 20
+prepara un camino cloud-production readiness y documenta lo que falta para
+endurecerlo.
 
 ## Ya Preparado
 
@@ -10,6 +11,10 @@ solo prepara un camino cloud y documenta lo que falta para endurecerlo.
 - Docker Compose listo para validacion Linux.
 - Gateway WebSocket con sesiones opacas verificables.
 - Auditoria persistente SQLite local.
+- Modulo `auth-storage-postgres` con repositorios JDBC y migraciones SQL.
+- `SecretsProvider` con `env` y AWS Secrets Manager preparado.
+- Health HTTP ligero y endpoint `/metrics` para procesos Java.
+- Logs JSON sanitizados en el Gateway para flujo y sesiones.
 - Skeleton Terraform para ECS Fargate, ECR, ALB, VPC, Security Groups,
   Secrets Manager, CloudWatch, IAM y RDS PostgreSQL opcional.
 - Documentacion de despliegue y validacion.
@@ -19,23 +24,21 @@ solo prepara un camino cloud y documenta lo que falta para endurecerlo.
 - Validar Docker en Linux con `docker compose config`, `build` y `up`.
 - Publicar imagenes reales en ECR.
 - Crear certificados ACM y DNS reales.
-- Implementar `auth-storage-postgres` con pruebas.
-- Migrar sesiones opacas a almacenamiento distribuido.
-- Sacar secretos demo del runtime y usar Secrets Manager.
+- Validar `auth-storage-postgres` contra PostgreSQL/RDS real.
+- Cargar secretos reales en Secrets Manager fuera del repositorio.
 - Agregar TLS/mTLS o proteccion equivalente para trafico interno.
-- Agregar health endpoints reales para ALB/ECS.
 - Definir backup, restore, retention y rotacion.
-- Agregar observabilidad operacional: metricas, alarmas y trazas.
+- Agregar observabilidad operacional completa: alarmas, dashboards y trazas.
 - Hacer revision de amenazas y pruebas de carga.
 
 ## Riesgos Restantes
 
 - El replay cache sigue siendo local por proceso.
 - El modo SQLite no escala horizontalmente.
-- El Gateway necesita health endpoint HTTP antes de un despliegue ALB serio.
+- El Gateway ya tiene health HTTP, pero falta validarlo detras de ALB real.
 - El protocolo interno TCP/JSON no tiene mTLS.
-- `AUTH_MODE=strict` exige secretos explicitos, pero todavia falta integracion
-  final con Secrets Manager.
+- `AUTH_MODE=strict` puede resolver Secrets Manager, pero falta cargar secretos
+  reales, revisar IAM y ejecutar pruebas en AWS.
 - La autorizacion de negocio sigue fuera del sistema demo.
 
 ## Lenguaje Permitido

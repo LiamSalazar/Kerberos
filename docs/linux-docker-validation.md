@@ -26,6 +26,14 @@ docker compose build
 docker compose up
 ```
 
+Validacion cloud-like opcional con PostgreSQL local:
+
+```bash
+AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local config
+AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local build
+AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local up
+```
+
 Abrir:
 
 ```text
@@ -63,3 +71,5 @@ La auditoria no debe exponer secretos, tickets, claves ni ciphertexts.
 - `docker compose up` levanta Gateway, web demo y sample login app publicos.
 - AS, TGS y Service no exponen puertos al host.
 - El Gateway responde con sesion opaca verificable.
+- Los health checks Java responden en `/health`.
+- El perfil `postgres-local` no publica PostgreSQL al host y usa valores demo.

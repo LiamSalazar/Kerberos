@@ -107,7 +107,7 @@ variable "auth_session_max_ttl_seconds" {
 }
 
 variable "enable_rds_postgres" {
-  description = "Create an optional RDS PostgreSQL instance for future AUTH_STORAGE_MODE=postgres work."
+  description = "Create an optional RDS PostgreSQL instance for AUTH_STORAGE_MODE=postgres validation."
   type        = bool
   default     = false
 }

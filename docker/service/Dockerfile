@@ -11,4 +11,5 @@ WORKDIR /app
 COPY --from=build /workspace/auth-service/target/classes /app/classes
 COPY --from=build /workspace/auth-service/target/dependency /app/dependency
 COPY --from=build /workspace/scripts/sqlite/migrations /app/scripts/sqlite/migrations
+COPY --from=build /workspace/scripts/postgres/migrations /app/scripts/postgres/migrations
 ENTRYPOINT ["java", "-cp", "/app/classes:/app/dependency/*", "com.portfolio.auth.service.ProtectedServiceApp"]

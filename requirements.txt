@@ -71,11 +71,19 @@
 #   AUTH_MODE=strict requires explicit secrets and rejects defaults.
 #   AUTH_STORAGE_MODE=memory uses in-memory demo repositories.
 #   AUTH_STORAGE_MODE=sqlite uses SQLite through org.xerial:sqlite-jdbc.
+#   AUTH_STORAGE_MODE=postgres uses PostgreSQL through org.postgresql:postgresql.
 #   AUTH_SQLITE_PATH points to the local SQLite database file.
+#   AUTH_POSTGRES_URL, AUTH_POSTGRES_USER, AUTH_POSTGRES_PASSWORD, and
+#     AUTH_POSTGRES_SSL_MODE configure PostgreSQL/RDS readiness.
+#   AUTH_SECRET_PROVIDER=env|aws-secrets-manager selects secret resolution.
+#   AUTH_AWS_REGION sets the AWS region for Secrets Manager.
+#   AUTH_SECRET_CLIENT_SECRET_ID, AUTH_SECRET_TGS_SECRET_ID,
+#     AUTH_SECRET_SERVICE_SECRET_ID, and AUTH_SECRET_POSTGRES_PASSWORD_ID point
+#     to env vars or AWS secret IDs/ARNs.
 #   AUTH_ALLOWED_ORIGINS restricts browser WebSocket origins when set.
 #   AUTH_SESSION_TTL_SECONDS sets the opaque Gateway session TTL.
 #   AUTH_SESSION_MAX_TTL_SECONDS caps Gateway session lifetime.
-#   AUTH_SESSION_STORAGE_MODE=memory|sqlite controls server-side session storage.
+#   AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres controls server-side session storage.
 #   AUTH_REQUIRE_SESSION_VERIFY=true keeps strict-mode integrations from
 #     treating FLOW_RESULT.success=true as final authorization.
 
@@ -123,3 +131,6 @@
 # Phase 19 moves the real project to the repository root, prepares Linux Docker
 # validation, and adds AWS deployment readiness docs/skeletons without applying
 # cloud infrastructure.
+# Phase 20 adds PostgreSQL/RDS readiness, SecretsProvider, health checks,
+# structured logs, basic metrics, cloud-like Docker Compose and expanded AWS
+# readiness without executing AWS real infrastructure.

@@ -23,7 +23,7 @@ allowed_origins = "https://demo.example.com,https://login.example.com"
 auth_session_ttl_seconds = 300
 auth_session_max_ttl_seconds = 900
 
-# Keep false until the postgres storage module exists and has migration tests.
+# Keep false until Docker Linux and RDS validation are completed.
 enable_rds_postgres = false
 postgres_db_name = "kerberos_auth"
 postgres_master_username = "kerberos_admin"

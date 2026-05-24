@@ -1,6 +1,6 @@
 # Docker Deployment
 
-Fase 19 deja Docker Compose listo para validacion en Linux desde la raiz del
+Fase 20 mantiene Docker Compose listo para validacion en Linux desde la raiz del
 repositorio. No es un despliegue productivo ni reemplaza la ejecucion local sin
 Docker.
 
@@ -33,6 +33,8 @@ AUTH_SESSION_TTL_SECONDS=300
 AUTH_SESSION_MAX_TTL_SECONDS=900
 AUTH_SESSION_STORAGE_MODE=sqlite
 AUTH_REQUIRE_SESSION_VERIFY=true
+AUTH_SECRET_PROVIDER=env
+AUTH_POSTGRES_URL=jdbc:postgresql://auth-postgres:5432/kerberos_auth
 ```
 
 ## Levantar Todo
@@ -64,6 +66,15 @@ Compose levanta:
 - `auth-websocket-gateway`: publico en `ws://localhost:2800`.
 - `auth-web-demo`: publico en `http://localhost:5173`.
 - `sample-login-app`: publico en `http://localhost:5174`.
+
+Opcionalmente se puede habilitar un PostgreSQL local no publico:
+
+```bash
+AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local up -d --build
+```
+
+Ese modo usa credenciales demo de `.env` y existe solo para validacion
+cloud-like local. La base no expone puertos al host.
 
 ## Abrir Frontends
 
@@ -148,15 +159,21 @@ docker compose down -v
 
 ## Health Checks
 
-AS, TGS, Service y Gateway usan health checks simples basados en proceso activo.
-Los frontends usan una solicitud HTTP local. No hay endpoints HTTP de salud para
-AS/TGS/Service porque esos procesos exponen TCP/JSON interno.
+AS, TGS, Service y Gateway usan health checks HTTP reales:
+
+- Gateway: `http://127.0.0.1:2801/health`
+- AS: `http://127.0.0.1:2900/health`
+- TGS: `http://127.0.0.1:2901/health`
+- Service: `http://127.0.0.1:2902/health`
+
+Los frontends usan una solicitud HTTP local. Los health checks no imprimen
+secretos ni exponen tickets o payloads sensibles.
 
 ## Limitaciones
 
 - No hay TLS/mTLS.
 - No hay gestion de secretos con vault.
-- No hay PostgreSQL.
+- PostgreSQL local es opcional y no reemplaza RDS.
 - No hay escalado ni alta disponibilidad.
 - No se debe presentar como production-ready.
 
@@ -172,7 +189,7 @@ docker compose build
 docker compose up
 ```
 
-En Linux, la validacion recomendada para Fase 19 es:
+En Linux, la validacion recomendada para Fase 20 es:
 
 ```bash
 cp .env.example .env

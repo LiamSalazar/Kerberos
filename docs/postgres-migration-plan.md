@@ -1,7 +1,7 @@
 # PostgreSQL Migration Plan
 
-Esta fase no implementa PostgreSQL. Deja la propuesta para un modulo futuro
-`auth-storage-postgres` y para `AUTH_STORAGE_MODE=postgres`.
+Fase 20 implementa PostgreSQL readiness mediante `auth-storage-postgres` y
+habilita `AUTH_STORAGE_MODE=postgres`.
 
 ## Objetivo
 
@@ -10,7 +10,7 @@ contratos publicos de `auth-core`.
 
 ## Modulo Futuro
 
-Modulo sugerido:
+Modulo implementado:
 
 ```text
 auth-storage-postgres/
@@ -23,30 +23,29 @@ Responsabilidades:
 - Implementar `AuthEventRepository`.
 - Implementar `SessionRepository`.
 - Ejecutar migraciones versionadas.
-- Proveer pruebas de integracion con PostgreSQL local o Testcontainers si se
-  autoriza en una fase futura.
-
-No agregar dependencia PostgreSQL hasta implementar el modulo real con pruebas.
+- Proveer pruebas normales sin PostgreSQL externo.
+- Dejar una prueba real futura deshabilitada por defecto con perfil
+  `postgres-it`.
 
 ## Variable De Modo
 
-Modo futuro:
+Modo:
 
 ```text
 AUTH_STORAGE_MODE=postgres
 AUTH_SESSION_STORAGE_MODE=postgres
 ```
 
-Mientras no exista el modulo, `postgres` debe tratarse como plan documentado,
-no como funcionalidad activa.
+`postgres` queda activo a nivel de configuracion y repositorios. La validacion
+contra RDS/AWS real sigue pendiente.
 
 ## Esquema Equivalente
 
 Tablas esperadas:
 
-- `auth_clients`
-- `auth_services`
-- `audit_events`
+- `principals`
+- `services`
+- `auth_audit_events`
 - `auth_sessions`
 - `schema_version`
 
@@ -60,14 +59,14 @@ Consideraciones:
 
 ## Migraciones
 
-Usar migraciones SQL versionadas equivalentes a `scripts/sqlite/migrations/`.
-La fase futura debe incluir:
+Las migraciones SQL versionadas viven en `scripts/postgres/migrations/` e
+incluyen:
 
 - migracion inicial;
 - seed opcional solo para demo;
 - indices de auditoria;
 - tabla de sesiones opacas;
-- pruebas de idempotencia.
+- indices de sesiones.
 
 ## RDS
 

@@ -11,6 +11,16 @@ public interface SessionRepository {
 
     boolean revoke(String sessionId, Instant revokedAt);
 
+    default int cleanupExpired(Instant now) {
+        Objects.requireNonNull(now, "now");
+        return 0;
+    }
+
+    default long activeCount(Instant now) {
+        Objects.requireNonNull(now, "now");
+        return 0;
+    }
+
     default SessionValidationResult validate(
             String sessionId,
             String clientId,

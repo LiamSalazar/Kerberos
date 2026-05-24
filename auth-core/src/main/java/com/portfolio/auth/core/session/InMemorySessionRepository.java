@@ -31,4 +31,21 @@ public final class InMemorySessionRepository implements SessionRepository {
         Objects.requireNonNull(revokedAt, "revokedAt");
         return sessions.computeIfPresent(sessionId, (ignored, session) -> session.revoke(revokedAt)) != null;
     }
+
+    @Override
+    public int cleanupExpired(Instant now) {
+        Objects.requireNonNull(now, "now");
+        int before = sessions.size();
+        sessions.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+        return before - sessions.size();
+    }
+
+    @Override
+    public long activeCount(Instant now) {
+        Objects.requireNonNull(now, "now");
+        return sessions.values().stream()
+                .filter(session -> session.status() == AuthSessionStatus.ACTIVE)
+                .filter(session -> !session.isExpired(now))
+                .count();
+    }
 }

@@ -16,6 +16,7 @@
         <module>auth-crypto</module>
         <module>auth-transport</module>
         <module>auth-storage-sqlite</module>
+        <module>auth-storage-postgres</module>
         <module>auth-as</module>
         <module>auth-tgs</module>
         <module>auth-service</module>
@@ -31,12 +32,21 @@
         <junit.version>5.10.2</junit.version>
         <java.websocket.version>1.5.6</java.websocket.version>
         <sqlite.jdbc.version>3.45.3.0</sqlite.jdbc.version>
+        <postgresql.jdbc.version>42.7.3</postgresql.jdbc.version>
+        <aws.sdk.version>2.25.60</aws.sdk.version>
         <slf4j.legacy.version>1.7.36</slf4j.legacy.version>
         <slf4j.version>2.0.6</slf4j.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
@@ -52,6 +62,11 @@
                 <groupId>org.xerial</groupId>
                 <artifactId>sqlite-jdbc</artifactId>
                 <version>${sqlite.jdbc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.jdbc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

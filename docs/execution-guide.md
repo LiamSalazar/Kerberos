@@ -30,8 +30,8 @@ mvn -pl auth-storage-sqlite -am test
 mvn -pl auth-websocket-gateway -am test
 ```
 
-Fase 15 mantiene esas verificaciones como cierre minimo cuando se toca runtime,
-SQLite o Gateway.
+Fase 20 mantiene esas verificaciones como cierre minimo cuando se toca runtime,
+SQLite, PostgreSQL o Gateway.
 
 ## Dependency Audit
 
@@ -64,8 +64,9 @@ scripts\run-client.bat
 ```
 
 Los scripts compilan con Maven y preparan el classpath runtime antes de lanzar
-la clase Java. Esto permite usar tanto `AUTH_STORAGE_MODE=memory` como
-`AUTH_STORAGE_MODE=sqlite`.
+la clase Java. Esto permite usar `AUTH_STORAGE_MODE=memory`,
+`AUTH_STORAGE_MODE=sqlite` o `AUTH_STORAGE_MODE=postgres` cuando el classpath
+incluye el modulo de almacenamiento correspondiente.
 
 En Linux/macOS:
 
@@ -326,8 +327,12 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
-- `AUTH_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
 - `AUTH_SQLITE_PATH`: ruta SQLite local.
+- `AUTH_POSTGRES_URL`
+- `AUTH_POSTGRES_USER`
+- `AUTH_POSTGRES_PASSWORD`
+- `AUTH_POSTGRES_SSL_MODE`
 - `AUTH_DEMO_CLIENT_SECRET`
 - `AUTH_DEMO_TGS_SECRET`
 - `AUTH_DEMO_SERVICE_SECRET`
@@ -335,8 +340,14 @@ Variables comunes:
 - `AUTH_ALLOWED_ORIGINS`
 - `AUTH_SESSION_TTL_SECONDS`
 - `AUTH_SESSION_MAX_TTL_SECONDS`
-- `AUTH_SESSION_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
 - `AUTH_REQUIRE_SESSION_VERIFY`
+- `AUTH_SECRET_PROVIDER`
+- `AUTH_AWS_REGION`
+- `AUTH_SECRET_CLIENT_SECRET_ID`
+- `AUTH_SECRET_TGS_SECRET_ID`
+- `AUTH_SECRET_SERVICE_SECRET_ID`
+- `AUTH_SECRET_POSTGRES_PASSWORD_ID`
 
 `AUTH_MODE=demo` permite defaults de demo local y muestra una advertencia.
 `AUTH_MODE=strict` exige `AUTH_DEMO_CLIENT_SECRET`,

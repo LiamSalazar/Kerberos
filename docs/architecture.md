@@ -11,8 +11,9 @@ migraciones SQLite, auditoria persistente, administracion local y
 `sample-login-app`. Fase 16 endurece configuracion, Gateway y auditoria
 consultable; Fase 17 agrega Docker Compose local sin reemplazar la ejecucion sin
 Docker. Fase 18 agrega sesiones opacas verificables en el Gateway. Fase 19
-mueve el proyecto real a la raiz y prepara validacion Docker Linux y AWS sin
-desplegar infraestructura.
+mueve el proyecto real a la raiz. Fase 20 agrega PostgreSQL/RDS readiness,
+SecretsProvider, health checks, logs estructurados, metricas y AWS readiness
+sin desplegar infraestructura.
 
 No es MIT Kerberos oficial y no debe presentarse como listo para produccion
 critica.
@@ -25,6 +26,7 @@ critica.
 | `auth-crypto` | `CryptoEnvelope`, AES-GCM, derivacion de claves | Activo |
 | `auth-transport` | `ProtocolEnvelope`, JSON, TCP y DTOs seguros | Activo |
 | `auth-storage-sqlite` | Repositorios SQLite, migraciones, auditoria y CLI local | Activo |
+| `auth-storage-postgres` | Repositorios PostgreSQL/RDS-ready, migraciones y sesiones compartidas | Activo |
 | `auth-as` | `AuthenticationServerApp`, `AuthenticationHandler` | Ejecutable |
 | `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
 | `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
@@ -46,11 +48,13 @@ critica.
 
 ## Storage
 
-La ruta modular soporta dos modos:
+La ruta modular soporta tres modos:
 
 - `AUTH_STORAGE_MODE=memory`: modo demo por defecto con repositorios en memoria.
 - `AUTH_STORAGE_MODE=sqlite`: AS, TGS y Service cargan clientes, TGS y servicios
   desde una base SQLite local indicada por `AUTH_SQLITE_PATH`.
+- `AUTH_STORAGE_MODE=postgres`: AS, TGS, Service y Gateway usan repositorios
+  PostgreSQL preparados para RDS/cloud.
 
 Las interfaces viven en `auth-core`:
 
@@ -63,9 +67,11 @@ Implementaciones actuales:
 - `InMemoryServiceRegistry`
 - `SQLitePrincipalRepository`
 - `SQLiteServiceRegistry`
+- `PostgresPrincipalRepository`
+- `PostgresServiceRegistry`
 
-SQLite se mantiene en un modulo separado para evitar acoplar `auth-core` a JDBC.
-No hay ORM ni servidor externo.
+SQLite y PostgreSQL se mantienen en modulos separados para evitar acoplar
+`auth-core` a JDBC. No hay ORM pesado ni Spring Boot.
 
 Fase 15 agrega migraciones versionadas en `scripts/sqlite/migrations/` y una
 tabla `schema_version`. `SQLiteDemoDatabaseInitializer` aplica migraciones en
@@ -180,12 +186,16 @@ Se cifran con AES-GCM:
 
 - `AUTH_MODE=demo`: permite secretos por defecto para demo y muestra advertencia.
 - `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
-- `AUTH_STORAGE_MODE=memory|sqlite`: selecciona repositorios en memoria o
-  SQLite local.
+- `AUTH_STORAGE_MODE=memory|sqlite|postgres`: selecciona repositorios en
+  memoria, SQLite local o PostgreSQL/RDS-ready.
 - `AUTH_SQLITE_PATH`: ruta de base SQLite cuando se usa `sqlite`.
+- `AUTH_POSTGRES_URL`, `AUTH_POSTGRES_USER`, `AUTH_POSTGRES_PASSWORD` y
+  `AUTH_POSTGRES_SSL_MODE`.
 - `AUTH_SESSION_TTL_SECONDS` y `AUTH_SESSION_MAX_TTL_SECONDS`.
-- `AUTH_SESSION_STORAGE_MODE=memory|sqlite`.
+- `AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres`.
 - `AUTH_REQUIRE_SESSION_VERIFY`.
+- `AUTH_SECRET_PROVIDER=env|aws-secrets-manager` y referencias
+  `AUTH_SECRET_*`.
 
 Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
 `AuthConfig` exige valores explicitos y rechaza los defaults de demo.

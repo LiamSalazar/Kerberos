@@ -5,6 +5,9 @@ import com.portfolio.auth.core.audit.AuthAuditEvent;
 import com.portfolio.auth.core.audit.AuthEventRepository;
 import com.portfolio.auth.core.audit.NoOpAuthEventRepository;
 import com.portfolio.auth.core.config.AuthConfig;
+import com.portfolio.auth.core.observability.MetricsRegistry;
+import com.portfolio.auth.core.observability.RequestContext;
+import com.portfolio.auth.core.observability.StructuredLog;
 import com.portfolio.auth.core.protocol.dto.ServiceResponse;
 import com.portfolio.auth.core.session.AuthSession;
 import com.portfolio.auth.transport.secure.SecureAsResponse;
@@ -19,6 +22,7 @@ public final class GatewayAuthFlowService {
     private final GatewayAuthClient authClient;
     private final AuthEventRepository auditRepository;
     private final GatewaySessionService sessionService;
+    private final MetricsRegistry metricsRegistry;
 
     public GatewayAuthFlowService(AuthConfig config, GatewayAuthClient authClient) {
         this(config, authClient, NoOpAuthEventRepository.INSTANCE, GatewaySessionService.inMemory(config));
@@ -36,10 +40,20 @@ public final class GatewayAuthFlowService {
             GatewayAuthClient authClient,
             AuthEventRepository auditRepository,
             GatewaySessionService sessionService) {
+        this(config, authClient, auditRepository, sessionService, MetricsRegistry.global());
+    }
+
+    public GatewayAuthFlowService(
+            AuthConfig config,
+            GatewayAuthClient authClient,
+            AuthEventRepository auditRepository,
+            GatewaySessionService sessionService,
+            MetricsRegistry metricsRegistry) {
         this.config = Objects.requireNonNull(config, "config");
         this.authClient = Objects.requireNonNull(authClient, "authClient");
         this.auditRepository = Objects.requireNonNull(auditRepository, "auditRepository");
         this.sessionService = Objects.requireNonNull(sessionService, "sessionService");
+        this.metricsRegistry = Objects.requireNonNull(metricsRegistry, "metricsRegistry");
     }
 
     public WebSocketMessage run(WebSocketMessage input, WebSocketEventPublisher publisher) {
@@ -50,6 +64,7 @@ public final class GatewayAuthFlowService {
         String clientId = valueOrDefault(input.clientId(), authClient.configuredClientId());
         String serviceId = valueOrDefault(input.serviceId(), config.defaultServiceId());
         WebSocketAuthSession session = new WebSocketAuthSession(requestId, clientId, serviceId, Instant.now());
+        RequestContext context = RequestContext.of(session.requestId(), session.clientId(), session.serviceId());
 
         long started = System.nanoTime();
         long asMillis = 0;
@@ -61,6 +76,12 @@ public final class GatewayAuthFlowService {
                 session.clientId(),
                 session.serviceId(),
                 session.startedAt()));
+        StructuredLog.info(
+                "auth-websocket-gateway",
+                "auth_flow_started",
+                "STARTED",
+                context,
+                0);
         publisher.publish(WebSocketMessage.flowEvent(session.requestId(), WebSocketFlowStage.FLOW_STARTED,
                 "Flujo modular iniciado"));
 
@@ -75,6 +96,15 @@ public final class GatewayAuthFlowService {
                     "UNKNOWN_CLIENT",
                     totalMillis,
                     Instant.now()));
+            metricsRegistry.increment("flow_failure_total");
+            metricsRegistry.recordLatency("request_latency_ms", totalMillis);
+            StructuredLog.warn(
+                    "auth-websocket-gateway",
+                    "auth_flow_finished",
+                    "FAILURE",
+                    context,
+                    totalMillis,
+                    "UNKNOWN_CLIENT");
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,
@@ -133,6 +163,24 @@ public final class GatewayAuthFlowService {
                     session.serviceId(),
                     totalMillis,
                     Instant.now()));
+            metricsRegistry.increment(serviceResponse.accessGranted() ? "flow_success_total" : "flow_failure_total");
+            metricsRegistry.recordLatency("request_latency_ms", totalMillis);
+            if (serviceResponse.accessGranted()) {
+                StructuredLog.info(
+                        "auth-websocket-gateway",
+                        "auth_flow_finished",
+                        "SUCCESS",
+                        context,
+                        totalMillis);
+            } else {
+                StructuredLog.warn(
+                        "auth-websocket-gateway",
+                        "auth_flow_finished",
+                        "FAILURE",
+                        context,
+                        totalMillis,
+                        WebSocketErrorType.FLOW_FAILED.name());
+            }
             AuthSession authSession = serviceResponse.accessGranted()
                     ? sessionService.createSession(
                             session.requestId(),
@@ -162,6 +210,15 @@ public final class GatewayAuthFlowService {
                     errorType(e),
                     totalMillis,
                     Instant.now()));
+            metricsRegistry.increment("flow_failure_total");
+            metricsRegistry.recordLatency("request_latency_ms", totalMillis);
+            StructuredLog.error(
+                    "auth-websocket-gateway",
+                    "auth_flow_finished",
+                    "FAILURE",
+                    context,
+                    totalMillis,
+                    errorType(e));
             return WebSocketMessage.flowResult(
                     session.requestId(),
                     false,

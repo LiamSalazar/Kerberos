@@ -16,9 +16,9 @@ El transporte TCP usa un mensaje JSON por conexion. El servidor modular valida
 payload no vacio, tamano maximo, timeout de lectura y, cuando se configura,
 `MessageType` esperado por endpoint.
 
-El protocolo no cambia entre `AUTH_STORAGE_MODE=memory` y
-`AUTH_STORAGE_MODE=sqlite`; solo cambia la fuente interna de clientes, TGS y
-servicios.
+El protocolo no cambia entre `AUTH_STORAGE_MODE=memory`,
+`AUTH_STORAGE_MODE=sqlite` y `AUTH_STORAGE_MODE=postgres`; solo cambia la
+fuente interna de clientes, TGS, servicios, auditoria y sesiones.
 
 ## Flujo
 

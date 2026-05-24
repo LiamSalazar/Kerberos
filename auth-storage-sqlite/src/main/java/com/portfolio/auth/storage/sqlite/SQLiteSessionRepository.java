@@ -108,6 +108,42 @@ public final class SQLiteSessionRepository implements SessionRepository {
         }
     }
 
+    @Override
+    public int cleanupExpired(Instant now) {
+        Objects.requireNonNull(now, "now");
+        String sql = """
+                DELETE FROM auth_sessions
+                WHERE expires_at <= ?
+                """;
+        try (Connection connection = connectionFactory.open();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, now.toString());
+            return statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Could not cleanup expired SQLite sessions", exception);
+        }
+    }
+
+    @Override
+    public long activeCount(Instant now) {
+        Objects.requireNonNull(now, "now");
+        String sql = """
+                SELECT COUNT(*) AS active_count
+                FROM auth_sessions
+                WHERE status = ? AND expires_at > ?
+                """;
+        try (Connection connection = connectionFactory.open();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, AuthSessionStatus.ACTIVE.name());
+            statement.setString(2, now.toString());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getLong("active_count") : 0;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Could not count active SQLite sessions", exception);
+        }
+    }
+
     private static AuthSession session(ResultSet resultSet) throws SQLException {
         String revokedAt = resultSet.getString("revoked_at");
         return new AuthSession(

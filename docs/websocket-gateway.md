@@ -112,7 +112,7 @@ Errores tipados:
 - `AUTH_ALLOWED_ORIGINS`: lista separada por comas.
 - `AUTH_SESSION_TTL_SECONDS`: TTL operativo de sesion.
 - `AUTH_SESSION_MAX_TTL_SECONDS`: maximo defensivo de sesion.
-- `AUTH_SESSION_STORAGE_MODE`: `memory` o `sqlite`.
+- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
 - `AUTH_REQUIRE_SESSION_VERIFY`: default efectivo `true` en strict.
 
 ## Tests

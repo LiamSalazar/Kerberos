@@ -1,0 +1,5 @@
+NAME                                IMAGE                             COMMAND                  SERVICE                  CREATED        STATUS                  PORTS
+kerberos-auth-postgres-1            postgres:16-alpine                "docker-entrypoint.s…"   auth-postgres            11 hours ago   Up 11 hours (healthy)   5432/tcp
+kerberos-auth-web-demo-1            kerberos-auth-web-demo:local      "docker-entrypoint.s…"   auth-web-demo            11 hours ago   Up 11 hours (healthy)   0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
+kerberos-auth-websocket-gateway-1   kerberos-auth-gateway:local       "java -cp /app/class…"   auth-websocket-gateway   11 hours ago   Up 11 hours (healthy)   0.0.0.0:2800-2801->2800-2801/tcp, [::]:2800-2801->2800-2801/tcp
+kerberos-sample-login-app-1         kerberos-sample-login-app:local   "python -m http.serv…"   sample-login-app         11 hours ago   Up 11 hours (healthy)   0.0.0.0:5174->5174/tcp, [::]:5174->5174/tcp

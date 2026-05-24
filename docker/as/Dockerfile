@@ -1,10 +1,10 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 COPY . .
-RUN mvn -q -pl auth-as -am -DskipTests package \
-    org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy-dependencies \
-    -DoutputDirectory=auth-as/target/dependency \
-    -DincludeScope=runtime
+RUN mvn -q -pl auth-as -am -DskipTests install \
+    && mvn -q -pl auth-as -DskipTests org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy-dependencies \
+       -DincludeScope=runtime \
+       -DoutputDirectory=/workspace/auth-as/target/dependency
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app

@@ -1,0 +1,2 @@
+auth-as-1  | [auth-config] AUTH_MODE=demo permite secretos demo por defecto; no usar en produccion critica.
+auth-as-1  | [auth-as] Modular AS escuchando en 2000

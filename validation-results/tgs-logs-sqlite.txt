@@ -1,0 +1,2 @@
+auth-tgs-1  | [auth-config] AUTH_MODE=demo permite secretos demo por defecto; no usar en produccion critica.
+auth-tgs-1  | [auth-tgs] Modular TGS escuchando en 2001

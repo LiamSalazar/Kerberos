@@ -3,8 +3,7 @@
 Proyecto Java de portafolio que implementa un flujo de autenticacion distribuida
 inspirado en Kerberos 4, con una arquitectura modular propia bajo `auth-*`.
 
-Este repositorio no es MIT Kerberos oficial y no debe presentarse como un
-sistema listo para produccion critica. Es una base local para estudiar
+Es una base local para estudiar
 protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
 reproducibles con o sin Docker.
 

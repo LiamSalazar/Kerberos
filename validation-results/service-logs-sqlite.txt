@@ -1,0 +1,2 @@
+auth-service-1  | [auth-config] AUTH_MODE=demo permite secretos demo por defecto; no usar en produccion critica.
+auth-service-1  | [auth-service] Servicio modular escuchando en 2002

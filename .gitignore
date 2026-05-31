@@ -21,4 +21,9 @@ v*-win-x64.zip
 .vscode/
 .idea/
 
+
+# Terraform state files
 **/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.tfstate.lock.info

@@ -20,3 +20,5 @@ v*-win-x64.zip
 # IDE metadata
 .vscode/
 .idea/
+
+**/.terraform/

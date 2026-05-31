@@ -1,0 +1,171 @@
+--- a/main.tf
++++ b/main.tf
+@@ -20,6 +20,9 @@
+     ManagedBy   = "terraform"
+     Phase       = "20"
+   }
++
++  https_listener_enabled = var.enable_https_listener && trimspace(var.acm_certificate_arn) != ""
++  http_redirect_enabled  = local.https_listener_enabled && var.redirect_http_to_https
+ 
+   ecr_repositories = toset([
+     "auth-as",
+@@ -520,12 +523,12 @@
+   protocol          = "HTTP"
+ 
+   default_action {
+-    type = var.acm_certificate_arn == "" ? "forward" : "redirect"
+-
+-    target_group_arn = var.acm_certificate_arn == "" ? aws_lb_target_group.public_services["auth-websocket-gateway"].arn : null
++    type = local.http_redirect_enabled ? "redirect" : "forward"
++
++    target_group_arn = local.http_redirect_enabled ? null : aws_lb_target_group.public_services["auth-websocket-gateway"].arn
+ 
+     dynamic "redirect" {
+-      for_each = var.acm_certificate_arn == "" ? [] : [1]
++      for_each = local.http_redirect_enabled ? [1] : []
+       content {
+         port        = "443"
+         protocol    = "HTTPS"
+@@ -536,11 +539,12 @@
+ }
+ 
+ resource "aws_lb_listener" "https" {
+-  count             = var.acm_certificate_arn == "" ? 0 : 1
++  count             = local.https_listener_enabled ? 1 : 0
+   load_balancer_arn = aws_lb.public.arn
+   port              = 443
+   protocol          = "HTTPS"
+   certificate_arn   = var.acm_certificate_arn
++  ssl_policy        = var.ssl_policy
+ 
+   default_action {
+     type             = "forward"
+@@ -549,11 +553,11 @@
+ }
+ 
+ resource "aws_lb_listener_rule" "https_host_routes" {
+-  for_each = var.acm_certificate_arn == "" ? {} : {
++  for_each = local.https_listener_enabled ? {
+     auth-websocket-gateway = var.gateway_host_header
+     auth-web-demo          = var.web_demo_host_header
+     sample-login-app       = var.sample_login_host_header
+-  }
++  } : {}
+ 
+   listener_arn = aws_lb_listener.https[0].arn
+   priority = {
+--- a/variables.tf
++++ b/variables.tf
+@@ -44,6 +44,24 @@
+   description = "ACM certificate ARN for HTTPS/WSS. Leave empty until a real certificate exists."
+   type        = string
+   default     = ""
++}
++
++variable "enable_https_listener" {
++  description = "Create an HTTPS listener on the public ALB for WSS/HTTPS when a valid ACM certificate ARN is provided."
++  type        = bool
++  default     = false
++}
++
++variable "redirect_http_to_https" {
++  description = "Redirect HTTP port 80 traffic to HTTPS port 443 when the HTTPS listener is enabled."
++  type        = bool
++  default     = true
++}
++
++variable "ssl_policy" {
++  description = "ALB SSL policy used by the HTTPS/WSS listener."
++  type        = string
++  default     = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+ }
+ 
+ variable "gateway_host_header" {
+--- a/outputs.tf
++++ b/outputs.tf
+@@ -27,3 +27,13 @@
+   description = "Optional RDS PostgreSQL endpoint when enable_rds_postgres=true."
+   value       = var.enable_rds_postgres ? aws_db_instance.postgres[0].endpoint : null
+ }
++
++output "https_listener_enabled" {
++  description = "Whether Terraform will create an HTTPS/WSS ALB listener."
++  value       = local.https_listener_enabled
++}
++
++output "http_redirect_enabled" {
++  description = "Whether Terraform will redirect HTTP traffic to HTTPS."
++  value       = local.http_redirect_enabled
++}
+--- a/terraform.tfvars.example
++++ b/terraform.tfvars.example
+@@ -7,8 +7,12 @@
+ public_subnet_cidrs = ["10.40.0.0/24", "10.40.1.0/24"]
+ private_subnet_cidrs = ["10.40.10.0/24", "10.40.11.0/24"]
+ 
+-# Set this only after issuing or importing a real ACM certificate.
+-acm_certificate_arn = ""
++# HTTP is valid only for temporary validation.
++# Set enable_https_listener=true only after issuing/importing a real ACM certificate.
++enable_https_listener   = false
++redirect_http_to_https  = true
++ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
++acm_certificate_arn     = ""
+ 
+ gateway_host_header = "gateway.example.com"
+ web_demo_host_header = "demo.example.com"
+--- a/terraform.tfvars
++++ b/terraform.tfvars
+@@ -7,8 +7,12 @@
+ public_subnet_cidrs  = ["10.40.0.0/24", "10.40.1.0/24"]
+ private_subnet_cidrs = ["10.40.10.0/24", "10.40.11.0/24"]
+ 
+-# Set this only after issuing or importing a real ACM certificate.
+-acm_certificate_arn = ""
++# HTTP is valid only for temporary validation.
++# Set enable_https_listener=true only after issuing/importing a real ACM certificate.
++enable_https_listener  = false
++redirect_http_to_https = true
++ssl_policy             = "ELBSecurityPolicy-TLS13-1-2-2021-06"
++acm_certificate_arn    = ""
+ 
+ gateway_host_header      = "gateway.example.com"
+ web_demo_host_header     = "demo.example.com"
+--- a/terraform.tfvars.https.example
++++ b/terraform.tfvars.https.example
+@@ -0,0 +1,34 @@
++# Example only. Do not apply until the ACM certificate exists in the same region as the ALB.
++aws_region = "us-east-1"
++name_prefix = "kerberos-auth"
++environment = "validation"
++
++vpc_cidr = "10.40.0.0/16"
++availability_zones = ["us-east-1a", "us-east-1b"]
++public_subnet_cidrs = ["10.40.0.0/24", "10.40.1.0/24"]
++private_subnet_cidrs = ["10.40.10.0/24", "10.40.11.0/24"]
++
++# HTTP is valid only for temporary validation.
++# Set enable_https_listener=true only after issuing/importing a real ACM certificate.
++enable_https_listener   = true
++redirect_http_to_https  = true
++ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
++acm_certificate_arn     = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
++
++gateway_host_header = "gateway.example.com" # example: auth.example.com
++web_demo_host_header = "demo.example.com"
++sample_login_host_header = "login.example.com"
++
++desired_count = 1
++gateway_desired_count = 2
++container_cpu = 512
++container_memory = 1024
++
++allowed_origins = "https://demo.example.com,https://login.example.com"
++auth_session_ttl_seconds = 300
++auth_session_max_ttl_seconds = 900
++
++# Keep false until Docker Linux and RDS validation are completed.
++enable_rds_postgres = false
++postgres_db_name = "kerberos_auth"
++postgres_master_username = "kerberos_admin"

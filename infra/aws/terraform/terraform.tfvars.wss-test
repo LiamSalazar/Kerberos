@@ -1,3 +1,4 @@
+# Example only. Do not apply until the ACM certificate exists in the same region as the ALB.
 aws_region = "us-east-1"
 name_prefix = "kerberos-auth"
 environment = "validation"
@@ -9,12 +10,12 @@ private_subnet_cidrs = ["10.40.10.0/24", "10.40.11.0/24"]
 
 # HTTP is valid only for temporary validation.
 # Set enable_https_listener=true only after issuing/importing a real ACM certificate.
-enable_https_listener   = false
+enable_https_listener   = true
 redirect_http_to_https  = true
 ssl_policy              = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-acm_certificate_arn     = ""
+acm_certificate_arn     = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
 
-gateway_host_header = "gateway.example.com"
+gateway_host_header = "gateway.example.com" # example: auth.example.com
 web_demo_host_header = "demo.example.com"
 sample_login_host_header = "login.example.com"
 

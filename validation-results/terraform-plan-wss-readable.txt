@@ -1,0 +1,2160 @@
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_cloudwatch_log_group.services["auth-as"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/auth-as"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_cloudwatch_log_group.services["auth-service"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/auth-service"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_cloudwatch_log_group.services["auth-tgs"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/auth-tgs"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_cloudwatch_log_group.services["auth-web-demo"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/auth-web-demo"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_cloudwatch_log_group.services["auth-websocket-gateway"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/auth-websocket-gateway"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_cloudwatch_log_group.services["sample-login-app"] will be created
+  + resource "aws_cloudwatch_log_group" "services" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "/ecs/kerberos-auth/sample-login-app"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_ecr_repository.services["auth-as"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/auth-as"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecr_repository.services["auth-service"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/auth-service"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecr_repository.services["auth-tgs"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/auth-tgs"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecr_repository.services["auth-web-demo"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/auth-web-demo"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecr_repository.services["auth-websocket-gateway"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/auth-websocket-gateway"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecr_repository.services["sample-login-app"] will be created
+  + resource "aws_ecr_repository" "services" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "kerberos-auth/sample-login-app"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # aws_ecs_cluster.main will be created
+  + resource "aws_ecs_cluster" "main" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + name     = "kerberos-auth-cluster"
+      + tags     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+
+      + setting {
+          + name  = "containerInsights"
+          + value = "enabled"
+        }
+    }
+
+  # aws_ecs_service.services["auth-as"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "auth-as"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+
+      + service_registries (known after apply)
+    }
+
+  # aws_ecs_service.services["auth-service"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "auth-service"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+
+      + service_registries (known after apply)
+    }
+
+  # aws_ecs_service.services["auth-tgs"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "auth-tgs"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+
+      + service_registries (known after apply)
+    }
+
+  # aws_ecs_service.services["auth-web-demo"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "auth-web-demo"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + load_balancer (known after apply)
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+    }
+
+  # aws_ecs_service.services["auth-websocket-gateway"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 2
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "auth-websocket-gateway"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + load_balancer (known after apply)
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+    }
+
+  # aws_ecs_service.services["sample-login-app"] will be created
+  + resource "aws_ecs_service" "services" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = (known after apply)
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "sample-login-app"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_definition                    = (known after apply)
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + load_balancer (known after apply)
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = (known after apply)
+          + subnets          = (known after apply)
+        }
+    }
+
+  # aws_ecs_task_definition.services["auth-as"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-auth-as"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_ecs_task_definition.services["auth-service"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-auth-service"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_ecs_task_definition.services["auth-tgs"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-auth-tgs"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_ecs_task_definition.services["auth-web-demo"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-auth-web-demo"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_ecs_task_definition.services["auth-websocket-gateway"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-auth-websocket-gateway"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_ecs_task_definition.services["sample-login-app"] will be created
+  + resource "aws_ecs_task_definition" "services" {
+      + arn                      = (known after apply)
+      + arn_without_revision     = (known after apply)
+      + container_definitions    = (known after apply)
+      + cpu                      = "512"
+      + enable_fault_injection   = (known after apply)
+      + execution_role_arn       = (known after apply)
+      + family                   = "kerberos-auth-sample-login-app"
+      + id                       = (known after apply)
+      + memory                   = "1024"
+      + network_mode             = "awsvpc"
+      + requires_compatibilities = [
+          + "FARGATE",
+        ]
+      + revision                 = (known after apply)
+      + skip_destroy             = false
+      + tags                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + task_role_arn            = (known after apply)
+      + track_latest             = false
+    }
+
+  # aws_eip.nat[0] will be created
+  + resource "aws_eip" "nat" {
+      + allocation_id        = (known after apply)
+      + arn                  = (known after apply)
+      + association_id       = (known after apply)
+      + carrier_ip           = (known after apply)
+      + customer_owned_ip    = (known after apply)
+      + domain               = "vpc"
+      + id                   = (known after apply)
+      + instance             = (known after apply)
+      + ipam_pool_id         = (known after apply)
+      + network_border_group = (known after apply)
+      + network_interface    = (known after apply)
+      + private_dns          = (known after apply)
+      + private_ip           = (known after apply)
+      + ptr_record           = (known after apply)
+      + public_dns           = (known after apply)
+      + public_ip            = (known after apply)
+      + public_ipv4_pool     = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-eip-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-eip-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc                  = (known after apply)
+    }
+
+  # aws_eip.nat[1] will be created
+  + resource "aws_eip" "nat" {
+      + allocation_id        = (known after apply)
+      + arn                  = (known after apply)
+      + association_id       = (known after apply)
+      + carrier_ip           = (known after apply)
+      + customer_owned_ip    = (known after apply)
+      + domain               = "vpc"
+      + id                   = (known after apply)
+      + instance             = (known after apply)
+      + ipam_pool_id         = (known after apply)
+      + network_border_group = (known after apply)
+      + network_interface    = (known after apply)
+      + private_dns          = (known after apply)
+      + private_ip           = (known after apply)
+      + ptr_record           = (known after apply)
+      + public_dns           = (known after apply)
+      + public_ip            = (known after apply)
+      + public_ipv4_pool     = (known after apply)
+      + tags                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-eip-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-eip-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc                  = (known after apply)
+    }
+
+  # aws_iam_role.ecs_task will be created
+  + resource "aws_iam_role" "ecs_task" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ecs-tasks.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "kerberos-auth-ecs-task"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role.ecs_task_execution will be created
+  + resource "aws_iam_role" "ecs_task_execution" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ecs-tasks.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "kerberos-auth-ecs-task-execution"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all              = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role_policy.ecs_task_execution_secrets will be created
+  + resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
+      + id          = (known after apply)
+      + name        = "kerberos-auth-ecs-task-execution-secrets"
+      + name_prefix = (known after apply)
+      + policy      = (known after apply)
+      + role        = (known after apply)
+    }
+
+  # aws_iam_role_policy.ecs_task_runtime_secrets will be created
+  + resource "aws_iam_role_policy" "ecs_task_runtime_secrets" {
+      + id          = (known after apply)
+      + name        = "kerberos-auth-ecs-task-runtime-secrets"
+      + name_prefix = (known after apply)
+      + policy      = (known after apply)
+      + role        = (known after apply)
+    }
+
+  # aws_iam_role_policy_attachment.ecs_task_execution will be created
+  + resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+      + role       = "kerberos-auth-ecs-task-execution"
+    }
+
+  # aws_internet_gateway.main will be created
+  + resource "aws_internet_gateway" "main" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + owner_id = (known after apply)
+      + tags     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-igw"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-igw"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id   = (known after apply)
+    }
+
+  # aws_lb.public will be created
+  + resource "aws_lb" "public" {
+      + arn                                                          = (known after apply)
+      + arn_suffix                                                   = (known after apply)
+      + client_keep_alive                                            = 3600
+      + desync_mitigation_mode                                       = "defensive"
+      + dns_name                                                     = (known after apply)
+      + drop_invalid_header_fields                                   = false
+      + enable_deletion_protection                                   = false
+      + enable_http2                                                 = true
+      + enable_tls_version_and_cipher_suite_headers                  = false
+      + enable_waf_fail_open                                         = false
+      + enable_xff_client_port                                       = false
+      + enable_zonal_shift                                           = false
+      + enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      + id                                                           = (known after apply)
+      + idle_timeout                                                 = 60
+      + internal                                                     = false
+      + ip_address_type                                              = (known after apply)
+      + load_balancer_type                                           = "application"
+      + name                                                         = "kerberos-auth-alb"
+      + name_prefix                                                  = (known after apply)
+      + preserve_host_header                                         = false
+      + security_groups                                              = (known after apply)
+      + subnets                                                      = (known after apply)
+      + tags                                                         = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                                                     = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id                                                       = (known after apply)
+      + xff_header_processing_mode                                   = "append"
+      + zone_id                                                      = (known after apply)
+
+      + subnet_mapping (known after apply)
+    }
+
+  # aws_lb_listener.http will be created
+  + resource "aws_lb_listener" "http" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 80
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags_all                                                              = (known after apply)
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order = (known after apply)
+          + type  = "redirect"
+
+          + redirect {
+              + host        = "#{host}"
+              + path        = "/#{path}"
+              + port        = "443"
+              + protocol    = "HTTPS"
+              + query       = "#{query}"
+              + status_code = "HTTP_301"
+            }
+        }
+
+      + mutual_authentication (known after apply)
+    }
+
+  # aws_lb_listener.https[0] will be created
+  + resource "aws_lb_listener" "https" {
+      + arn                                                                   = (known after apply)
+      + certificate_arn                                                       = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 443
+      + protocol                                                              = "HTTPS"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+      + tags_all                                                              = (known after apply)
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + mutual_authentication (known after apply)
+    }
+
+  # aws_lb_listener_rule.https_host_routes["auth-web-demo"] will be created
+  + resource "aws_lb_listener_rule" "https_host_routes" {
+      + arn          = (known after apply)
+      + id           = (known after apply)
+      + listener_arn = (known after apply)
+      + priority     = 20
+      + tags_all     = (known after apply)
+
+      + action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + condition {
+          + host_header {
+              + values = [
+                  + "demo.example.com",
+                ]
+            }
+        }
+    }
+
+  # aws_lb_listener_rule.https_host_routes["auth-websocket-gateway"] will be created
+  + resource "aws_lb_listener_rule" "https_host_routes" {
+      + arn          = (known after apply)
+      + id           = (known after apply)
+      + listener_arn = (known after apply)
+      + priority     = 10
+      + tags_all     = (known after apply)
+
+      + action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + condition {
+          + host_header {
+              + values = [
+                  + "gateway.example.com",
+                ]
+            }
+        }
+    }
+
+  # aws_lb_listener_rule.https_host_routes["sample-login-app"] will be created
+  + resource "aws_lb_listener_rule" "https_host_routes" {
+      + arn          = (known after apply)
+      + id           = (known after apply)
+      + listener_arn = (known after apply)
+      + priority     = 30
+      + tags_all     = (known after apply)
+
+      + action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + condition {
+          + host_header {
+              + values = [
+                  + "login.example.com",
+                ]
+            }
+        }
+    }
+
+  # aws_lb_target_group.public_services["auth-web-demo"] will be created
+  + resource "aws_lb_target_group" "public_services" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "kerberos-auth-auth-web-demo"
+      + name_prefix                        = (known after apply)
+      + port                               = 5173
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + target_type                        = "ip"
+      + vpc_id                             = (known after apply)
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 2
+          + interval            = 30
+          + matcher             = "200-499"
+          + path                = "/"
+          + port                = "traffic-port"
+          + protocol            = "HTTP"
+          + timeout             = 5
+          + unhealthy_threshold = 3
+        }
+
+      + stickiness (known after apply)
+
+      + target_failover (known after apply)
+
+      + target_group_health (known after apply)
+
+      + target_health_state (known after apply)
+    }
+
+  # aws_lb_target_group.public_services["auth-websocket-gateway"] will be created
+  + resource "aws_lb_target_group" "public_services" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "kerberos-auth-auth-websocket-gat"
+      + name_prefix                        = (known after apply)
+      + port                               = 2800
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + target_type                        = "ip"
+      + vpc_id                             = (known after apply)
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 2
+          + interval            = 30
+          + matcher             = "200-299"
+          + path                = "/health"
+          + port                = "2801"
+          + protocol            = "HTTP"
+          + timeout             = 5
+          + unhealthy_threshold = 3
+        }
+
+      + stickiness (known after apply)
+
+      + target_failover (known after apply)
+
+      + target_group_health (known after apply)
+
+      + target_health_state (known after apply)
+    }
+
+  # aws_lb_target_group.public_services["sample-login-app"] will be created
+  + resource "aws_lb_target_group" "public_services" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "kerberos-auth-sample-login-app"
+      + name_prefix                        = (known after apply)
+      + port                               = 5174
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + target_type                        = "ip"
+      + vpc_id                             = (known after apply)
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 2
+          + interval            = 30
+          + matcher             = "200-499"
+          + path                = "/"
+          + port                = "traffic-port"
+          + protocol            = "HTTP"
+          + timeout             = 5
+          + unhealthy_threshold = 3
+        }
+
+      + stickiness (known after apply)
+
+      + target_failover (known after apply)
+
+      + target_group_health (known after apply)
+
+      + target_health_state (known after apply)
+    }
+
+  # aws_nat_gateway.main[0] will be created
+  + resource "aws_nat_gateway" "main" {
+      + allocation_id                      = (known after apply)
+      + association_id                     = (known after apply)
+      + connectivity_type                  = "public"
+      + id                                 = (known after apply)
+      + network_interface_id               = (known after apply)
+      + private_ip                         = (known after apply)
+      + public_ip                          = (known after apply)
+      + secondary_private_ip_address_count = (known after apply)
+      + secondary_private_ip_addresses     = (known after apply)
+      + subnet_id                          = (known after apply)
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_nat_gateway.main[1] will be created
+  + resource "aws_nat_gateway" "main" {
+      + allocation_id                      = (known after apply)
+      + association_id                     = (known after apply)
+      + connectivity_type                  = "public"
+      + id                                 = (known after apply)
+      + network_interface_id               = (known after apply)
+      + private_ip                         = (known after apply)
+      + public_ip                          = (known after apply)
+      + secondary_private_ip_address_count = (known after apply)
+      + secondary_private_ip_addresses     = (known after apply)
+      + subnet_id                          = (known after apply)
+      + tags                               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-nat-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+  # aws_route_table.private[0] will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + nat_gateway_id             = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-rt-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all         = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-rt-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table.private[1] will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + nat_gateway_id             = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-rt-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all         = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-rt-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table.public will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + gateway_id                 = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-rt"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all         = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-rt"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table_association.private[0] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.private[1] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.public[0] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.public[1] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_secretsmanager_secret.auth_runtime["auth-demo-client-secret"] will be created
+  + resource "aws_secretsmanager_secret" "auth_runtime" {
+      + arn                            = (known after apply)
+      + force_overwrite_replica_secret = false
+      + id                             = (known after apply)
+      + name                           = "kerberos-auth/validation/auth-demo-client-secret"
+      + name_prefix                    = (known after apply)
+      + policy                         = (known after apply)
+      + recovery_window_in_days        = 30
+      + tags                           = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+      + tags_all                       = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+
+      + replica (known after apply)
+    }
+
+  # aws_secretsmanager_secret.auth_runtime["auth-demo-service-secret"] will be created
+  + resource "aws_secretsmanager_secret" "auth_runtime" {
+      + arn                            = (known after apply)
+      + force_overwrite_replica_secret = false
+      + id                             = (known after apply)
+      + name                           = "kerberos-auth/validation/auth-demo-service-secret"
+      + name_prefix                    = (known after apply)
+      + policy                         = (known after apply)
+      + recovery_window_in_days        = 30
+      + tags                           = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+      + tags_all                       = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+
+      + replica (known after apply)
+    }
+
+  # aws_secretsmanager_secret.auth_runtime["auth-demo-tgs-secret"] will be created
+  + resource "aws_secretsmanager_secret" "auth_runtime" {
+      + arn                            = (known after apply)
+      + force_overwrite_replica_secret = false
+      + id                             = (known after apply)
+      + name                           = "kerberos-auth/validation/auth-demo-tgs-secret"
+      + name_prefix                    = (known after apply)
+      + policy                         = (known after apply)
+      + recovery_window_in_days        = 30
+      + tags                           = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+      + tags_all                       = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+
+      + replica (known after apply)
+    }
+
+  # aws_secretsmanager_secret.auth_runtime["postgres-password"] will be created
+  + resource "aws_secretsmanager_secret" "auth_runtime" {
+      + arn                            = (known after apply)
+      + force_overwrite_replica_secret = false
+      + id                             = (known after apply)
+      + name                           = "kerberos-auth/validation/postgres-password"
+      + name_prefix                    = (known after apply)
+      + policy                         = (known after apply)
+      + recovery_window_in_days        = 30
+      + tags                           = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+      + tags_all                       = {
+          + "Environment"      = "validation"
+          + "ManagedBy"        = "terraform"
+          + "Phase"            = "20"
+          + "Project"          = "Kerberos"
+          + "RotationPrepared" = "false"
+        }
+
+      + replica (known after apply)
+    }
+
+  # aws_security_group.alb will be created
+  + resource "aws_security_group" "alb" {
+      + arn                    = (known after apply)
+      + description            = "Public ALB ingress for HTTPS/WSS and HTTP redirect."
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+                # (1 unchanged attribute hidden)
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "HTTP"
+              + from_port        = 80
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 80
+            },
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "HTTPS and WSS"
+              + from_port        = 443
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 443
+            },
+        ]
+      + name                   = "kerberos-auth-alb-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_security_group.ecs_tasks will be created
+  + resource "aws_security_group" "ecs_tasks" {
+      + arn                    = (known after apply)
+      + description            = "ECS task ingress from ALB and private service-to-service traffic."
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+                # (1 unchanged attribute hidden)
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = []
+              + description      = "Gateway from ALB"
+              + from_port        = 2800
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 2800
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Gateway health from ALB"
+              + from_port        = 2801
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 2801
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Private auth TCP services"
+              + from_port        = 2000
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = true
+              + to_port          = 2002
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Sample login app from ALB"
+              + from_port        = 5174
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 5174
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Web demo from ALB"
+              + from_port        = 5173
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 5173
+            },
+        ]
+      + name                   = "kerberos-auth-ecs-tasks-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_security_group.rds will be created
+  + resource "aws_security_group" "rds" {
+      + arn                    = (known after apply)
+      + description            = "Optional PostgreSQL ingress from ECS tasks."
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+                # (1 unchanged attribute hidden)
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = []
+              + description      = "PostgreSQL from ECS tasks"
+              + from_port        = 5432
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 5432
+            },
+        ]
+      + name                   = "kerberos-auth-rds-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all               = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_service_discovery_private_dns_namespace.auth will be created
+  + resource "aws_service_discovery_private_dns_namespace" "auth" {
+      + arn         = (known after apply)
+      + description = "Private discovery namespace for Kerberos auth services."
+      + hosted_zone = (known after apply)
+      + id          = (known after apply)
+      + name        = "kerberos-auth.local"
+      + tags        = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all    = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + vpc         = (known after apply)
+    }
+
+  # aws_service_discovery_service.private_services["auth-as"] will be created
+  + resource "aws_service_discovery_service" "private_services" {
+      + arn           = (known after apply)
+      + force_destroy = false
+      + id            = (known after apply)
+      + name          = "auth-as"
+      + namespace_id  = (known after apply)
+      + tags          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all      = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + type          = (known after apply)
+
+      + dns_config {
+          + namespace_id   = (known after apply)
+          + routing_policy = "MULTIVALUE"
+
+          + dns_records {
+              + ttl  = 10
+              + type = "A"
+            }
+        }
+
+      + health_check_custom_config {
+          + failure_threshold = 1
+        }
+    }
+
+  # aws_service_discovery_service.private_services["auth-service"] will be created
+  + resource "aws_service_discovery_service" "private_services" {
+      + arn           = (known after apply)
+      + force_destroy = false
+      + id            = (known after apply)
+      + name          = "auth-service"
+      + namespace_id  = (known after apply)
+      + tags          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all      = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + type          = (known after apply)
+
+      + dns_config {
+          + namespace_id   = (known after apply)
+          + routing_policy = "MULTIVALUE"
+
+          + dns_records {
+              + ttl  = 10
+              + type = "A"
+            }
+        }
+
+      + health_check_custom_config {
+          + failure_threshold = 1
+        }
+    }
+
+  # aws_service_discovery_service.private_services["auth-tgs"] will be created
+  + resource "aws_service_discovery_service" "private_services" {
+      + arn           = (known after apply)
+      + force_destroy = false
+      + id            = (known after apply)
+      + name          = "auth-tgs"
+      + namespace_id  = (known after apply)
+      + tags          = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all      = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + type          = (known after apply)
+
+      + dns_config {
+          + namespace_id   = (known after apply)
+          + routing_policy = "MULTIVALUE"
+
+          + dns_records {
+              + ttl  = 10
+              + type = "A"
+            }
+        }
+
+      + health_check_custom_config {
+          + failure_threshold = 1
+        }
+    }
+
+  # aws_subnet.private[0] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.40.10.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "private"
+        }
+      + tags_all                                       = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "private"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.private[1] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.40.11.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "private"
+        }
+      + tags_all                                       = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-private-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "private"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public[0] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.40.0.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "public"
+        }
+      + tags_all                                       = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-1"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "public"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public[1] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.40.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "public"
+        }
+      + tags_all                                       = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-public-2"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+          + "Tier"        = "public"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.40.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-vpc"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+      + tags_all                             = {
+          + "Environment" = "validation"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "kerberos-auth-vpc"
+          + "Phase"       = "20"
+          + "Project"     = "Kerberos"
+        }
+    }
+
+Plan: 67 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + alb_dns_name                        = (known after apply)
+  + ecr_repository_urls                 = {
+      + auth-as                = (known after apply)
+      + auth-service           = (known after apply)
+      + auth-tgs               = (known after apply)
+      + auth-web-demo          = (known after apply)
+      + auth-websocket-gateway = (known after apply)
+      + sample-login-app       = (known after apply)
+    }
+  + ecs_cluster_name                    = "kerberos-auth-cluster"
+  + http_redirect_enabled               = true
+  + https_listener_enabled              = true
+  + private_service_discovery_namespace = "kerberos-auth.local"
+  + secret_arns                         = {
+      + auth-demo-client-secret  = (known after apply)
+      + auth-demo-service-secret = (known after apply)
+      + auth-demo-tgs-secret     = (known after apply)
+      + postgres-password        = (known after apply)
+    }

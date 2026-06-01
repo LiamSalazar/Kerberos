@@ -3,6 +3,8 @@
 `sample-login-app` es una mini app HTML/CSS/JS vanilla para integradores. No usa
 React, Vite, TypeScript, npm ni dependencias externas.
 
+Nombre visual de Fase 23A: **MelodyFinder**.
+
 La app solo habla con `auth-websocket-gateway`. No abre SQLite, no importa
 codigo backend y no administra clientes o servicios.
 
@@ -77,6 +79,9 @@ Resultado:
 - dashboard solo visible despues de `SESSION_VALID`;
 - `LOGOUT_SESSION` enviado en logout;
 - sin secretos, tickets, claves ni ciphertexts.
+
+La UI tambien muestra un panel tecnico "What is happening behind the scenes?"
+con el estado Gateway, Authentication, Session y Access.
 
 ## Expected Failure
 

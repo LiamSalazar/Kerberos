@@ -6,6 +6,9 @@ traves de `auth-websocket-gateway`.
 No usa React, Vite, TypeScript, bundler ni dependencias npm externas. Los
 comandos `npm run dev` y `npm run build` usan scripts propios de Node.js.
 
+Nombre visual de Fase 23A: **Kerberos System Demonstration**. La pantalla
+principal es **Kerberos Auth Control Center**.
+
 ## Requisitos
 
 - Node.js 18 o superior.
@@ -53,7 +56,18 @@ El build valida los archivos estaticos y copia la demo a `dist/`.
 8. Usar `Verify Session` para enviar `VERIFY_SESSION`.
 9. Usar `Logout Session` para enviar `LOGOUT_SESSION`.
 
-La UI muestra solo etapa, estado, mensaje resumido, `requestId`, latencias y
-resultado final. No muestra secretos, claves, tickets completos, ciphertexts ni
-material criptografico sensible. `FLOW_RESULT.success=true` no debe usarse como
+## Visualizacion
+
+La UI muestra:
+
+- chips de conexion, storage/mode si estan disponibles, latencia y sesion;
+- mapa Client App -> WebSocket Gateway -> AS -> TGS -> Service -> Opaque Session;
+- mensajes conceptuales sin material sensible;
+- Live Protocol Trace;
+- Access Decision;
+- Security Explanation;
+- Security Validation Lab.
+
+No muestra secretos, claves, tickets completos, ciphertexts ni material
+criptografico sensible. `FLOW_RESULT.success=true` no debe usarse como
 autorizacion final en una app real; se requiere `SESSION_VALID`.

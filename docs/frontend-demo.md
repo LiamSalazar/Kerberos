@@ -8,14 +8,16 @@ No es la app de login. Para el ejemplo de integracion con zona protegida, usar
 
 ## What It Shows
 
-- conexion al Gateway;
-- `START_AUTH_FLOW`;
-- eventos `FLOW_EVENT`;
-- `FLOW_RESULT`;
-- `sessionId` enmascarado;
-- `sessionExpiresAt`;
-- verificacion manual con `VERIFY_SESSION`;
-- cierre manual con `LOGOUT_SESSION`;
+- header `Kerberos Auth Control Center`;
+- chips de Gateway, storage/mode si estan disponibles, latencia y sesion;
+- panel de conexion con `START_AUTH_FLOW`, `VERIFY_SESSION`, `LOGOUT_SESSION`
+  y `Clear Trace`;
+- mapa Client App -> WebSocket Gateway -> AS -> TGS -> Service -> Opaque Session;
+- tarjetas de mensajes conceptuales;
+- Live Protocol Trace;
+- Access Decision;
+- Security Explanation;
+- Security Validation Lab;
 - errores de protocolo sin mostrar secretos.
 
 ## Run

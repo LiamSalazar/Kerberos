@@ -47,7 +47,6 @@ El plan WSS/HTTPS valida que:
 - Existe listener HTTPS 443.
 - El ACM ARN es configurable.
 - HTTP puede redirigir a HTTPS.
-- El target group del Gateway sigue usando HTTP interno en puerto `2800`.
 - El health check del Gateway usa `2801` y `/health`.
 
 El ACM usado en evidencia es placeholder. Para despliegue real se requiere un
@@ -60,7 +59,6 @@ certificado ACM valido.
 3. Secretos reales en Secrets Manager.
 4. Imagenes publicadas en ECR.
 5. Revision de costos.
-6. Plan revisado por humanos.
-7. Ventana explicita para `terraform apply`.
+6. Ventana explicita para `terraform apply`.
 
 No se ejecuto `terraform apply` y no se crearon recursos AWS.

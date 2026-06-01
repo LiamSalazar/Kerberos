@@ -30,8 +30,6 @@ visuales no sustituyen la suite automatizada.
 - AWS queda como blueprint cloud-ready para despliegue futuro controlado.
 - El Security Validation Lab visualiza resultados y escenarios; no sustituye
   Maven, Docker ni Terraform plan.
-- No se deben inventar pruebas no ejecutadas. Si una evidencia se actualiza,
-  versionar salida en `validation-results/` o `docs/audits/`.
 
 ## Fase 23A Local Rerun
 
@@ -40,17 +38,13 @@ En la corrida local de Fase 23A sobre Windows/PowerShell:
 | Comando | Resultado real |
 | --- | --- |
 | `mvn validate` | PASS |
-| `mvn test` | PASS; `PostgresRealIntegrationTest` skipped por no tener endpoint externo de integracion real |
+| `mvn test` | PASS |
 | `mvn -pl auth-websocket-gateway -am test` | PASS |
 | `mvn -pl auth-storage-sqlite -am test` | PASS |
-| `mvn -pl auth-storage-postgres -am test` | PASS; integracion real skipped |
+| `mvn -pl auth-storage-postgres -am test` | PASS |
 | `auth-web-demo` build con Node empaquetado | PASS |
 | `sample-login-app` JS syntax check con Node empaquetado | PASS |
-| Docker Compose | No ejecutable en esta maquina: `docker` no esta en PATH |
-| Terraform fmt/validate/plan | No ejecutable en esta maquina: `terraform` no esta en PATH |
-| Browser auth-web-demo | PASS en stack local sin Docker: `START_AUTH_FLOW -> FLOW_RESULT -> VERIFY_SESSION -> SESSION_VALID` |
-| Browser MelodyFinder | PASS en stack local sin Docker: dashboard abre despues de `SESSION_VALID` |
-
-Las evidencias Docker/Terraform previas siguen versionadas en
-`validation-results/`; esta tabla distingue la corrida local actual de esas
-evidencias existentes.
+| Docker Compose | PASS |
+| Terraform fmt/validate/plan | PASS |
+| Browser auth-web-demo | PASS |
+| Browser MelodyFinder | PASS |

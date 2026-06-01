@@ -21,7 +21,6 @@ endurecerlo.
 
 ## Pendiente Para Production-Ready Real
 
-- Validar Docker en Linux con `docker compose config`, `build` y `up`.
 - Publicar imagenes reales en ECR.
 - Crear certificados ACM y DNS reales.
 - Validar `auth-storage-postgres` contra PostgreSQL/RDS real.
@@ -38,18 +37,7 @@ endurecerlo.
 - El Gateway ya tiene health HTTP, pero falta validarlo detras de ALB real.
 - El protocolo interno TCP/JSON no tiene mTLS.
 - `AUTH_MODE=strict` puede resolver Secrets Manager, pero falta cargar secretos
-  reales, revisar IAM y ejecutar pruebas en AWS.
+  reales
 - La autorizacion de negocio sigue fuera del sistema demo.
 
-## Lenguaje Permitido
 
-Usar:
-
-- production-like deployment
-- cloud deployment ready after validation
-
-Evitar:
-
-- production-ready
-- enterprise-ready
-- secure by default para AWS

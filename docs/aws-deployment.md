@@ -46,8 +46,7 @@ browser no deben abrir conexiones a la base ni a los servicios privados.
 
 ## WSS Con ACM Y ALB
 
-El WebSocket local usa `ws://` solo para desarrollo. En AWS debe usarse
-`wss://` terminando TLS en el ALB con ACM. El ALB enruta al target group del
+En AWS se usa `wss://` terminando TLS en el ALB con ACM. El ALB enruta al target group del
 Gateway en el puerto `2800`; el contenedor sigue escuchando `AUTH_WS_HOST=0.0.0.0`
 y `AUTH_WS_PORT=2800`.
 

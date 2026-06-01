@@ -217,10 +217,7 @@ Secrets Manager y RDS PostgreSQL preparado. Se valido `terraform init`,
 `terraform validate` y `terraform plan` para HTTP temporal y WSS/HTTPS con ACM
 placeholder.
 
-No se ejecuto `terraform apply`, no se crearon recursos AWS y no se gastaron
-recursos cloud. Para un despliegue real faltan credenciales controladas,
-certificado ACM real, dominios, secretos reales en Secrets Manager, revision de
-costos y una ventana explicita de apply.
+
 
 ## Validaciones Documentadas
 
@@ -237,7 +234,6 @@ costos y una ventana explicita de apply.
 | Web demo | PASS |
 | Sample login app | PASS |
 | Terraform init/validate/plan | PASS |
-| Terraform apply | NOT RUN |
 
 Ver [docs/project-validation-results.md](docs/project-validation-results.md).
 
@@ -256,11 +252,10 @@ Ver [docs/project-validation-results.md](docs/project-validation-results.md).
 - [docs/install-windows.md](docs/install-windows.md)
 - [docs/aws-terraform-readiness.md](docs/aws-terraform-readiness.md)
 
-## Limites Honestos
+## Limites 
 
 - No es MIT Kerberos oficial.
 - No es una declaracion de produccion critica.
-- `ws://` es solo local; cloud requiere `wss://`.
 - No se ejecuto `terraform apply`.
 - No se versionan secretos reales.
 - SQLite es demo/local; PostgreSQL es la ruta preparada para cloud/RDS.

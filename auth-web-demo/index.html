@@ -1,27 +1,42 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Modular Auth Web Demo</title>
+    <title>Kerberos System Demonstration</title>
     <link rel="stylesheet" href="./src/styles.css">
   </head>
   <body>
     <main class="app-shell">
       <section class="workspace" aria-labelledby="app-title">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Ruta modular AS -> TGS -> Service</p>
-            <h1 id="app-title">Kerberos-Inspired Modular Auth Demo</h1>
-            <p class="summary">
-              Demo local desacoplada que consume el WebSocket Gateway real para
-              observar el flujo de autenticacion distribuida sin exponer
-              secretos, tickets ni material criptografico sensible.
-            </p>
+          <div class="title-block">
+            <p class="eyebrow">Kerberos System Demonstration</p>
+            <h1 id="app-title">Kerberos Auth Control Center</h1>
+            <p class="summary">Real-time distributed authentication flow.</p>
           </div>
-          <div class="connection-status" data-connection-status="closed">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span data-connection-label>Disconnected</span>
+
+          <div class="status-chip-grid" aria-label="Runtime status">
+            <span class="status-chip" data-connection-status="closed">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span data-connection-label>Disconnected</span>
+            </span>
+            <span class="status-chip">
+              <span class="chip-label">Storage</span>
+              <strong data-storage-mode>unavailable</strong>
+            </span>
+            <span class="status-chip">
+              <span class="chip-label">Mode</span>
+              <strong data-auth-mode>not exposed</strong>
+            </span>
+            <span class="status-chip">
+              <span class="chip-label">Last latency</span>
+              <strong data-last-latency>not available</strong>
+            </span>
+            <span class="status-chip">
+              <span class="chip-label">Session</span>
+              <strong data-session-chip>not issued</strong>
+            </span>
           </div>
         </header>
 
@@ -47,99 +62,348 @@
           </label>
           <div class="actions">
             <button type="button" class="button primary" data-action="connect">Connect</button>
-            <button type="button" class="button" data-action="start-flow">Start Auth Flow</button>
-            <button type="button" class="button quiet" data-action="clear-events">Clear Events</button>
+            <button type="button" class="button accent" data-action="start-flow">Start Auth Flow</button>
+            <button type="button" class="button" data-action="verify-session">Verify Session</button>
+            <button type="button" class="button" data-action="logout-session">Logout Session</button>
+            <button type="button" class="button quiet" data-action="clear-events">Clear Trace</button>
           </div>
         </form>
 
-        <section class="stage-board" aria-label="Authentication flow stages">
-          <article class="stage" data-stage="client">
-            <span class="stage-kicker">01</span>
-            <h2>Client</h2>
-            <p>Creates the request and receives the protected service result.</p>
-            <strong data-stage-status="client">idle</strong>
+        <section class="protocol-layout" aria-label="Live protocol visualization">
+          <article class="panel protocol-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Distributed protocol map</p>
+                <h2>Client -> Gateway -> AS -> TGS -> Service -> Opaque Session</h2>
+              </div>
+              <span data-active-stage>idle</span>
+            </div>
+
+            <div class="protocol-map">
+              <article class="protocol-node" data-node="client">
+                <span class="node-marker">C</span>
+                <div>
+                  <h3>Client App</h3>
+                  <p>Starts the flow and verifies the opaque session.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="client">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="client">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="client">none</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <div class="protocol-link" data-link="client-gateway">
+                <span>START_AUTH_FLOW</span>
+              </div>
+
+              <article class="protocol-node" data-node="gateway">
+                <span class="node-marker">GW</span>
+                <div>
+                  <h3>WebSocket Gateway</h3>
+                  <p>Integration boundary for browser and external apps.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="gateway">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="gateway">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="gateway">none</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <div class="protocol-link" data-link="gateway-as">
+                <span>AS request</span>
+              </div>
+
+              <article class="protocol-node" data-node="as">
+                <span class="node-marker">AS</span>
+                <div>
+                  <h3>Authentication Server</h3>
+                  <p>Checks client identity and prepares TGS access.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="as">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="as">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="as">none</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <div class="protocol-link" data-link="as-tgs">
+                <span>TGS exchange</span>
+              </div>
+
+              <article class="protocol-node" data-node="tgs">
+                <span class="node-marker">TGS</span>
+                <div>
+                  <h3>Ticket Granting Server</h3>
+                  <p>Issues service access only for registered services.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="tgs">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="tgs">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="tgs">none</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <div class="protocol-link" data-link="tgs-service">
+                <span>Service request</span>
+              </div>
+
+              <article class="protocol-node" data-node="service">
+                <span class="node-marker">S</span>
+                <div>
+                  <h3>Protected Service</h3>
+                  <p>Validates the request and returns a protected result.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="service">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="service">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="service">none</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <div class="protocol-link" data-link="gateway-session">
+                <span>VERIFY_SESSION</span>
+              </div>
+
+              <article class="protocol-node" data-node="session">
+                <span class="node-marker">OS</span>
+                <div>
+                  <h3>Opaque Session</h3>
+                  <p>Server-side session verified before app access.</p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-node-status="session">idle</dd>
+                  </div>
+                  <div>
+                    <dt>Latency</dt>
+                    <dd data-node-latency="session">-</dd>
+                  </div>
+                  <div>
+                    <dt>Last event</dt>
+                    <dd data-node-event="session">none</dd>
+                  </div>
+                </dl>
+              </article>
+            </div>
           </article>
-          <article class="stage" data-stage="gateway">
-            <span class="stage-kicker">02</span>
-            <h2>Gateway</h2>
-            <p>Bridges the browser to the modular TCP/JSON runtime.</p>
-            <strong data-stage-status="gateway">idle</strong>
+
+          <aside class="panel decision-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Access Decision</p>
+                <h2 data-decision-state>WAITING</h2>
+              </div>
+              <span data-result-status>waiting</span>
+            </div>
+            <dl class="decision-list">
+              <div>
+                <dt>Request ID</dt>
+                <dd data-result-request>none</dd>
+              </div>
+              <div>
+                <dt>Session ID</dt>
+                <dd data-result-session>none</dd>
+              </div>
+              <div>
+                <dt>Session expires</dt>
+                <dd data-result-session-expires-at>not available</dd>
+              </div>
+              <div>
+                <dt>Session state</dt>
+                <dd data-result-session-state>not issued</dd>
+              </div>
+              <div class="latency-grid">
+                <span>AS <strong data-latency-as>-</strong></span>
+                <span>TGS <strong data-latency-tgs>-</strong></span>
+                <span>Service <strong data-latency-service>-</strong></span>
+                <span>Total <strong data-latency-total>-</strong></span>
+              </div>
+              <div>
+                <dt>Protected output</dt>
+                <dd data-result-message>Run a flow to see the protected response.</dd>
+              </div>
+            </dl>
+          </aside>
+        </section>
+
+        <section class="message-matrix" aria-label="Conceptual protocol messages">
+          <article class="message-card" data-message="start_auth_flow">
+            <div>
+              <span>Client -> Gateway</span>
+              <h3>START_AUTH_FLOW</h3>
+            </div>
+            <p>Conceptually contains clientId, serviceId and requestId.</p>
+            <strong data-message-status="start_auth_flow">idle</strong>
           </article>
-          <article class="stage" data-stage="as">
-            <span class="stage-kicker">03</span>
-            <h2>AS</h2>
-            <p>Issues the initial authentication response.</p>
-            <strong data-stage-status="as">idle</strong>
+          <article class="message-card" data-message="as_request">
+            <div>
+              <span>Gateway/AuthClient -> AS</span>
+              <h3>AS request</h3>
+            </div>
+            <p>Conceptually contains client identity, requested TGS and request metadata.</p>
+            <strong data-message-status="as_request">idle</strong>
           </article>
-          <article class="stage" data-stage="tgs">
-            <span class="stage-kicker">04</span>
-            <h2>TGS</h2>
-            <p>Grants a service ticket through the modular flow.</p>
-            <strong data-stage-status="tgs">idle</strong>
+          <article class="message-card" data-message="as_response">
+            <div>
+              <span>AS -> Gateway/AuthClient</span>
+              <h3>AS response</h3>
+            </div>
+            <p>Conceptually contains client-TGS session material, TGS ticket and lifetime; encrypted material omitted.</p>
+            <strong data-message-status="as_response">idle</strong>
           </article>
-          <article class="stage" data-stage="service">
-            <span class="stage-kicker">05</span>
-            <h2>Service</h2>
-            <p>Validates the request and returns the protected resource.</p>
-            <strong data-stage-status="service">idle</strong>
+          <article class="message-card" data-message="tgs_request">
+            <div>
+              <span>Gateway/AuthClient -> TGS</span>
+              <h3>TGS request</h3>
+            </div>
+            <p>Conceptually contains TGS ticket, authenticator, requested service ID and timestamp.</p>
+            <strong data-message-status="tgs_request">idle</strong>
+          </article>
+          <article class="message-card" data-message="tgs_response">
+            <div>
+              <span>TGS -> Gateway/AuthClient</span>
+              <h3>TGS response</h3>
+            </div>
+            <p>Conceptually contains service ticket, client-service session material and lifetime; encrypted material omitted.</p>
+            <strong data-message-status="tgs_response">idle</strong>
+          </article>
+          <article class="message-card" data-message="service_request">
+            <div>
+              <span>Gateway/AuthClient -> Service</span>
+              <h3>Service request</h3>
+            </div>
+            <p>Conceptually contains service ticket, authenticator and timestamp.</p>
+            <strong data-message-status="service_request">idle</strong>
+          </article>
+          <article class="message-card" data-message="service_response">
+            <div>
+              <span>Service -> Gateway</span>
+              <h3>Service response</h3>
+            </div>
+            <p>Conceptually contains access decision, protected response and validation result.</p>
+            <strong data-message-status="service_response">idle</strong>
+          </article>
+          <article class="message-card" data-message="flow_result">
+            <div>
+              <span>Gateway -> Client</span>
+              <h3>FLOW_RESULT</h3>
+            </div>
+            <p>Conceptually contains success/failure, opaque sessionId, expiration, latency and no raw ticket.</p>
+            <strong data-message-status="flow_result">idle</strong>
+          </article>
+          <article class="message-card" data-message="verify_session">
+            <div>
+              <span>Client -> Gateway</span>
+              <h3>VERIFY_SESSION</h3>
+            </div>
+            <p>Conceptually contains opaque sessionId, clientId, serviceId and requestId.</p>
+            <strong data-message-status="verify_session">idle</strong>
+          </article>
+          <article class="message-card" data-message="session_valid">
+            <div>
+              <span>Gateway -> Client</span>
+              <h3>SESSION_VALID</h3>
+            </div>
+            <p>Conceptually confirms the server-side session is active for the client and service.</p>
+            <strong data-message-status="session_valid">idle</strong>
           </article>
         </section>
 
         <section class="content-grid">
           <article class="panel events-panel">
             <div class="panel-header">
-              <h2>FLOW_* Events</h2>
+              <div>
+                <p class="panel-kicker">Live Protocol Trace</p>
+                <h2>Ordered technical events</h2>
+              </div>
               <span data-event-count>0 events</span>
             </div>
             <ol class="event-list" data-events aria-live="polite"></ol>
           </article>
 
           <aside class="side-stack">
-            <article class="panel result-panel">
+            <article class="panel security-panel">
               <div class="panel-header">
-                <h2>Final Result</h2>
-                <span data-result-status>waiting</span>
+                <div>
+                  <p class="panel-kicker">Security Explanation</p>
+                  <h2>Browser boundary</h2>
+                </div>
               </div>
-              <dl class="result-list">
-                <div>
-                  <dt>Request ID</dt>
-                  <dd data-result-request>none</dd>
-                </div>
-                <div>
-                  <dt>Service message</dt>
-                  <dd data-result-message>Run a flow to see the protected response.</dd>
-                </div>
-                <div>
-                  <dt>Session ID</dt>
-                  <dd data-result-session>none</dd>
-                </div>
-                <div>
-                  <dt>Session expires</dt>
-                  <dd data-result-session-expires-at>not available</dd>
-                </div>
-                <div>
-                  <dt>Session state</dt>
-                  <dd data-result-session-state>not available</dd>
-                </div>
-                <div>
-                  <dt>Latency</dt>
-                  <dd data-result-latency>not available</dd>
-                </div>
-              </dl>
-              <div class="session-actions">
-                <button type="button" class="button" data-action="verify-session">Verify Session</button>
-                <button type="button" class="button quiet" data-action="logout-session">Logout Session</button>
-              </div>
+              <ul class="security-points">
+                <li>Raw tickets are never exposed to the browser.</li>
+                <li>Cryptographic material is omitted from the UI.</li>
+                <li>Opaque sessions must be verified with the Gateway.</li>
+                <li>Invalid identities and replay attempts are rejected by the runtime or automated tests.</li>
+                <li>The Gateway stays as the integration boundary for apps.</li>
+              </ul>
             </article>
 
             <article class="panel error-panel">
               <div class="panel-header">
-                <h2>Errors</h2>
+                <div>
+                  <p class="panel-kicker">Controlled Errors</p>
+                  <h2>Sanitized output</h2>
+                </div>
                 <span data-error-count>0 errors</span>
               </div>
               <ul class="error-list" data-errors aria-live="assertive"></ul>
             </article>
           </aside>
+        </section>
+
+        <section class="validation-section" aria-labelledby="validation-title">
+          <div class="section-heading">
+            <p class="eyebrow">Security Validation Lab</p>
+            <h2 id="validation-title">Validated evidence and demo security scenarios</h2>
+          </div>
+          <div class="validation-grid" data-validation-lab></div>
         </section>
       </section>
     </main>

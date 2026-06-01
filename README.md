@@ -1,153 +1,147 @@
-# Kerberos-Inspired Modular Authentication Demo
+# Kerberos-Inspired Modular Authentication Portfolio
 
-Proyecto Java de portafolio que implementa un flujo de autenticacion distribuida
-inspirado en Kerberos 4, con una arquitectura modular propia bajo `auth-*`.
+Proyecto Java modular de portafolio que demuestra autenticacion distribuida
+inspirada en Kerberos. No es MIT Kerberos oficial y no debe presentarse como
+listo para produccion critica. El objetivo es educativo, tecnico y demostrable:
+mostrar como una app externa puede delegar una decision de acceso a un flujo
+AS -> TGS -> Service y aceptar acceso solo despues de verificar una sesion
+opaca emitida por el Gateway.
 
-Es una base local para estudiar
-protocolos, integracion, persistencia SQLite, Gateway WebSocket y demos
-reproducibles con o sin Docker.
-
-Fase actual: **Fase 20: cloud-production readiness, PostgreSQL/RDS,
-SecretsProvider, health checks, logs, metrics and AWS readiness**.
-
-La raiz del repositorio ahora es directamente la raiz Maven, Docker, docs,
-scripts e infra. Ya no se requiere entrar a una subcarpeta.
+Estado de cierre: **Fase 23A: documentacion profesional, visualizacion avanzada
+del protocolo, interfaz final de portafolio y evidencia tecnica**.
 
 ## Que Problema Resuelve
 
-El proyecto muestra como una aplicacion puede delegar una decision de acceso a
-un flujo distribuido AS -> TGS -> Service. El Gateway emite una sesion opaca
-solo cuando el flujo fue exitoso, y la app debe verificar esa sesion con
-`VERIFY_SESSION` antes de abrir una zona protegida.
+Una app externa no deberia decidir acceso solo porque recibio un boolean local.
+Este proyecto muestra una ruta mas segura: la app pide autenticacion al
+`auth-websocket-gateway`, el Gateway ejecuta el flujo modular, emite una sesion
+opaca si el servicio concedio acceso, y la app concede acceso propio solo cuando
+`VERIFY_SESSION` devuelve `SESSION_VALID`.
 
-No implementa login tradicional con password de usuario final. La demo usa
-`clientId` y `serviceId` para demostrar autenticacion distribuida local.
+La app externa no se conecta a PostgreSQL, AS, TGS ni Service. Solo habla con el
+Gateway por WebSocket.
+
+## Conceptos Principales
+
+| Concepto | Explicacion breve |
+| --- | --- |
+| Kerberos | Protocolo de autenticacion distribuida basado en tickets. Este proyecto solo esta inspirado en ese modelo. |
+| Modelo distribuido | Divide responsabilidades entre cliente, AS, TGS y servicio protegido. |
+| Cliente | Identidad que solicita acceso a un servicio. En demos se usa `clientId`. |
+| Authentication Server (AS) | Valida al cliente y prepara acceso hacia TGS. |
+| Ticket Granting Server (TGS) | Emite acceso conceptual al servicio solicitado si esta registrado. |
+| Service Server | Servicio protegido que decide si responde al cliente autenticado. |
+| Ticket | Prueba temporal para un servidor especifico. La UI solo muestra el concepto, nunca el contenido real. |
+| Sesion | Estado temporal de acceso. |
+| Sesion opaca | Identificador aleatorio guardado server-side; el browser no puede auto-validarlo. |
+| `success=true` | Resultado de flujo, no autorizacion final para apps externas. |
+| `SESSION_VALID` | Confirmacion del Gateway requerida antes de conceder acceso. |
+| Timestamp | Marca temporal usada para controlar vigencia y ataques de repeticion. |
+| Replay attack | Reuso de una solicitud o autenticador anterior. |
+| Replay cache | Registro temporal que rechaza reusos antes de que expiren. |
+| AES | Algoritmo de cifrado simetrico. |
+| Cifrado simetrico | La misma familia de secreto sirve para cifrar y descifrar. |
+| AES-GCM | Modo autenticado de AES que protege confidencialidad e integridad. |
+| Docker | Empaqueta servicios para ejecucion local reproducible. |
+| Docker Compose | Levanta varios contenedores como un stack local. |
+| PostgreSQL | Base relacional usada como preparacion cloud/RDS y sesiones compartidas. |
+| SQLite | Base local ligera para demo e integracion local verificable. |
+| Terraform | Define infraestructura como codigo. En este repo solo se valido plan, sin apply. |
+| AWS | Blueprint cloud-ready con ECS/Fargate, ALB, ACM, RDS, Secrets Manager y CloudWatch. |
+| ECS/Fargate | Ejecuta contenedores sin administrar servidores. |
+| ECR | Registry para imagenes Docker en AWS. |
+| ALB | Balanceador que publicaria Gateway/web demos. |
+| ACM | Certificados TLS para HTTPS/WSS. |
+| WSS | WebSocket seguro sobre TLS. |
+| RDS PostgreSQL | PostgreSQL administrado para sesiones y auditoria compartidas. |
+| Secrets Manager | Servicio recomendado para secretos cloud. |
+| CloudWatch | Logs y metricas en AWS. |
+| Service Discovery | Resolucion interna entre servicios ECS. |
+| Subnet publica | Red que puede exponer ALB. |
+| Subnet privada | Red para AS/TGS/Service/RDS sin acceso publico directo. |
+
+AS, TGS y Service no deben ser publicos. El Gateway puede publicarse mediante
+ALB/WSS porque es la capa de integracion controlada.
 
 ## Modulos
 
 | Modulo | Responsabilidad |
 | --- | --- |
-| `auth-core/` | DTOs, configuracion, replay cache y contratos de repositorio/auditoria |
-| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion |
-| `auth-transport/` | `ProtocolEnvelope`, JSON/TCP y DTOs seguros |
-| `auth-storage-sqlite/` | Repositorios SQLite, migraciones, auditoria y CLI local |
-| `auth-storage-postgres/` | Repositorios PostgreSQL/RDS-ready, migraciones SQL y pruebas sin Postgres externo por defecto |
-| `auth-as/` | Authentication Server modular |
-| `auth-tgs/` | Ticket Granting Server modular |
-| `auth-service/` | Servicio protegido y `ProtectedResource` |
-| `auth-client-sdk/` | Cliente modular, CLI y runners de auditoria |
-| `auth-websocket-gateway/` | Gateway WebSocket separado para apps web/locales |
-| `auth-web-demo/` | Demo tecnica del flujo AS -> TGS -> Service |
-| `sample-login-app/` | Mini app tipo login para integradores |
+| `auth-core/` | DTOs, configuracion, contratos, replay cache, sesiones, health, logs y metricas. |
+| `auth-crypto/` | AES-GCM, `CryptoEnvelope`, derivacion y claves de sesion. |
+| `auth-transport/` | JSON/TCP modular y mensajes seguros. |
+| `auth-as/` | Authentication Server modular. |
+| `auth-tgs/` | Ticket Granting Server modular. |
+| `auth-service/` | Servicio protegido y adaptadores de recurso. |
+| `auth-client-sdk/` | Cliente modular, CLI y runners de auditoria. |
+| `auth-storage-sqlite/` | Repositorios SQLite, migraciones, auditoria y sesiones locales. |
+| `auth-storage-postgres/` | Repositorios PostgreSQL/RDS-ready. |
+| `auth-websocket-gateway/` | API WebSocket separada para apps externas. |
+| `auth-web-demo/` | Dashboard vanilla de visualizacion del protocolo. |
+| `sample-login-app/` | Mini app vanilla MelodyFinder para integradores. |
 
-## Flujo
+## Flujo Principal
 
 ```mermaid
 sequenceDiagram
-    participant App as App / Browser
+    participant App as External App
     participant GW as WebSocket Gateway
     participant C as AuthClient
-    participant AS as AS
-    participant TGS as TGS
-    participant S as Service
+    participant AS as Authentication Server
+    participant TGS as Ticket Granting Server
+    participant S as Protected Service
 
     App->>GW: START_AUTH_FLOW
-    GW->>C: run flow
-    C->>AS: AS_REQUEST
-    AS-->>C: AS_RESPONSE
-    C->>TGS: TGS_REQUEST
-    TGS-->>C: TGS_RESPONSE
-    C->>S: SERVICE_REQUEST
-    S-->>C: SERVICE_RESPONSE
-    GW-->>App: FLOW_RESULT
+    GW->>C: run modular flow
+    C->>AS: AS request
+    AS-->>C: AS response
+    C->>TGS: TGS request
+    TGS-->>C: TGS response
+    C->>S: Service request
+    S-->>C: Service response
+    GW-->>App: FLOW_RESULT + opaque sessionId
     App->>GW: VERIFY_SESSION
     GW-->>App: SESSION_VALID
 ```
 
-## Compilar Y Probar
+El navegador nunca recibe tickets crudos, claves, ciphertexts ni material
+criptografico sensible. La UI enmascara `sessionId`.
 
-```bash
-mvn -q -DskipTests compile
-mvn test
-mvn -pl auth-storage-sqlite -am test
-mvn -pl auth-storage-postgres -am test
-mvn -pl auth-websocket-gateway -am test
-```
+## Puertos Locales
 
-## Ejecutar Demo Tecnica
+| Componente | Puerto |
+| --- | --- |
+| WebSocket Gateway | `2800` |
+| Gateway health | `2801` |
+| auth-web-demo | `5173` |
+| sample-login-app | `5174` |
+
+## Ejecucion Local Sin Docker
 
 Windows:
 
-```cmd
+```powershell
+mvn validate
+mvn test
 scripts\run-as.bat
 scripts\run-tgs.bat
 scripts\run-service.bat
 scripts\run-websocket-gateway.bat
 scripts\run-web-demo.bat
-```
-
-Abrir:
-
-```text
-http://127.0.0.1:5173
-```
-
-Linux/macOS:
-
-```bash
-scripts/run-as.sh
-scripts/run-tgs.sh
-scripts/run-service.sh
-scripts/run-websocket-gateway.sh
-scripts/run-web-demo.sh
-```
-
-## Ejecutar Mini App De Login
-
-Con AS, TGS, Service y Gateway levantados:
-
-```cmd
 scripts\run-sample-login-app.bat
 ```
 
 Linux/macOS:
 
 ```bash
+mvn validate
+mvn test
+scripts/run-as.sh
+scripts/run-tgs.sh
+scripts/run-service.sh
+scripts/run-websocket-gateway.sh
+scripts/run-web-demo.sh
 scripts/run-sample-login-app.sh
-```
-
-Abrir:
-
-```text
-http://127.0.0.1:5174
-```
-
-Usar `clientId=1`, `serviceId=1` para un flujo exitoso. Usar un `serviceId`
-invalido para verificar acceso denegado.
-
-## Ejecutar Con Docker Compose
-
-Docker es opcional para levantar la demo local completa sin abrir cinco
-terminales. Requiere Docker Desktop:
-
-```cmd
-copy .env.example .env
-scripts\docker-up.bat
-```
-
-Linux/macOS:
-
-```bash
-cp .env.example .env
-scripts/docker-up.sh
-```
-
-Validacion recomendada antes de levantar servicios:
-
-```bash
-docker compose config
-docker compose build
-docker compose up
 ```
 
 Abrir:
@@ -155,202 +149,119 @@ Abrir:
 ```text
 http://localhost:5173
 http://localhost:5174
+```
+
+## Docker Local
+
+SQLite local:
+
+```bash
+docker compose build
+docker compose up -d
+curl http://localhost:2801/health
+```
+
+PostgreSQL local:
+
+```bash
+docker compose --env-file .env.postgres --profile postgres-local build
+docker compose --env-file .env.postgres --profile postgres-local up -d
+docker compose --env-file .env.postgres --profile postgres-local ps
+curl http://localhost:2801/health
+```
+
+Apagar:
+
+```bash
+docker compose --env-file .env.postgres --profile postgres-local down
+```
+
+## API Para Apps Propias
+
+Endpoint local:
+
+```text
 ws://localhost:2800
 ```
 
-AS, TGS y Service quedan en una red interna de Docker; solo se publican Gateway,
-web demo y sample-login-app. Ver [docs/docker-deployment.md](docs/docker-deployment.md).
-
-## AWS Readiness
-
-La carpeta `infra/aws/terraform/` contiene un skeleton Terraform para preparar
-un production-like deployment posterior en AWS con ECS Fargate, ECR, ALB con
-HTTPS/WSS, VPC publica/privada, Security Groups, Secrets Manager, CloudWatch,
-IAM minimo y una ruta preparada para RDS PostgreSQL. Fase 20 agrega el modulo
-`auth-storage-postgres`, health HTTP ligero, logs JSON sanitizados, metricas
-basicas y referencias a Secrets Manager. No se debe ejecutar `terraform apply`
-todavia ni usar credenciales reales en esta fase.
-
-Documentacion relacionada:
-
-- [docs/aws-deployment.md](docs/aws-deployment.md)
-- [docs/cloud-production-readiness.md](docs/cloud-production-readiness.md)
-- [docs/production-readiness-checklist.md](docs/production-readiness-checklist.md)
-- [docs/linux-docker-validation.md](docs/linux-docker-validation.md)
-- [docs/postgres-migration-plan.md](docs/postgres-migration-plan.md)
-- [docs/rds-postgres-readiness.md](docs/rds-postgres-readiness.md)
-- [docs/secrets-management.md](docs/secrets-management.md)
-- [docs/health-checks.md](docs/health-checks.md)
-- [docs/observability.md](docs/observability.md)
-
-## SQLite Local
-
-Modo demo por defecto:
+Endpoint cloud futuro:
 
 ```text
-AUTH_STORAGE_MODE=memory
+wss://auth.dominio.com
 ```
 
-Inicializar SQLite con migraciones:
+Mensajes principales:
 
-```cmd
-scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
+```json
+{"type":"START_AUTH_FLOW","requestId":"app-1","clientId":"1","serviceId":"1"}
 ```
 
-Linux/macOS:
-
-```bash
-scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
+```json
+{"type":"VERIFY_SESSION","requestId":"app-1-verify","sessionId":"opaque-session-id","clientId":"1","serviceId":"1"}
 ```
 
-Ejecutar servidores con SQLite:
-
-```cmd
-set AUTH_STORAGE_MODE=sqlite
-set AUTH_SQLITE_PATH=data\auth-demo.sqlite
-scripts\run-as.bat
-scripts\run-tgs.bat
-scripts\run-service.bat
-scripts\run-websocket-gateway.bat
+```json
+{"type":"LOGOUT_SESSION","requestId":"app-1-logout","sessionId":"opaque-session-id"}
 ```
 
-Las migraciones viven en `scripts/sqlite/migrations/` y registran versiones en
-`schema_version`.
+La regla de integracion es estricta: conceder acceso solo con `SESSION_VALID`;
+negarlo con `SESSION_INVALID`, `ERROR` o `FLOW_RESULT.success=false`.
 
-## PostgreSQL / RDS Readiness
+Ver [docs/api-integration-guide.md](docs/api-integration-guide.md).
 
-Modo cloud recomendado para persistencia compartida:
+## AWS Deployment Blueprint
 
-```text
-AUTH_STORAGE_MODE=postgres
-AUTH_SESSION_STORAGE_MODE=postgres
-AUTH_POSTGRES_URL=jdbc:postgresql://<rds-endpoint>:5432/kerberos_auth
-AUTH_POSTGRES_USER=<user>
-AUTH_POSTGRES_SSL_MODE=require
-```
+`infra/aws/terraform/` prepara un blueprint cloud-ready con VPC, subnets
+publicas/privadas, ALB, ECS/Fargate, CloudWatch, ECR, Service Discovery,
+Secrets Manager y RDS PostgreSQL preparado. Se valido `terraform init`,
+`terraform validate` y `terraform plan` para HTTP temporal y WSS/HTTPS con ACM
+placeholder.
 
-`AUTH_POSTGRES_PASSWORD` se acepta para validacion local, pero en cloud debe
-resolverse mediante `AUTH_SECRET_POSTGRES_PASSWORD_ID` y
-`AUTH_SECRET_PROVIDER=aws-secrets-manager`. Las migraciones PostgreSQL viven en
-`scripts/postgres/migrations/`. Las pruebas normales no requieren PostgreSQL
-externo; el perfil `postgres-it` queda reservado para una prueba real futura.
+No se ejecuto `terraform apply`, no se crearon recursos AWS y no se gastaron
+recursos cloud. Para un despliegue real faltan credenciales controladas,
+certificado ACM real, dominios, secretos reales en Secrets Manager, revision de
+costos y una ventana explicita de apply.
 
-## Administracion Local
+## Validaciones Documentadas
 
-Registrar cliente:
+| Validacion | Estado documentado |
+| --- | --- |
+| Maven validate | PASS |
+| Maven test | PASS |
+| Gateway tests | PASS |
+| SQLite tests | PASS |
+| PostgreSQL tests | PASS |
+| Docker Compose SQLite | PASS |
+| Docker Compose PostgreSQL local | PASS |
+| Gateway `/health` | PASS |
+| Web demo | PASS |
+| Sample login app | PASS |
+| Terraform init/validate/plan | PASS |
+| Terraform apply | NOT RUN |
 
-```cmd
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
-```
+Ver [docs/project-validation-results.md](docs/project-validation-results.md).
 
-Registrar servicio:
+## Documentacion Principal
 
-```cmd
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfinder --display-name "MelodyFinder" --secret "<secret>" --endpoint local://melodyfinder
-```
+- [docs/non-technical-explanation.md](docs/non-technical-explanation.md)
+- [docs/glossary.md](docs/glossary.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/protocol-flow.md](docs/protocol-flow.md)
+- [docs/technical-deep-dive.md](docs/technical-deep-dive.md)
+- [docs/frontend-visualization-guide.md](docs/frontend-visualization-guide.md)
+- [docs/security-validation-lab.md](docs/security-validation-lab.md)
+- [docs/docker-local-runbook.md](docs/docker-local-runbook.md)
+- [docs/install-linux.md](docs/install-linux.md)
+- [docs/install-macos.md](docs/install-macos.md)
+- [docs/install-windows.md](docs/install-windows.md)
+- [docs/aws-terraform-readiness.md](docs/aws-terraform-readiness.md)
 
-Listar y activar/desactivar:
-
-```cmd
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients disable --id app-client
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite services enable --id melodyfinder
-```
-
-Consultar auditoria:
-
-```cmd
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-id sample-login-1
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id 1
-scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id 1
-```
-
-La salida no imprime secretos, tickets, claves ni ciphertexts.
-
-## Using This Project To Secure Your Own App
-
-1. Registrar un cliente en SQLite con `scripts\sqlite-admin.bat ... clients add`.
-2. Registrar un servicio con `scripts\sqlite-admin.bat ... services add`.
-3. Inicializar o migrar la base con `scripts\init-sqlite-demo.bat`.
-4. Levantar AS, TGS y Service con `AUTH_STORAGE_MODE=sqlite`.
-5. Levantar `auth-websocket-gateway`.
-6. Desde la app, abrir `ws://127.0.0.1:2800`.
-7. Enviar `START_AUTH_FLOW` con `requestId`, `clientId` y `serviceId`.
-8. Leer `FLOW_RESULT`: si `success=true`, tomar `sessionId` y
-   `sessionExpiresAt`.
-9. Enviar `VERIFY_SESSION` con `sessionId`, `clientId` y `serviceId`.
-10. Conceder acceso solo despues de recibir `SESSION_VALID`.
-11. En logout, enviar `LOGOUT_SESSION` y limpiar estado local.
-12. Consultar auditoria con `sqlite-admin ... audit list`, `by-request`,
-    `by-client` o `by-service`.
-
-La app conserva responsabilidad sobre UI, sesiones propias, autorizacion de
-negocio, TLS y almacenamiento de usuario. No debe conceder acceso solamente por
-ver `FLOW_RESULT.success=true` en el frontend. Este sistema asume la validacion
-modular AS -> TGS -> Service, sesion opaca server-side en el Gateway y auditoria
-local SQLite del flujo cuando el Gateway corre en modo SQLite. SQLite pertenece
-al sistema de autenticacion; la app externa no debe conectarse directamente a
-esa base.
-
-## API De Integracion
-
-Para integrar un servicio real, implementar `ProtectedResource`:
-
-```java
-String getServiceId();
-ProtectedServiceResponse execute(ProtectedServiceRequest request);
-```
-
-`DemoProtectedResource` es el ejemplo local. `HttpProtectedResource` muestra como
-reenviar una llamada a un servidor HTTP local simple en pruebas, sin consumir
-APIs externas reales.
-
-## Limitaciones
+## Limites Honestos
 
 - No es MIT Kerberos oficial.
-- No esta listo para produccion critica.
-- Docker local es opcional; no hay Spring Boot, ORM pesado, React ni Next.js.
-- No hay RSA, JWT ni autoridad certificadora en el modelo actual.
-- `ws://` es solo para desarrollo local; en cloud se requiere `wss://`.
-- SQLite es persistencia local verificable, no una base recomendada para cloud.
-- PostgreSQL/RDS esta preparado para cloud readiness, no validado contra AWS real.
-- AWS queda preparado como cloud deployment ready after validation, no aplicado.
-- No hay TLS ni autenticacion mutua en TCP/WebSocket.
-- Los secretos demo no deben usarse fuera de ejecucion local.
-- El replay cache sigue siendo local por proceso.
-
-## Roadmap
-
-1. Endurecer transporte con TLS/autenticacion mutua.
-2. Separar secretos demo de secretos operativos con vault o mecanismo externo.
-3. Ejecutar validacion Docker en Linux y prueba PostgreSQL real controlada.
-4. Agregar politicas de autorizacion por recurso.
-5. Evaluar parser JSON mantenido si el codec propio crece.
-6. Agregar TLS/mTLS y gestion operativa de secretos.
-
-## Mas Documentacion
-
-- [docs/execution-guide.md](docs/execution-guide.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/sqlite-integration.md](docs/sqlite-integration.md)
-- [docs/integration-api.md](docs/integration-api.md)
-- [docs/using-auth-api.md](docs/using-auth-api.md)
-- [docs/session-model.md](docs/session-model.md)
-- [docs/sample-login-app.md](docs/sample-login-app.md)
-- [docs/docker-deployment.md](docs/docker-deployment.md)
-- [docs/websocket-gateway.md](docs/websocket-gateway.md)
-- [docs/frontend-demo.md](docs/frontend-demo.md)
-- [docs/concurrency.md](docs/concurrency.md)
-- [docs/security-hardening-roadmap.md](docs/security-hardening-roadmap.md)
-- [docs/secrets-management.md](docs/secrets-management.md)
-- [docs/observability.md](docs/observability.md)
-- [docs/health-checks.md](docs/health-checks.md)
-- [docs/rds-postgres-readiness.md](docs/rds-postgres-readiness.md)
-- [docs/audits/maven-dependency-audit.md](docs/audits/maven-dependency-audit.md)
-- [docs/aws-deployment.md](docs/aws-deployment.md)
-- [docs/cloud-production-readiness.md](docs/cloud-production-readiness.md)
-- [docs/production-readiness-checklist.md](docs/production-readiness-checklist.md)
-- [docs/linux-docker-validation.md](docs/linux-docker-validation.md)
-- [docs/postgres-migration-plan.md](docs/postgres-migration-plan.md)
+- No es una declaracion de produccion critica.
+- `ws://` es solo local; cloud requiere `wss://`.
+- No se ejecuto `terraform apply`.
+- No se versionan secretos reales.
+- SQLite es demo/local; PostgreSQL es la ruta preparada para cloud/RDS.
+- Las demos visuales no sustituyen pruebas automatizadas.

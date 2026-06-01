@@ -1,118 +1,145 @@
 # Protocol Flow
 
-Este documento describe la ruta modular principal.
+El protocolo modular viaja por JSON/TCP entre AS, TGS y Service. El Gateway
+WebSocket es una capa externa de integracion y no cambia el contrato interno.
 
-## Envelope
+## AS -> TGS -> Service
 
-Todos los mensajes modulares viajan como JSON dentro de `ProtocolEnvelope`:
+```mermaid
+sequenceDiagram
+    participant C as AuthClient
+    participant AS as Authentication Server
+    participant TGS as Ticket Granting Server
+    participant S as Protected Service
 
-- `messageType`
-- `version`
-- `requestId`
-- `issuedAt`
-- `payload`
-
-El transporte TCP usa un mensaje JSON por conexion. El servidor modular valida
-payload no vacio, tamano maximo, timeout de lectura y, cuando se configura,
-`MessageType` esperado por endpoint.
-
-El protocolo no cambia entre `AUTH_STORAGE_MODE=memory`,
-`AUTH_STORAGE_MODE=sqlite` y `AUTH_STORAGE_MODE=postgres`; solo cambia la
-fuente interna de clientes, TGS, servicios, auditoria y sesiones.
-
-## Flujo
-
-1. Client envia `AS_REQUEST` con `AsRequest`.
-2. AS responde `AS_RESPONSE` con `CryptoEnvelope<SecureAsResponse>`.
-3. Client envia `TGS_REQUEST` con `SecureTgsRequest`.
-4. TGS valida replay, ticket, identidad, expiracion y clock skew.
-5. TGS responde `TGS_RESPONSE` con `CryptoEnvelope<SecureTgsResponse>`.
-6. Client envia `SERVICE_REQUEST` con `SecureServiceRequest`.
-7. Service valida replay, ticket, identidad, expiracion y clock skew.
-8. Service responde `SERVICE_RESPONSE` con `CryptoEnvelope<ServiceResponse>`.
-
-## Gateway WebSocket
-
-El gateway WebSocket es una capa externa al flujo principal. Recibe mensajes
-JSON WebSocket y ejecuta el mismo flujo modular mediante `AuthClient`, por lo
-que AS, TGS y Service siguen hablando JSON/TCP.
-
-`auth-web-demo` consume este contrato desde el navegador local. El frontend solo
-se comunica con el gateway; no abre conexiones directas con AS, TGS ni Service.
-
-Entrada minima:
-
-```json
-{
-  "type": "START_AUTH_FLOW",
-  "requestId": "manual-1",
-  "clientId": "1",
-  "serviceId": "1"
-}
+    C->>AS: AS_REQUEST
+    AS-->>C: AS_RESPONSE
+    C->>TGS: TGS_REQUEST
+    TGS-->>C: TGS_RESPONSE
+    C->>S: SERVICE_REQUEST
+    S-->>C: SERVICE_RESPONSE
 ```
 
-Eventos emitidos:
+## Gateway -> AuthClient -> AS/TGS/Service
 
-- `FLOW_STARTED`
-- `AS_REQUEST_SENT`
-- `AS_RESPONSE_RECEIVED`
-- `TGS_REQUEST_SENT`
-- `TGS_RESPONSE_RECEIVED`
-- `SERVICE_REQUEST_SENT`
-- `SERVICE_RESPONSE_RECEIVED`
-- `FLOW_SUCCESS`
-- `FLOW_ERROR`
+```mermaid
+sequenceDiagram
+    participant App as Browser/App
+    participant GW as WebSocket Gateway
+    participant AC as AuthClient
+    participant AS as AS
+    participant TGS as TGS
+    participant S as Service
 
-Resultado final:
-
-```json
-{
-  "type": "FLOW_RESULT",
-  "requestId": "manual-1",
-  "success": true,
-  "sessionId": "opaque-session-id",
-  "sessionExpiresAt": "2026-05-23T17:00:00Z",
-  "serviceMessage": "MODULAR AUTH EXITOSO",
-  "asMillis": 1,
-  "tgsMillis": 1,
-  "serviceMillis": 1,
-  "totalMillis": 3
-}
+    App->>GW: START_AUTH_FLOW
+    GW->>AC: runFullFlow
+    AC->>AS: AS_REQUEST
+    AS-->>AC: AS_RESPONSE
+    AC->>TGS: TGS_REQUEST
+    TGS-->>AC: TGS_RESPONSE
+    AC->>S: SERVICE_REQUEST
+    S-->>AC: SERVICE_RESPONSE
+    AC-->>GW: ServiceResponse
+    GW-->>App: FLOW_RESULT
+    App->>GW: VERIFY_SESSION
+    GW-->>App: SESSION_VALID or SESSION_INVALID
 ```
 
-La app externa debe enviar `VERIFY_SESSION` y esperar `SESSION_VALID` antes de
-conceder acceso propio. `FLOW_RESULT.success=true` no es autorizacion final.
+## Complete Login
 
-## Errores Controlados
+```mermaid
+sequenceDiagram
+    participant MF as MelodyFinder
+    participant GW as Gateway
+    participant Runtime as Modular Runtime
+    participant Repo as SessionRepository
 
-Los errores vuelven como `ERROR_RESPONSE` con payload `ErrorResponse`.
+    MF->>GW: START_AUTH_FLOW(clientId, serviceId, requestId)
+    GW->>Runtime: AS -> TGS -> Service
+    Runtime-->>GW: access decision
+    alt access granted
+        GW->>Repo: save opaque session
+        GW-->>MF: FLOW_RESULT(success=true, sessionId masked in UI)
+        MF->>GW: VERIFY_SESSION(sessionId, clientId, serviceId)
+        GW->>Repo: validate session
+        GW-->>MF: SESSION_VALID
+        MF->>MF: open protected dashboard
+    else access denied
+        GW-->>MF: FLOW_RESULT(success=false) or ERROR
+        MF->>MF: keep access closed
+    end
+```
 
-Casos cubiertos por pruebas unitarias, de componente o de integracion:
+## Opaque Session
 
-- flujo completo exitoso;
-- replay y `requestId` repetido;
-- servicio inexistente;
-- cliente inexistente;
-- ticket TGS expirado;
-- ticket de servicio expirado;
-- autenticador expirado o fuera de clock skew;
-- ciphertext y `CryptoEnvelope` alterados;
-- clave incorrecta;
-- JSON vacio, truncado, malformado o con payload faltante;
-- `MessageType` incorrecto;
-- servidor no disponible;
-- multiples clientes concurrentes;
-- mensajes WebSocket validos, tipo desconocido, JSON invalido y servicios no
-  disponibles a nivel de gateway.
-- sesiones opacas del Gateway: creacion, verificacion, expiracion, revocacion y
-  mismatch de cliente/servicio.
-- flujo WebSocket E2E real con AS, TGS, Service y Gateway levantados en pruebas
-  Maven.
-- concurrencia con multiples clientes y flujos simultaneos;
-- flujo AS -> TGS -> Service respaldado por SQLite temporal en pruebas Maven.
+```mermaid
+flowchart LR
+    App["External app"] -->|VERIFY_SESSION| Gateway["Gateway"]
+    Gateway --> Repo["SessionRepository"]
+    Repo --> Decision{"active, not expired,\nclient/service match?"}
+    Decision -->|yes| Valid["SESSION_VALID"]
+    Decision -->|no| Invalid["SESSION_INVALID"]
+    Valid --> App
+    Invalid --> App
+```
 
-## Estado Legacy
+## Conceptual Messages
 
-La ruta de ejecucion historica fue retirada fisicamente del proyecto principal.
-El resumen historico vive en `docs/legacy-summary.md`. La ruta modular no debe
-presentarse como MIT Kerberos oficial ni como lista para produccion critica.
+```mermaid
+flowchart LR
+    M1["Client request\nclientId, serviceId, requestId"] --> M2["AS request\nclient identity, TGS, timestamp"]
+    M2 --> M3["AS response\nclient-TGS material, TGS ticket, lifetime\nsensitive data omitted"]
+    M3 --> M4["TGS request\nTGS ticket, authenticator, serviceId, timestamp"]
+    M4 --> M5["TGS response\nservice ticket, client-service material, lifetime\nsensitive data omitted"]
+    M5 --> M6["Service request\nservice ticket, authenticator, timestamp"]
+    M6 --> M7["Service response\naccess decision, protected output"]
+    M7 --> M8["FLOW_RESULT\nsuccess/failure, opaque session, latency"]
+    M8 --> M9["VERIFY_SESSION\nopaque sessionId, clientId, serviceId"]
+```
+
+## Negative Scenarios
+
+```mermaid
+flowchart TB
+    Start["START_AUTH_FLOW"] --> ClientCheck{"known client?"}
+    ClientCheck -->|no| UnknownClient["CLIENT_NOT_FOUND / UNKNOWN_CLIENT\nACCESS DENIED"]
+    ClientCheck -->|yes| ServiceCheck{"known service?"}
+    ServiceCheck -->|no| UnknownService["SERVICE_NOT_FOUND / TGS_UNKNOWN_SERVICE\nACCESS DENIED"]
+    ServiceCheck -->|yes| ReplayCheck{"replay detected?"}
+    ReplayCheck -->|yes| Replay["REPLAY rejected\nvalidated by tests"]
+    ReplayCheck -->|no| Session["opaque session issued"]
+    Session --> Verify{"VERIFY_SESSION valid?"}
+    Verify -->|yes| Valid["SESSION_VALID"]
+    Verify -->|no| Invalid["SESSION_INVALID"]
+```
+
+## WebSocket Contract
+
+Entrada:
+
+- `START_AUTH_FLOW`
+- `VERIFY_SESSION`
+- `LOGOUT_SESSION`
+- `PING`
+
+Salida:
+
+- `FLOW_EVENT`
+- `FLOW_RESULT`
+- `SESSION_VALID`
+- `SESSION_INVALID`
+- `SESSION_LOGGED_OUT`
+- `ERROR`
+- `PONG`
+
+`FLOW_RESULT.success=true` no es autorizacion final. La app debe esperar
+`SESSION_VALID`.
+
+## Security Notes
+
+- No mostrar tickets crudos.
+- No mostrar claves.
+- No mostrar ciphertexts.
+- No mostrar payloads sensibles.
+- Enmascarar `sessionId`.
+- Usar `wss://` para cloud.

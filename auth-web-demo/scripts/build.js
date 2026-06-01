@@ -9,6 +9,7 @@ const requiredFiles = [
   "src/websocket-client.js",
   "src/state.js",
   "src/renderer.js",
+  "src/security-validations.js",
   "src/styles.css"
 ];
 

@@ -32,3 +32,15 @@ Aqui se concentrara la documentacion viva del proyecto:
 - auditoria Maven en `audits/maven-dependency-audit.md`
 - ejemplo seguro de auditoria SQLite en `audits/sqlite-audit-sample.md`
 - resumen historico del legacy retirado en `legacy-summary.md`
+- guia Linux en `install-linux.md`
+- guia macOS en `install-macos.md`
+- guia Windows en `install-windows.md`
+- runbook Docker local en `docker-local-runbook.md`
+- guia API externa en `api-integration-guide.md`
+- readiness Terraform/AWS en `aws-terraform-readiness.md`
+- resultados de validacion en `project-validation-results.md`
+- explicacion no tecnica en `non-technical-explanation.md`
+- glosario en `glossary.md`
+- laboratorio visual de seguridad en `security-validation-lab.md`
+- guia de visualizacion frontend en `frontend-visualization-guide.md`
+- explicacion tecnica profunda en `technical-deep-dive.md`

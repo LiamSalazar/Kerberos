@@ -8,90 +8,159 @@
 </head>
 <body>
   <main class="app-shell">
-    <section class="login-panel" id="login-panel">
-      <div class="brand-row">
-        <img src="assets/melodyfinder-mark.svg" alt="" class="brand-mark">
-        <div>
-          <p class="eyebrow">MelodyFinder</p>
-          <h1>Secure Login</h1>
+    <section class="product-surface">
+      <section class="login-panel" id="login-panel">
+        <div class="brand-row">
+          <img src="assets/melodyfinder-mark.svg" alt="" class="brand-mark">
+          <div>
+            <p class="eyebrow">MelodyFinder</p>
+            <h1>Find your private listening profile</h1>
+          </div>
         </div>
-      </div>
 
-      <form id="login-form" class="login-form">
-        <label>
-          Gateway URL
-          <input id="gateway-url" name="gatewayUrl" value="ws://127.0.0.1:2800" autocomplete="off">
-        </label>
-        <label>
-          Client ID
-          <input id="client-id" name="clientId" value="1" autocomplete="username">
-        </label>
-        <label>
-          Service ID
-          <input id="service-id" name="serviceId" value="1" autocomplete="off">
-        </label>
-        <button id="login-button" type="submit">Authenticate</button>
-      </form>
+        <form id="login-form" class="login-form">
+          <label>
+            Gateway URL
+            <input id="gateway-url" name="gatewayUrl" value="ws://127.0.0.1:2800" autocomplete="off" spellcheck="false">
+          </label>
+          <label>
+            Client ID
+            <input id="client-id" name="clientId" value="1" autocomplete="username">
+          </label>
+          <label>
+            Service ID
+            <input id="service-id" name="serviceId" value="1" autocomplete="off">
+          </label>
+          <button id="login-button" type="submit">Authenticate</button>
+        </form>
 
-      <p id="status-line" class="status-line">Disconnected</p>
-      <p id="error-line" class="error-line" hidden></p>
-    </section>
+        <p id="status-line" class="status-line">Disconnected</p>
+        <p id="error-line" class="error-line" hidden></p>
+      </section>
 
-    <section class="dashboard" id="dashboard" hidden>
-      <header class="dashboard-header">
-        <div>
-          <p class="eyebrow">Protected Dashboard</p>
-          <h1>Welcome to MelodyFinder</h1>
+      <section class="dashboard" id="dashboard" hidden>
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">Protected Dashboard</p>
+            <h1>Welcome to MelodyFinder</h1>
+          </div>
+          <button id="logout-button" type="button">Log out</button>
+        </header>
+
+        <div class="library-grid">
+          <article class="library-tile">
+            <span>01</span>
+            <strong>Private weekly mix</strong>
+            <p>Unlocked only after SESSION_VALID.</p>
+          </article>
+          <article class="library-tile">
+            <span>02</span>
+            <strong>Saved artist insights</strong>
+            <p>Protected by the Gateway-issued opaque session.</p>
+          </article>
+          <article class="library-tile">
+            <span>03</span>
+            <strong>Listening history</strong>
+            <p>Hidden again after logout or invalid session state.</p>
+          </article>
         </div>
-        <button id="logout-button" type="button">Log out</button>
-      </header>
 
-      <div class="dashboard-grid">
-        <article class="metric">
-          <span>Authenticated</span>
-          <strong id="authenticated-state">true</strong>
-        </article>
-        <article class="metric">
-          <span>Session State</span>
-          <strong id="session-state">session valid</strong>
-        </article>
-        <article class="metric">
-          <span>Request ID</span>
-          <strong id="request-id">-</strong>
-        </article>
-        <article class="metric">
-          <span>Session ID</span>
-          <strong id="session-id">-</strong>
-        </article>
-        <article class="metric">
-          <span>Session Expires</span>
-          <strong id="session-expires-at">-</strong>
-        </article>
-        <article class="metric metric-wide">
-          <span>Service Message</span>
-          <strong id="service-message">-</strong>
-        </article>
-      </div>
-
-      <section class="playlist-band">
-        <div>
-          <span class="track-number">01</span>
-          <p>Private weekly mix</p>
-        </div>
-        <div>
-          <span class="track-number">02</span>
-          <p>Saved artist insights</p>
-        </div>
-        <div>
-          <span class="track-number">03</span>
-          <p>Protected listening history</p>
+        <div class="dashboard-grid">
+          <article class="metric">
+            <span>Authenticated</span>
+            <strong id="authenticated-state">true</strong>
+          </article>
+          <article class="metric">
+            <span>Session State</span>
+            <strong id="session-state">session valid</strong>
+          </article>
+          <article class="metric">
+            <span>Request ID</span>
+            <strong id="request-id">-</strong>
+          </article>
+          <article class="metric">
+            <span>Session ID</span>
+            <strong id="session-id">-</strong>
+          </article>
+          <article class="metric">
+            <span>Session Expires</span>
+            <strong id="session-expires-at">-</strong>
+          </article>
+          <article class="metric metric-wide">
+            <span>Service Message</span>
+            <strong id="service-message">-</strong>
+          </article>
         </div>
       </section>
     </section>
 
-    <aside class="event-panel">
-      <p class="eyebrow">Gateway Events</p>
-      <ol id="event-log" class="event-log"></ol>
+    <aside class="technical-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Integration Console</p>
+          <h2>What is happening behind the scenes?</h2>
+        </div>
+      </div>
+
+      <div class="route-strip">
+        <span>MelodyFinder</span>
+        <strong>Gateway only</strong>
+        <span>AS / TGS / Service stay behind it</span>
+      </div>
+
+      <dl class="status-grid">
+        <div>
+          <dt>Gateway</dt>
+          <dd id="gateway-state">disconnected</dd>
+        </div>
+        <div>
+          <dt>Authentication</dt>
+          <dd id="auth-state">idle</dd>
+        </div>
+        <div>
+          <dt>Session</dt>
+          <dd id="technical-session">not issued</dd>
+        </div>
+        <div>
+          <dt>Access</dt>
+          <dd id="access-state">closed</dd>
+        </div>
+      </dl>
+
+      <ol class="flow-steps" aria-label="MelodyFinder authentication steps">
+        <li data-step="gateway">
+          <span>01</span>
+          <strong>Connect to WebSocket Gateway</strong>
+        </li>
+        <li data-step="start">
+          <span>02</span>
+          <strong>Send START_AUTH_FLOW</strong>
+        </li>
+        <li data-step="as">
+          <span>03</span>
+          <strong>AS validates the client</strong>
+        </li>
+        <li data-step="tgs">
+          <span>04</span>
+          <strong>TGS grants service access</strong>
+        </li>
+        <li data-step="service">
+          <span>05</span>
+          <strong>Protected Service returns a decision</strong>
+        </li>
+        <li data-step="verify">
+          <span>06</span>
+          <strong>MelodyFinder waits for SESSION_VALID</strong>
+        </li>
+      </ol>
+
+      <section class="event-panel">
+        <div class="event-heading">
+          <p class="eyebrow">Gateway Events</p>
+          <button id="clear-events-button" type="button">Clear</button>
+        </div>
+        <ol id="event-log" class="event-log"></ol>
+      </section>
     </aside>
   </main>
 

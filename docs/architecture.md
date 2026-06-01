@@ -1,228 +1,161 @@
 # Architecture
 
-La arquitectura actual esta centrada en la ruta modular `auth-*`. El codigo
-legacy fisico ya fue retirado, y Fase 9 elimino tambien los paquetes internos
-`auth-transport/javaio` y `auth-transport/legacy`. Fase 10 agrego
-`auth-websocket-gateway` como capa separada de integracion. Fase 12 + Fase 13
-agregan `auth-web-demo`, una demo web local que consume el gateway sin acoplarse
-al runtime TCP modular. Fase 14 agrega pruebas formales de concurrencia y
-`auth-storage-sqlite` como primera integracion persistente local. Fase 15 agrega
-migraciones SQLite, auditoria persistente, administracion local y
-`sample-login-app`. Fase 16 endurece configuracion, Gateway y auditoria
-consultable; Fase 17 agrega Docker Compose local sin reemplazar la ejecucion sin
-Docker. Fase 18 agrega sesiones opacas verificables en el Gateway. Fase 19
-mueve el proyecto real a la raiz. Fase 20 agrega PostgreSQL/RDS readiness,
-SecretsProvider, health checks, logs estructurados, metricas y AWS readiness
-sin desplegar infraestructura.
+La ruta principal es modular y vive en `auth-*`. No es MIT Kerberos oficial y
+no debe presentarse como listo para produccion critica.
 
-No es MIT Kerberos oficial y no debe presentarse como listo para produccion
-critica.
+## Local Architecture
 
-## Modulos
+```mermaid
+flowchart LR
+    Browser["Browser demos\n5173 / 5174"] -->|WebSocket 2800| Gateway["auth-websocket-gateway"]
+    Gateway --> AuthClient["auth-client-sdk\nAuthClient"]
+    AuthClient -->|TCP/JSON 2000| AS["auth-as\nAuthenticationServerApp"]
+    AuthClient -->|TCP/JSON 2001| TGS["auth-tgs\nTicketGrantingServerApp"]
+    AuthClient -->|TCP/JSON 2002| Service["auth-service\nProtectedServiceApp"]
+    Gateway --> Sessions["SessionRepository\nmemory/sqlite/postgres"]
+    AS --> Principals["PrincipalRepository"]
+    TGS --> Registry["ServiceRegistry"]
+    Service --> Registry
+```
 
-| Modulo | Responsabilidad | Estado |
-| --- | --- | --- |
-| `auth-core` | DTOs, `AuthConfig`, `ReplayCache` | Activo |
-| `auth-crypto` | `CryptoEnvelope`, AES-GCM, derivacion de claves | Activo |
-| `auth-transport` | `ProtocolEnvelope`, JSON, TCP y DTOs seguros | Activo |
-| `auth-storage-sqlite` | Repositorios SQLite, migraciones, auditoria y CLI local | Activo |
-| `auth-storage-postgres` | Repositorios PostgreSQL/RDS-ready, migraciones y sesiones compartidas | Activo |
-| `auth-as` | `AuthenticationServerApp`, `AuthenticationHandler` | Ejecutable |
-| `auth-tgs` | `TicketGrantingServerApp`, `TicketGrantingHandler` | Ejecutable |
-| `auth-service` | `ProtectedServiceApp`, `ProtectedServiceHandler` | Ejecutable |
-| `auth-client-sdk` | `AuthClient`, `AuthFlowRunner`, `ClientCli`, audit runner | Ejecutable |
-| `auth-websocket-gateway` | WebSocket Gateway separado sobre `AuthClient` | Ejecutable |
-| `auth-web-demo` | Frontend vanilla local que consume el Gateway WebSocket | Demo local |
-| `sample-login-app` | Mini app vanilla tipo login para integradores | Demo local |
-| `docs` | Documentacion y auditorias | Activo |
+## Docker Deployment
 
-## Flujo Principal
+```mermaid
+flowchart TB
+    subgraph Public["auth-public network"]
+        WebDemo["auth-web-demo:5173"]
+        Sample["sample-login-app:5174"]
+        Gateway["auth-websocket-gateway:2800/2801"]
+    end
+    subgraph Internal["auth-internal network"]
+        AS["auth-as:2000/2900"]
+        TGS["auth-tgs:2001/2901"]
+        Service["auth-service:2002/2902"]
+        SQLite["auth-sqlite-data volume"]
+        Postgres["auth-postgres\nprofile postgres-local"]
+    end
+    WebDemo --> Gateway
+    Sample --> Gateway
+    Gateway --> AS
+    Gateway --> TGS
+    Gateway --> Service
+    AS --> SQLite
+    TGS --> SQLite
+    Service --> SQLite
+    Gateway --> SQLite
+    AS -. postgres mode .-> Postgres
+    TGS -. postgres mode .-> Postgres
+    Service -. postgres mode .-> Postgres
+    Gateway -. postgres mode .-> Postgres
+```
 
-1. Client solicita al AS un ticket TGS.
-2. AS devuelve una respuesta cifrada para el cliente y un ticket cifrado para
-   TGS.
-3. Client presenta ticket y autenticador al TGS.
-4. TGS devuelve ticket de servicio y clave de sesion cliente-servicio.
-5. Client presenta ticket y autenticador al Service.
-6. Service devuelve `ServiceResponse` cifrado.
+## AWS Blueprint
 
-## Storage
+```mermaid
+flowchart TB
+    Users["Users / Apps"] --> ALB["Public ALB\nHTTP/HTTPS/WSS"]
+    ALB --> WebDemo["ECS auth-web-demo"]
+    ALB --> Sample["ECS sample-login-app"]
+    ALB --> Gateway["ECS auth-websocket-gateway"]
+    subgraph PrivateSubnets["Private subnets"]
+        Gateway --> AS["ECS auth-as"]
+        Gateway --> TGS["ECS auth-tgs"]
+        Gateway --> Service["ECS auth-service"]
+        Gateway --> RDS["RDS PostgreSQL"]
+        AS --> RDS
+        TGS --> RDS
+        Service --> RDS
+    end
+    Secrets["Secrets Manager"] --> AS
+    Secrets --> TGS
+    Secrets --> Service
+    Secrets --> Gateway
+    Logs["CloudWatch Logs"] --- Gateway
+    Logs --- AS
+    Logs --- TGS
+    Logs --- Service
+    ACM["ACM certificate"] --> ALB
+    Discovery["Service Discovery"] --- AS
+    Discovery --- TGS
+    Discovery --- Service
+```
 
-La ruta modular soporta tres modos:
+AS/TGS/Service no deben ser publicos. El Gateway puede publicarse por ALB/WSS
+como frontera de integracion.
 
-- `AUTH_STORAGE_MODE=memory`: modo demo por defecto con repositorios en memoria.
-- `AUTH_STORAGE_MODE=sqlite`: AS, TGS y Service cargan clientes, TGS y servicios
-  desde una base SQLite local indicada por `AUTH_SQLITE_PATH`.
-- `AUTH_STORAGE_MODE=postgres`: AS, TGS, Service y Gateway usan repositorios
-  PostgreSQL preparados para RDS/cloud.
+## Maven Modules
 
-Las interfaces viven en `auth-core`:
+```mermaid
+flowchart LR
+    Root["root pom.xml"] --> Core["auth-core"]
+    Root --> Crypto["auth-crypto"]
+    Root --> Transport["auth-transport"]
+    Root --> AS["auth-as"]
+    Root --> TGS["auth-tgs"]
+    Root --> Service["auth-service"]
+    Root --> Client["auth-client-sdk"]
+    Root --> SQLite["auth-storage-sqlite"]
+    Root --> Postgres["auth-storage-postgres"]
+    Root --> Gateway["auth-websocket-gateway"]
+    Crypto --> Core
+    Transport --> Core
+    Transport --> Crypto
+    AS --> Core
+    AS --> Transport
+    TGS --> Core
+    TGS --> Transport
+    Service --> Core
+    Service --> Transport
+    Client --> Core
+    Client --> Transport
+    Gateway --> Client
+    Gateway --> SQLite
+    Gateway --> Postgres
+```
 
-- `PrincipalRepository`
-- `ServiceRegistry`
+## Main Class Diagram
 
-Implementaciones actuales:
+```mermaid
+classDiagram
+    class AuthClient
+    class AuthFlowRunner
+    class WebSocketGatewayApp
+    class AuthWebSocketServer
+    class GatewayAuthFlowService
+    class GatewaySessionService
+    class SessionRepository
+    class InMemorySessionRepository
+    class SQLiteSessionRepository
+    class PostgresSessionRepository
+    class PrincipalRepository
+    class ServiceRegistry
+    class AuditRepository
+    class AuthenticationServerApp
+    class TicketGrantingServerApp
+    class ProtectedServiceApp
 
-- `InMemoryPrincipalRepository`
-- `InMemoryServiceRegistry`
-- `SQLitePrincipalRepository`
-- `SQLiteServiceRegistry`
-- `PostgresPrincipalRepository`
-- `PostgresServiceRegistry`
+    WebSocketGatewayApp --> AuthWebSocketServer
+    WebSocketGatewayApp --> GatewayAuthFlowService
+    WebSocketGatewayApp --> GatewaySessionService
+    GatewayAuthFlowService --> AuthClient
+    GatewayAuthFlowService --> AuditRepository
+    GatewaySessionService --> SessionRepository
+    SessionRepository <|.. InMemorySessionRepository
+    SessionRepository <|.. SQLiteSessionRepository
+    SessionRepository <|.. PostgresSessionRepository
+    AuthFlowRunner --> AuthClient
+    AuthenticationServerApp --> PrincipalRepository
+    TicketGrantingServerApp --> ServiceRegistry
+    ProtectedServiceApp --> ServiceRegistry
+```
 
-SQLite y PostgreSQL se mantienen en modulos separados para evitar acoplar
-`auth-core` a JDBC. No hay ORM pesado ni Spring Boot.
+## Storage Modes
 
-Fase 15 agrega migraciones versionadas en `scripts/sqlite/migrations/` y una
-tabla `schema_version`. `SQLiteDemoDatabaseInitializer` aplica migraciones en
-vez de depender solo de scripts sueltos.
+| Mode | Uso |
+| --- | --- |
+| `AUTH_STORAGE_MODE=memory` | demo por defecto sin persistencia. |
+| `AUTH_STORAGE_MODE=sqlite` | integracion local verificable. |
+| `AUTH_STORAGE_MODE=postgres` | cloud/RDS-ready y multiples instancias del Gateway. |
 
-## Auditoria Persistente
-
-`auth-core` define `AuditRepository` y `AuthEventRepository`. En modo memoria se
-usa `NoOpAuthEventRepository`. En modo SQLite, `auth-websocket-gateway` usa
-`SQLiteAuditRepository` para registrar inicio, exito y fallo del flujo.
-
-La auditoria persiste `requestId`, `clientId`, `serviceId`, `eventType`,
-`status`, `errorType`, `latencyMs` y `createdAt`. No registra secretos, tickets
-completos, claves, ciphertexts ni payloads internos.
-
-## Sesiones Opacas
-
-`auth-core` define `AuthSession`, `SessionRepository` e
-`InMemorySessionRepository`. `auth-storage-sqlite` implementa
-`SQLiteSessionRepository` sobre `auth_sessions`.
-
-El Gateway crea una sesion solo si AS -> TGS -> Service termina con acceso
-concedido. La app externa debe verificarla con `VERIFY_SESSION`; no debe abrir
-recursos solo por `FLOW_RESULT.success=true`.
-
-## API De Servicio Protegido
-
-`auth-service` expone `ProtectedResource` como interfaz:
-
-- `getServiceId()`
-- `execute(ProtectedServiceRequest request)`
-
-`ProtectedServiceHandler` valida el protocolo antes de llamar al recurso. La
-implementacion actual es `DemoProtectedResource`; servicios reales pueden crear
-su propia implementacion sin cambiar AS/TGS. `HttpProtectedResource` sirve como
-ejemplo de adaptador HTTP local simple para integraciones externas.
-
-## WebSocket Gateway
-
-`auth-websocket-gateway` agrega una capa de integracion para clientes WebSocket.
-No modifica ni reemplaza `auth-as`, `auth-tgs` ni `auth-service`; usa
-`AuthClient` para ejecutar el flujo AS -> TGS -> Service sobre la ruta TCP
-modular.
-
-Mensajes de entrada soportados:
-
-- `START_AUTH_FLOW`
-- `VERIFY_SESSION`
-- `LOGOUT_SESSION`
-- `PING`
-
-Mensajes de salida:
-
-- `FLOW_EVENT`
-- `FLOW_RESULT`
-- `SESSION_VALID`
-- `SESSION_INVALID`
-- `SESSION_LOGGED_OUT`
-- `ERROR`
-- `PONG`
-
-El gateway emite eventos como `AS_REQUEST_SENT`, `TGS_RESPONSE_RECEIVED`,
-`SERVICE_RESPONSE_RECEIVED` y `FLOW_SUCCESS`, junto con latencias basicas por
-etapa.
-
-## Frontend Demo
-
-`auth-web-demo` es una aplicacion estatica en HTML, CSS y JavaScript vanilla. Se
-sirve localmente con un script Node propio, no usa bundler ni framework, y solo
-habla con `auth-websocket-gateway` mediante el contrato documentado en
-`docs/frontend-contract.md`.
-
-La UI muestra:
-
-- estado de conexion WebSocket;
-- etapas Client, Gateway, AS, TGS y Service;
-- eventos `FLOW_*`;
-- `FLOW_RESULT`, latencias y errores controlados.
-- sesion opaca enmascarada, expiracion y estado de verificacion.
-
-No muestra claves, secretos, tickets completos, ciphertexts ni payloads
-criptograficos.
-
-`sample-login-app` tambien es vanilla y no usa npm. A diferencia de
-`auth-web-demo`, simula una app real con pantalla de login y zona protegida. El
-dashboard se muestra solo despues de `SESSION_VALID`.
-
-## Transporte
-
-La ruta modular usa `ProtocolEnvelope`, `JsonMessageCodec`, `TcpMessageClient`
-y `TcpMessageServer`. El transporte tiene timeout de conexion, timeout de
-lectura, limite de tamano de mensaje, cierre de sockets y validacion opcional
-del `MessageType` esperado.
-
-## Criptografia
-
-La ruta modular usa `AesGcmCryptoService`, `CryptoEnvelope`,
-`AesKeyDerivation`, `SessionKeys` y associated data estable en `SecureAad`.
-
-Se cifran con AES-GCM:
-
-- `TicketTgs`
-- `TicketService`
-- `ClientAuthenticator`
-- `SecureAsResponse`
-- `SecureTgsResponse`
-- `ServiceResponse`
-
-## Configuracion
-
-`AuthConfig` soporta:
-
-- `AUTH_MODE=demo`: permite secretos por defecto para demo y muestra advertencia.
-- `AUTH_MODE=strict`: exige secretos explicitos y rechaza defaults.
-- `AUTH_STORAGE_MODE=memory|sqlite|postgres`: selecciona repositorios en
-  memoria, SQLite local o PostgreSQL/RDS-ready.
-- `AUTH_SQLITE_PATH`: ruta de base SQLite cuando se usa `sqlite`.
-- `AUTH_POSTGRES_URL`, `AUTH_POSTGRES_USER`, `AUTH_POSTGRES_PASSWORD` y
-  `AUTH_POSTGRES_SSL_MODE`.
-- `AUTH_SESSION_TTL_SECONDS` y `AUTH_SESSION_MAX_TTL_SECONDS`.
-- `AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres`.
-- `AUTH_REQUIRE_SESSION_VERIFY`.
-- `AUTH_SECRET_PROVIDER=env|aws-secrets-manager` y referencias
-  `AUTH_SECRET_*`.
-
-Los nombres principales de secretos son `AUTH_DEMO_*`. En `AUTH_MODE=strict`,
-`AuthConfig` exige valores explicitos y rechaza los defaults de demo.
-
-## Pruebas Y CI
-
-La suite Maven cubre replay cache, configuracion, AES-GCM, codec JSON,
-transporte seguro JSON + AES-GCM, integracion modular con casos negativos,
-concurrencia, SQLite local, migraciones, auditoria persistente, administracion
-SQLite, `ProtectedResource` HTTP local, pruebas unitarias del WebSocket Gateway y
-una prueba E2E WebSocket real.
-
-La demo web se valida por separado con `npm install` y `npm run build` dentro de
-`auth-web-demo`.
-
-GitHub Actions vive en la raiz del repositorio Git en
-`.github/workflows/maven.yml` y ejecuta desde la raiz del repositorio:
-
-- `mvn -q -DskipTests compile`
-- `mvn test`
-- `mvn -pl auth-websocket-gateway -am test`
-- `mvn -pl auth-storage-sqlite -am test`
-
-## Pendiente
-
-- Evaluar un JSON parser mantenido si el codec propio crece fuera de su alcance
-  acotado.
-- Endurecer secretos SQLite, transporte y auditoria si la integracion crece.
-- Validar Docker Compose en Linux con `docker compose config/build/up`.
-- Evaluar pruebas E2E de navegador para la demo web.
+`AUTH_SESSION_STORAGE_MODE` puede seguir al storage mode o configurarse
+explicitamente como `memory`, `sqlite` o `postgres`.

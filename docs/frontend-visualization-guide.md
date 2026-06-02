@@ -1,31 +1,31 @@
 # Frontend Visualization Guide
 
-La Fase 23A redisenia las dos UIs vanilla sin agregar frameworks.
+Phase 23A redesigns both vanilla UIs without adding frameworks.
 
 ## auth-web-demo
 
-Nombre visual: Kerberos System Demonstration.
+Visual name: Kerberos System Demonstration.
 
-Pantalla principal: Kerberos Auth Control Center.
+Main screen: Kerberos Auth Control Center.
 
-Muestra:
+Shows:
 
-- estado de Gateway;
-- storage mode si `/health` es accesible desde el browser;
-- mode como no expuesto por el contrato WebSocket actual;
-- latencia total del ultimo flujo;
-- estado de sesion;
-- mapa Client App -> WebSocket Gateway -> AS -> TGS -> Protected Service -> Opaque Session;
-- mensajes conceptuales;
+- Gateway status;
+- storage mode if `/health` is accessible from the browser;
+- mode as not exposed by the current WebSocket contract;
+- total latency of the latest flow;
+- session status;
+- map Client App -> WebSocket Gateway -> AS -> TGS -> Protected Service -> Opaque Session;
+- conceptual messages;
 - Live Protocol Trace;
 - Access Decision;
 - Security Explanation;
 - Security Validation Lab.
 
-La UI no muestra secretos, claves, tickets completos, ciphertexts ni payloads
-internos. `sessionId` se muestra enmascarado.
+The UI does not show secrets, keys, full tickets, ciphertexts, or internal
+payloads. `sessionId` is shown masked.
 
-Archivos:
+Files:
 
 - `auth-web-demo/index.html`
 - `auth-web-demo/src/styles.css`
@@ -34,7 +34,7 @@ Archivos:
 - `auth-web-demo/src/state.js`
 - `auth-web-demo/src/security-validations.js`
 
-Validacion local:
+Local validation:
 
 ```bash
 cd auth-web-demo
@@ -43,24 +43,24 @@ node scripts/build.js
 
 ## sample-login-app
 
-Nombre visual: MelodyFinder.
+Visual name: MelodyFinder.
 
-Muestra una app integradora realista:
+Shows a realistic integrator app:
 
-- formulario con Gateway URL, clientId y serviceId;
-- estado de Gateway;
-- estado de autenticacion;
-- estado de sesion;
-- acceso concedido o denegado;
+- form with Gateway URL, clientId, and serviceId;
+- Gateway status;
+- authentication status;
+- session status;
+- access granted or denied;
 - panel "What is happening behind the scenes?";
-- dashboard protegido solo despues de `SESSION_VALID`;
-- logout con `LOGOUT_SESSION`.
+- protected dashboard only after `SESSION_VALID`;
+- logout with `LOGOUT_SESSION`.
 
-Archivos:
+Files:
 
 - `sample-login-app/index.html`
 - `sample-login-app/styles.css`
 - `sample-login-app/app.js`
 - `sample-login-app/assets/melodyfinder-mark.svg`
 
-No usa npm ni frameworks frontend.
+It does not use npm or frontend frameworks.

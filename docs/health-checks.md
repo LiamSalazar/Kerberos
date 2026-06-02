@@ -1,33 +1,34 @@
 # Health Checks
 
-Fase 20 agrega health checks HTTP ligeros para los procesos Java y mantiene
-checks HTTP simples para los frontends.
+Phase 20 adds lightweight HTTP health checks for Java processes and keeps
+simple HTTP checks for the frontends.
 
-## Endpoints Java
+## Java Endpoints
 
-Cada proceso Java puede exponer:
+Each Java process can expose:
 
 - `/health`
 - `/metrics`
 
-Respuesta de `/health`:
+`/health` response:
 
 ```json
 {"status":"UP","service":"auth-websocket-gateway","version":"0.1.0-SNAPSHOT","uptimeSeconds":12,"storageMode":"sqlite","timestamp":"2026-05-24T00:00:00Z"}
 ```
 
-No se exponen secretos, cadenas de conexion con password, tickets ni payloads
-sensibles.
+Secrets, connection strings with passwords, tickets, and sensitive payloads are
+not exposed.
 
-## Puertos Locales/Docker
+## Local/Docker Ports
 
 - Gateway: `AUTH_HEALTH_PORT=2801`
-- AS: `AUTH_AS_HEALTH_PORT=2900` en Compose, `AUTH_HEALTH_PORT=2900` dentro del
-  contenedor.
+- AS: `AUTH_AS_HEALTH_PORT=2900` in Compose, `AUTH_HEALTH_PORT=2900` inside the
+  container.
 - TGS: `AUTH_TGS_HEALTH_PORT=2901`
 - Service: `AUTH_SERVICE_HEALTH_PORT=2902`
 
-`HealthProbe` permite healthchecks Docker sin depender de `curl` o `wget`:
+`HealthProbe` enables Docker healthchecks without depending on `curl` or
+`wget`:
 
 ```bash
 java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthProbe http://127.0.0.1:2801/health
@@ -35,6 +36,6 @@ java -cp /app/classes:/app/dependency/* com.portfolio.auth.core.health.HealthPro
 
 ## AWS
 
-El ALB debe revisar el Gateway por HTTP en `/health`, puerto `2801`. El trafico
-de usuarios usa WSS hacia el puerto `2800`. AS, TGS, Service y RDS permanecen
-privados; sus health checks son internos de ECS o red privada.
+The ALB must check the Gateway over HTTP on `/health`, port `2801`. User traffic
+uses WSS toward port `2800`. AS, TGS, Service, and RDS remain private; their
+health checks are internal to ECS or the private network.

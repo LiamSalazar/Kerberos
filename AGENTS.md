@@ -1,64 +1,65 @@
 # AGENTS.md
 
-Instrucciones permanentes para futuros trabajos con Codex en este repositorio:
+Permanent instructions for future Codex work in this repository:
 
-- No afirmar que el proyecto es MIT Kerberos oficial.
-- No afirmar que el sistema esta listo para produccion critica.
-- La ruta principal es modular y vive en `auth-*`.
-- No reintroducir las carpetas legacy retiradas sin autorizacion explicita.
-- Mantener cambios pequenos, revisables y explicados.
-- Correr `mvn test` cuando se toque codigo o comportamiento; si falla,
-  documentar el resultado real.
-- Mantener `README.md` y `docs/` sincronizados con los cambios tecnicos.
-- No imprimir secretos, claves, tickets descifrados completos ni payloads
-  sensibles en logs nuevos.
-- Preferir DTOs tipados sobre `HashMap<String,Object>` en codigo nuevo.
-- La ruta modular nueva debe permanecer libre de dependencias hacia paquetes
-  historicos y Java serialization como contrato principal.
-- `auth-websocket-gateway` es una capa separada de integracion; no debe
-  reemplazar ni acoplar WebSockets dentro de `auth-as`, `auth-tgs` o
-  `auth-service`.
-- `auth-web-demo` es una demo frontend local vanilla; mantenerla desacoplada del
-  backend y comunicandose solo con `auth-websocket-gateway`.
-- `sample-login-app` es una mini app vanilla para integradores; mantenerla
-  desacoplada del backend y sin frameworks frontend salvo autorizacion futura.
-- Las apps externas no deben conceder acceso solo por `FLOW_RESULT.success=true`;
-  deben usar `VERIFY_SESSION` y aceptar acceso solo con `SESSION_VALID`.
-- Mantener sesiones opacas del Gateway sin RSA, sin JWT, sin CA y sin exponer
-  secretos, tickets, ciphertexts ni claves al frontend.
-- Para cambios en runtime modular, cubrir al menos codec JSON, AES-GCM y flujo
-  AS -> TGS -> Service cuando sea viable.
-- Mantener `docs/audits/legacy-dependency-audit.md` actualizado cuando se toque
-  independencia legacy.
-- Si se ejecuta auditoria modular, documentar o versionar la evidencia en
-  `docs/audits/latest-run.md` y `docs/audits/latest-run.json`.
-- Si se ejecuta auditoria de concurrencia, documentar o versionar la evidencia
-  en `docs/audits/concurrency-latest-run.md` y
+- Do not state that the project is official MIT Kerberos.
+- Do not state that the system is ready for critical production use.
+- The main path is modular and lives in `auth-*`.
+- Do not reintroduce retired legacy folders without explicit authorization.
+- Keep changes small, reviewable, and explained.
+- Run `mvn test` when code or behavior is touched; if it fails, document the
+  real result.
+- Keep `README.md` and `docs/` synchronized with technical changes.
+- Do not print secrets, keys, full decrypted tickets, or sensitive payloads in
+  new logs.
+- Prefer typed DTOs over `HashMap<String,Object>` in new code.
+- The new modular path must remain free of dependencies on historical packages
+  and Java serialization as the main contract.
+- `auth-websocket-gateway` is a separate integration layer; it must not replace
+  or couple WebSockets inside `auth-as`, `auth-tgs`, or `auth-service`.
+- `auth-web-demo` is a local vanilla frontend demo; keep it decoupled from the
+  backend and communicating only with `auth-websocket-gateway`.
+- `sample-login-app` is a vanilla mini app for integrators; keep it decoupled
+  from the backend and without frontend frameworks unless a future phase
+  explicitly authorizes them.
+- External apps must not grant access only because `FLOW_RESULT.success=true`;
+  they must use `VERIFY_SESSION` and accept access only with `SESSION_VALID`.
+- Keep Gateway opaque sessions without RSA, without JWT, without CA, and without
+  exposing secrets, tickets, ciphertexts, or keys to the frontend.
+- For modular runtime changes, cover at least JSON codec, AES-GCM, and the
+  AS -> TGS -> Service flow when viable.
+- Keep `docs/audits/legacy-dependency-audit.md` updated when touching legacy
+  independence.
+- If a modular audit is run, document or version the evidence in
+  `docs/audits/latest-run.md` and `docs/audits/latest-run.json`.
+- If a concurrency audit is run, document or version the evidence in
+  `docs/audits/concurrency-latest-run.md` and
   `docs/audits/concurrency-latest-run.json`.
-- Mantener `docs/audits/maven-dependency-audit.md` actualizado cuando se toquen
-  dependencias Maven/POM.
-- Mantener `docs/audits/sqlite-audit-sample.md` y
-  `docs/audits/sqlite-audit-sample.json` sincronizados cuando cambie el formato
-  de auditoria SQLite.
-- Respetar `AUTH_MODE=demo` para demo y `AUTH_MODE=strict` para
-  validacion sin secretos por defecto.
-- Mantener `AUTH_STORAGE_MODE=memory` como modo demo por defecto y
-  `AUTH_STORAGE_MODE=sqlite` como integracion local verificable.
-- Mantener `AUTH_STORAGE_MODE=postgres` como modo cloud/RDS preparado, sin
-  eliminar SQLite ni memory mode.
-- En cloud, preferir `AUTH_SECRET_PROVIDER=aws-secrets-manager` y no versionar
-  secretos reales ni tfvars con passwords.
-- Para multiples instancias del Gateway, usar sesiones opacas persistidas en BD
-  compartida; no depender de memoria local.
-- Mantener health checks, logs estructurados y metricas sin secretos, tickets,
-  ciphertexts, claves ni `sessionId` completo.
-- No versionar bases generadas `*.db`, `*.sqlite` ni `*.sqlite3`.
-- Preferir documentacion honesta sobre afirmaciones exageradas.
-- Mantener ejecucion local sin Docker como requisito actual.
-- Docker y Docker Compose estan autorizados solo como despliegue local
-  reproducible; no presentarlos como produccion.
-- No versionar herramientas portables locales como `tools/`.
-- No introducir Spring Boot. No agregar frameworks frontend salvo que una fase
-  futura lo autorice explicitamente.
-- No agregar npm ni frameworks a `sample-login-app` sin autorizacion explicita.
-- Explicar siempre que cambio, como probarlo y que queda pendiente.
+- Keep `docs/audits/maven-dependency-audit.md` updated when Maven
+  dependencies/POMs are touched.
+- Keep `docs/audits/sqlite-audit-sample.md` and
+  `docs/audits/sqlite-audit-sample.json` synchronized when the SQLite audit
+  format changes.
+- Respect `AUTH_MODE=demo` for demo and `AUTH_MODE=strict` for validation
+  without default secrets.
+- Keep `AUTH_STORAGE_MODE=memory` as the default demo mode and
+  `AUTH_STORAGE_MODE=sqlite` as a verifiable local integration.
+- Keep `AUTH_STORAGE_MODE=postgres` as the prepared cloud/RDS mode, without
+  removing SQLite or memory mode.
+- In cloud, prefer `AUTH_SECRET_PROVIDER=aws-secrets-manager` and do not version
+  real secrets or tfvars with passwords.
+- For multiple Gateway instances, use opaque sessions persisted in a shared
+  database; do not depend on local memory.
+- Keep health checks, structured logs, and metrics free of secrets, tickets,
+  ciphertexts, keys, and full `sessionId`.
+- Do not version generated databases `*.db`, `*.sqlite`, or `*.sqlite3`.
+- Prefer honest documentation over exaggerated claims.
+- Keep local execution without Docker as a current requirement.
+- Docker and Docker Compose are authorized only as reproducible local
+  deployment; do not present them as production.
+- Do not version local portable tools such as `tools/`.
+- Do not introduce Spring Boot. Do not add frontend frameworks unless a future
+  phase explicitly authorizes them.
+- Do not add npm or frameworks to `sample-login-app` without explicit
+  authorization.
+- Always explain what changed, how to test it, and what remains pending.

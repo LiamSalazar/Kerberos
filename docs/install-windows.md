@@ -1,18 +1,18 @@
 # Windows Installation Guide
 
-Guia para ejecutar el proyecto en Windows con PowerShell. CMD y Git Bash pueden
-usarse, pero los ejemplos oficiales de esta guia usan PowerShell.
+Guide to run the project on Windows with PowerShell. CMD and Git Bash can also
+be used, but the official examples in this guide use PowerShell.
 
-## 1. Instalar Herramientas
+## 1. Install Tools
 
-Instalar:
+Install:
 
 - Git for Windows.
-- JDK 21 o compatible.
-- Maven, o Maven integrado desde el IDE si se usa una terminal configurada.
-- Docker Desktop con WSL2 habilitado.
+- JDK 21 or compatible.
+- Maven, or integrated Maven from the IDE if using a configured terminal.
+- Docker Desktop with WSL2 enabled.
 
-Verificar en PowerShell:
+Verify in PowerShell:
 
 ```powershell
 git --version
@@ -22,26 +22,26 @@ docker version
 docker compose version
 ```
 
-PowerShell usa `.\script.bat` o `scripts\script.bat`. CMD usa sintaxis similar.
-Git Bash usa rutas tipo `scripts/run-as.sh`.
+PowerShell uses `.\script.bat` or `scripts\script.bat`. CMD uses similar
+syntax. Git Bash uses paths such as `scripts/run-as.sh`.
 
-## 2. Clonar
+## 2. Clone
 
 ```powershell
 git clone <repo-url> Kerberos
 cd Kerberos
 ```
 
-## 3. Validar Maven
+## 3. Validate Maven
 
 ```powershell
 mvn validate
 mvn test
 ```
 
-## 4. Ejecutar Sin Docker
+## 4. Run Without Docker
 
-Abra terminales separadas:
+Open separate terminals:
 
 ```powershell
 scripts\run-as.bat
@@ -52,14 +52,14 @@ scripts\run-web-demo.bat
 scripts\run-sample-login-app.bat
 ```
 
-Abrir:
+Open:
 
 ```text
 http://localhost:5173
 http://localhost:5174
 ```
 
-## 5. Ejecutar Con Docker Compose
+## 5. Run With Docker Compose
 
 SQLite:
 
@@ -70,7 +70,7 @@ docker compose up -d
 Invoke-RestMethod http://localhost:2801/health
 ```
 
-PostgreSQL local:
+Local PostgreSQL:
 
 ```powershell
 docker compose --env-file .env.postgres --profile postgres-local build
@@ -79,10 +79,10 @@ docker compose --env-file .env.postgres --profile postgres-local ps
 Invoke-RestMethod http://localhost:2801/health
 ```
 
-Apagar:
+Stop:
 
 ```powershell
 docker compose --env-file .env.postgres --profile postgres-local down
 ```
 
-No cambie los puertos `2800`, `2801`, `5173` ni `5174`.
+Do not change ports `2800`, `2801`, `5173`, or `5174`.

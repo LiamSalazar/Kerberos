@@ -1,47 +1,46 @@
 # PostgreSQL Migration Plan
 
-Fase 20 implementa PostgreSQL readiness mediante `auth-storage-postgres` y
-habilita `AUTH_STORAGE_MODE=postgres`.
+Phase 20 implements PostgreSQL readiness through `auth-storage-postgres` and
+enables `AUTH_STORAGE_MODE=postgres`.
 
-## Objetivo
+## Objective
 
-Reemplazar SQLite en despliegues cloud por RDS PostgreSQL sin cambiar los
-contratos publicos de `auth-core`.
+Replace SQLite in cloud deployments with RDS PostgreSQL without changing the
+public contracts in `auth-core`.
 
-## Modulo Futuro
+## Future Module
 
-Modulo implementado:
+Implemented module:
 
 ```text
 auth-storage-postgres/
 ```
 
-Responsabilidades:
+Responsibilities:
 
-- Implementar `PrincipalRepository`.
-- Implementar `ServiceRegistry`.
-- Implementar `AuthEventRepository`.
-- Implementar `SessionRepository`.
-- Ejecutar migraciones versionadas.
-- Proveer pruebas normales sin PostgreSQL externo.
-- Dejar una prueba real futura deshabilitada por defecto con perfil
-  `postgres-it`.
+- Implement `PrincipalRepository`.
+- Implement `ServiceRegistry`.
+- Implement `AuthEventRepository`.
+- Implement `SessionRepository`.
+- Run versioned migrations.
+- Provide normal tests without external PostgreSQL.
+- Leave a future real test disabled by default with the `postgres-it` profile.
 
-## Variable De Modo
+## Mode Variable
 
-Modo:
+Mode:
 
 ```text
 AUTH_STORAGE_MODE=postgres
 AUTH_SESSION_STORAGE_MODE=postgres
 ```
 
-`postgres` queda activo a nivel de configuracion y repositorios. La validacion
-contra RDS/AWS real sigue pendiente.
+`postgres` is active at configuration and repository level. Validation against
+real RDS/AWS is still pending.
 
-## Esquema Equivalente
+## Equivalent Schema
 
-Tablas esperadas:
+Expected tables:
 
 - `principals`
 - `services`
@@ -49,50 +48,49 @@ Tablas esperadas:
 - `auth_sessions`
 - `schema_version`
 
-Consideraciones:
+Considerations:
 
-- IDs textuales compatibles con SQLite.
-- Timestamps en `TIMESTAMPTZ`.
-- Indices por `request_id`, `client_id`, `service_id`, `event_type` y
-  expiracion de sesion.
-- Restricciones para sesiones revocadas y expiradas.
+- Text IDs compatible with SQLite.
+- Timestamps in `TIMESTAMPTZ`.
+- Indexes by `request_id`, `client_id`, `service_id`, `event_type`, and session
+  expiration.
+- Constraints for revoked and expired sessions.
 
-## Migraciones
+## Migrations
 
-Las migraciones SQL versionadas viven en `scripts/postgres/migrations/` e
-incluyen:
+Versioned SQL migrations live in `scripts/postgres/migrations/` and include:
 
-- migracion inicial;
-- seed opcional solo para demo;
-- indices de auditoria;
-- tabla de sesiones opacas;
-- indices de sesiones.
+- initial migration;
+- optional demo-only seed;
+- audit indexes;
+- opaque session table;
+- session indexes.
 
 ## RDS
 
-RDS PostgreSQL debe vivir en subnets privadas, con Security Group que permita
-`5432` solo desde ECS. Habilitar backups, deletion protection, cifrado KMS,
-logs y parametros revisados.
+RDS PostgreSQL must live in private subnets, with a Security Group that allows
+`5432` only from ECS. Enable backups, deletion protection, KMS encryption, logs,
+and reviewed parameters.
 
-## Sesiones Opacas Distribuidas
+## Distributed Opaque Sessions
 
-`auth_sessions` debe ser compartida por todos los Gateways. `VERIFY_SESSION` y
-`LOGOUT_SESSION` deben operar sobre el mismo repositorio distribuido para que
-el escalado horizontal sea coherente.
+`auth_sessions` must be shared by all Gateways. `VERIFY_SESSION` and
+`LOGOUT_SESSION` must operate on the same distributed repository so horizontal
+scaling remains coherent.
 
-## Auditoria Persistente
+## Persistent Audit
 
-Los eventos de auditoria deben conservar el comportamiento actual:
+Audit events must preserve current behavior:
 
-- inicio de flujo;
-- exito;
-- fallo;
-- duracion;
-- razon de error sin secretos.
+- flow start;
+- success;
+- failure;
+- duration;
+- error reason without secrets.
 
-No registrar tickets, claves, ciphertexts ni secretos.
+Do not record tickets, keys, ciphertexts, or secrets.
 
-## Secretos
+## Secrets
 
-Los secretos de conexion y secretos operativos deben venir desde Secrets
-Manager. No deben vivir en `.env`, Terraform tfvars, Docker Compose ni codigo.
+Connection secrets and operational secrets must come from Secrets Manager. They
+must not live in `.env`, Terraform tfvars, Docker Compose, or code.

@@ -1,24 +1,25 @@
 # Non-Technical Explanation
 
-Este proyecto es una maqueta tecnica de autenticacion distribuida. Imagine una
-app que no quiere decidir sola si alguien puede entrar. En vez de confiar en una
-respuesta simple, pregunta a un sistema separado.
+This project is a technical model of distributed authentication. Imagine an app
+that does not want to decide by itself whether someone can enter. Instead of
+trusting a simple response, it asks a separate system.
 
-La app habla con el WebSocket Gateway. El Gateway coordina tres servicios
-internos:
+The app talks to the WebSocket Gateway. The Gateway coordinates three internal
+services:
 
-1. AS confirma que el cliente existe.
-2. TGS confirma que el servicio solicitado existe.
-3. Service decide si responde al cliente autenticado.
+1. AS confirms that the client exists.
+2. TGS confirms that the requested service exists.
+3. Service decides whether to answer the authenticated client.
 
-Cuando todo sale bien, el Gateway crea una sesion opaca. "Opaca" significa que
-el navegador solo ve un identificador parcial y no puede saber ni modificar lo
-que representa. La app debe pedir al Gateway `VERIFY_SESSION`. Solo si recibe
-`SESSION_VALID`, abre su area protegida.
+When everything succeeds, the Gateway creates an opaque session. "Opaque" means
+the browser only sees a partial identifier and cannot know or modify what it
+represents. The app must ask the Gateway through `VERIFY_SESSION`. Only if it
+receives `SESSION_VALID` does it open its protected area.
 
-La interfaz `auth-web-demo` muestra el mapa tecnico del flujo. MelodyFinder en
-`sample-login-app` muestra como se veria una app real que integra el Gateway.
+The `auth-web-demo` interface shows the technical map of the flow. MelodyFinder
+in `sample-login-app` shows what a real app integrating the Gateway could look
+like.
 
-No se muestran secretos, claves, tickets completos ni ciphertexts. La demo es
-local y cloud-ready como blueprint, pero no declara estar lista para produccion
-critica.
+Secrets, keys, full tickets, and ciphertexts are not shown. The demo is local
+and cloud-ready as a blueprint, but it does not claim to be ready for critical
+production use.

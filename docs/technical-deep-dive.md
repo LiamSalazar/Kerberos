@@ -1,100 +1,100 @@
 # Technical Deep Dive
 
-## Arranque De Servicios
+## Service Startup
 
-- `auth-as`: ejecuta `AuthenticationServerApp` y escucha solicitudes AS por TCP/JSON.
-- `auth-tgs`: ejecuta `TicketGrantingServerApp` y procesa solicitudes TGS.
-- `auth-service`: ejecuta `ProtectedServiceApp` y protege el recurso demo.
-- `auth-websocket-gateway`: ejecuta `WebSocketGatewayApp`, expone WebSocket `2800` y health `2801`.
-- `auth-web-demo`: sirve HTML/CSS/JS vanilla en `5173`.
-- `sample-login-app`: sirve MelodyFinder en `5174`.
+- `auth-as`: runs `AuthenticationServerApp` and listens for AS requests over TCP/JSON.
+- `auth-tgs`: runs `TicketGrantingServerApp` and processes TGS requests.
+- `auth-service`: runs `ProtectedServiceApp` and protects the demo resource.
+- `auth-websocket-gateway`: runs `WebSocketGatewayApp`, exposes WebSocket `2800` and health `2801`.
+- `auth-web-demo`: serves vanilla HTML/CSS/JS on `5173`.
+- `sample-login-app`: serves MelodyFinder on `5174`.
 
-## Modulos
+## Modules
 
-- `auth-core`: contratos, DTOs, configuracion, replay cache, sesiones, health,
-  logs estructurados y metricas.
-- `auth-crypto`: AES-GCM, `CryptoEnvelope`, derivacion y material de sesion.
-- `auth-transport`: `ProtocolEnvelope`, codec JSON y TCP.
-- `auth-as`: validacion inicial del cliente.
-- `auth-tgs`: emision conceptual de acceso al servicio.
-- `auth-service`: validacion final y recurso protegido.
-- `auth-client-sdk`: `AuthClient`, `AuthFlowRunner`, CLI y auditorias.
-- `auth-storage-sqlite`: repositorios SQLite, migraciones y CLI local.
-- `auth-storage-postgres`: repositorios PostgreSQL/RDS-ready.
-- `auth-websocket-gateway`: frontera de integracion WebSocket.
-- `auth-web-demo`: visualizacion tecnica del protocolo.
-- `sample-login-app`: app de ejemplo para integradores.
+- `auth-core`: contracts, DTOs, configuration, replay cache, sessions, health,
+  structured logs, and metrics.
+- `auth-crypto`: AES-GCM, `CryptoEnvelope`, derivation, and session material.
+- `auth-transport`: `ProtocolEnvelope`, JSON codec, and TCP.
+- `auth-as`: initial client validation.
+- `auth-tgs`: conceptual issuance of service access.
+- `auth-service`: final validation and protected resource.
+- `auth-client-sdk`: `AuthClient`, `AuthFlowRunner`, CLI, and audits.
+- `auth-storage-sqlite`: SQLite repositories, migrations, and local CLI.
+- `auth-storage-postgres`: PostgreSQL/RDS-ready repositories.
+- `auth-websocket-gateway`: WebSocket integration boundary.
+- `auth-web-demo`: technical protocol visualization.
+- `sample-login-app`: sample app for integrators.
 
 ## Docker
 
-`docker-compose.yml` define servicios para AS, TGS, Service, Gateway, frontends
-y PostgreSQL opcional con perfil `postgres-local`.
+`docker-compose.yml` defines services for AS, TGS, Service, Gateway, frontends,
+and optional PostgreSQL with the `postgres-local` profile.
 
 Dockerfiles:
 
-- `docker/as/Dockerfile`: empaqueta runtime de AS.
-- `docker/tgs/Dockerfile`: empaqueta runtime de TGS.
-- `docker/service/Dockerfile`: empaqueta runtime de Service.
-- `docker/gateway/Dockerfile`: empaqueta Gateway y dependencias runtime.
-- `docker/web-demo/Dockerfile`: sirve `auth-web-demo`.
-- `docker/sample-login-app/Dockerfile`: sirve `sample-login-app`.
+- `docker/as/Dockerfile`: packages the AS runtime.
+- `docker/tgs/Dockerfile`: packages the TGS runtime.
+- `docker/service/Dockerfile`: packages the Service runtime.
+- `docker/gateway/Dockerfile`: packages the Gateway and runtime dependencies.
+- `docker/web-demo/Dockerfile`: serves `auth-web-demo`.
+- `docker/sample-login-app/Dockerfile`: serves `sample-login-app`.
 
 ## Terraform
 
-- `infra/aws/terraform/main.tf`: VPC, ALB, ECS/Fargate, ECR, RDS, logs y rutas.
-- `variables.tf`: parametros del blueprint.
-- `outputs.tf`: salidas utiles del plan.
-- `terraform.tfvars.example`: variables ejemplo HTTP/local blueprint.
-- `terraform.tfvars.https.example`: variables ejemplo HTTPS/WSS.
+- `infra/aws/terraform/main.tf`: VPC, ALB, ECS/Fargate, ECR, RDS, logs, and routes.
+- `variables.tf`: blueprint parameters.
+- `outputs.tf`: useful plan outputs.
+- `terraform.tfvars.example`: example HTTP/local blueprint variables.
+- `terraform.tfvars.https.example`: example HTTPS/WSS variables.
 
-No se usa RSA/JWT en esta fase porque el objetivo es mantener sesiones opacas
-server-side y no exponer tokens auto-verificables al frontend.
+RSA/JWT are not used in this phase because the goal is to keep opaque sessions
+server-side and avoid exposing self-verifiable tokens to the frontend.
 
-PostgreSQL es la ruta preparada para multiples instancias del Gateway porque
-`VERIFY_SESSION` y `LOGOUT_SESSION` deben consultar estado compartido. Memoria
-local no sirve para replicas cloud.
+PostgreSQL is the prepared path for multiple Gateway instances because
+`VERIFY_SESSION` and `LOGOUT_SESSION` must query shared state. Local memory does
+not work for cloud replicas.
 
-WSS debe terminar en ALB/ACM para que el navegador use TLS y el Gateway reciba
-trafico interno controlado.
+WSS must terminate at ALB/ACM so the browser uses TLS and the Gateway receives
+controlled internal traffic.
 
-## Mensajes Conceptuales En UI
+## Conceptual Messages In The UI
 
-La UI muestra nombres y contenido conceptual:
+The UI shows names and conceptual content:
 
 - `START_AUTH_FLOW`: clientId, serviceId, requestId.
-- AS request/response: identidad, TGS solicitado, lifetime conceptual.
-- TGS request/response: ticket conceptual, autenticador, servicio solicitado.
-- Service request/response: decision de acceso y respuesta protegida.
-- `FLOW_RESULT`: exito/fallo, sesion opaca, expiracion y latencia.
-- `VERIFY_SESSION`: sesion opaca y contexto cliente/servicio.
+- AS request/response: identity, requested TGS, conceptual lifetime.
+- TGS request/response: conceptual ticket, authenticator, requested service.
+- Service request/response: access decision and protected response.
+- `FLOW_RESULT`: success/failure, opaque session, expiration, and latency.
+- `VERIFY_SESSION`: opaque session and client/service context.
 
-No muestra material criptografico real.
+It does not show real cryptographic material.
 
-## Amenazas Y Limites
+## Threats And Limits
 
-Amenazas visualizadas:
+Visualized threats:
 
-- cliente desconocido;
-- servicio desconocido;
-- sesion invalida;
+- unknown client;
+- unknown service;
+- invalid session;
 - replay protection;
-- sesion expirada;
-- exposicion de datos sensibles.
+- expired session;
+- sensitive data exposure.
 
-Validaciones automatizadas relevantes:
+Relevant automated validations:
 
-- codec JSON;
+- JSON codec;
 - AES-GCM;
-- flujo AS -> TGS -> Service;
+- AS -> TGS -> Service flow;
 - replay cache;
-- sesiones opacas;
+- opaque sessions;
 - Gateway WebSocket;
 - SQLite/PostgreSQL.
 
-Limites abiertos:
+Open limits:
 
-- no se ejecuto AWS apply;
-- no se hizo hardening productivo completo;
-- WSS requiere ACM real;
-- secretos cloud deben vivir en Secrets Manager;
-- las demos son locales y no reemplazan pruebas automatizadas.
+- AWS apply was not executed;
+- full production hardening was not performed;
+- WSS requires a real ACM certificate;
+- cloud secrets must live in Secrets Manager;
+- demos are local and do not replace automated tests.

@@ -1,16 +1,16 @@
 # Linux Docker Validation
 
-Validacion esperada en una maquina Linux con Docker Compose v2. Estos comandos
-parten de cero y usan la raiz del repositorio.
+Expected validation on a Linux machine with Docker Compose v2. These commands
+start from scratch and use the repository root.
 
-## Clonar
+## Clone
 
 ```bash
 git clone https://github.com/LiamSalazar/Kerberos.git
 cd Kerberos
 ```
 
-## Validacion Local
+## Local Validation
 
 ```bash
 mvn -q -DskipTests compile
@@ -26,7 +26,7 @@ docker compose build
 docker compose up
 ```
 
-Validacion cloud-like opcional con PostgreSQL local:
+Optional cloud-like validation with local PostgreSQL:
 
 ```bash
 AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local config
@@ -34,7 +34,7 @@ AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --p
 AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local up
 ```
 
-Abrir:
+Open:
 
 ```text
 http://localhost:5173
@@ -43,33 +43,32 @@ http://localhost:5174
 
 ## Smoke Test
 
-1. Abrir `http://localhost:5173`.
-2. Abrir `http://localhost:5174`.
-3. Probar `START_AUTH_FLOW` con `clientId=1` y `serviceId=1`.
-4. Verificar `FLOW_RESULT` con `sessionId`.
-5. Enviar `VERIFY_SESSION`.
-6. Verificar `SESSION_VALID`.
-7. Probar `LOGOUT_SESSION`.
-8. Consultar auditoria SQLite.
+1. Open `http://localhost:5173`.
+2. Open `http://localhost:5174`.
+3. Test `START_AUTH_FLOW` with `clientId=1` and `serviceId=1`.
+4. Verify `FLOW_RESULT` with `sessionId`.
+5. Send `VERIFY_SESSION`.
+6. Verify `SESSION_VALID`.
+7. Test `LOGOUT_SESSION`.
+8. Query SQLite audit.
 
-## Auditoria SQLite
+## SQLite Audit
 
-Con los contenedores arriba, inspeccionar el volumen o ejecutar el CLI local
-contra una base copiada desde el volumen. Para validacion manual local fuera de
-Docker:
+With the containers running, inspect the volume or run the local CLI against a
+database copied from the volume. For manual local validation outside Docker:
 
 ```bash
 scripts/sqlite-admin.sh --db data/auth-demo.sqlite audit list --limit 20
 ```
 
-La auditoria no debe exponer secretos, tickets, claves ni ciphertexts.
+The audit must not expose secrets, tickets, keys, or ciphertexts.
 
-## Resultado Esperado
+## Expected Result
 
-- `docker compose config` genera YAML normalizado sin errores.
-- `docker compose build` construye imagenes.
-- `docker compose up` levanta Gateway, web demo y sample login app publicos.
-- AS, TGS y Service no exponen puertos al host.
-- El Gateway responde con sesion opaca verificable.
-- Los health checks Java responden en `/health`.
-- El perfil `postgres-local` no publica PostgreSQL al host y usa valores demo.
+- `docker compose config` generates normalized YAML without errors.
+- `docker compose build` builds images.
+- `docker compose up` starts Gateway, web demo, and sample login app publicly.
+- AS, TGS, and Service do not expose ports to the host.
+- The Gateway responds with a verifiable opaque session.
+- Java health checks respond on `/health`.
+- The `postgres-local` profile does not publish PostgreSQL to the host and uses demo values.

@@ -1,9 +1,9 @@
 # Docker Local Runbook
 
-Docker y Docker Compose estan autorizados aqui como despliegue local
-reproducible. No se presentan como produccion.
+Docker and Docker Compose are authorized here as reproducible local deployment.
+They are not presented as production.
 
-## SQLite Local
+## Local SQLite
 
 ```bash
 cp .env.example .env
@@ -23,7 +23,7 @@ docker compose ps
 Invoke-RestMethod http://localhost:2801/health
 ```
 
-## PostgreSQL Local
+## Local PostgreSQL
 
 ```bash
 docker compose --env-file .env.postgres --profile postgres-local build
@@ -32,7 +32,7 @@ docker compose --env-file .env.postgres --profile postgres-local ps
 curl http://localhost:2801/health
 ```
 
-Esperado:
+Expected:
 
 - `auth-postgres`: healthy.
 - `auth-as`: healthy.
@@ -43,7 +43,7 @@ Esperado:
 - `sample-login-app`: healthy.
 - Gateway `/health`: `status=UP`, `storageMode=postgres`.
 
-## Abrir Demos
+## Open Demos
 
 ```text
 http://localhost:5173
@@ -62,13 +62,13 @@ docker compose logs auth-web-demo
 docker compose logs sample-login-app
 ```
 
-Con perfil PostgreSQL:
+With PostgreSQL profile:
 
 ```bash
 docker compose --env-file .env.postgres --profile postgres-local logs auth-websocket-gateway
 ```
 
-## Reconstruir
+## Rebuild
 
 ```bash
 docker compose build --no-cache
@@ -82,25 +82,25 @@ docker compose --env-file .env.postgres --profile postgres-local build --no-cach
 docker compose --env-file .env.postgres --profile postgres-local up -d
 ```
 
-## Apagar
+## Stop
 
 ```bash
 docker compose down
 docker compose --env-file .env.postgres --profile postgres-local down
 ```
 
-## Limpiar Volumenes Locales
+## Clear Local Volumes
 
-Esto borra datos locales de demo:
+This deletes local demo data:
 
 ```bash
 docker compose down -v
 docker compose --env-file .env.postgres --profile postgres-local down -v
 ```
 
-## Puertos Ocupados
+## Occupied Ports
 
-Ver procesos:
+See processes:
 
 Linux/macOS:
 
@@ -117,14 +117,14 @@ Windows PowerShell:
 Get-NetTCPConnection -LocalPort 2800,2801,5173,5174 -ErrorAction SilentlyContinue
 ```
 
-No cambie los puertos del proyecto sin autorizacion porque son parte del
-contrato local documentado.
+Do not change the project ports without authorization because they are part of
+the documented local contract.
 
-## Como Saber Si Funciona
+## How To Know It Works
 
-1. `docker compose ps` muestra servicios healthy.
-2. `curl http://localhost:2801/health` devuelve `UP`.
-3. `auth-web-demo` abre en `http://localhost:5173`.
-4. `sample-login-app` abre en `http://localhost:5174`.
-5. Flujo esperado: `START_AUTH_FLOW -> FLOW_RESULT -> VERIFY_SESSION -> SESSION_VALID`.
-6. Logout esperado: `LOGOUT_SESSION -> SESSION_LOGGED_OUT`.
+1. `docker compose ps` shows healthy services.
+2. `curl http://localhost:2801/health` returns `UP`.
+3. `auth-web-demo` opens at `http://localhost:5173`.
+4. `sample-login-app` opens at `http://localhost:5174`.
+5. Expected flow: `START_AUTH_FLOW -> FLOW_RESULT -> VERIFY_SESSION -> SESSION_VALID`.
+6. Expected logout: `LOGOUT_SESSION -> SESSION_LOGGED_OUT`.

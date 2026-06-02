@@ -1,22 +1,22 @@
 # WebSocket Gateway
 
-`auth-websocket-gateway` expone una API WebSocket separada para apps externas y
-demos locales. No reemplaza AS, TGS ni Service; solo traduce mensajes WebSocket
-a la ruta modular AS -> TGS -> Service por TCP/JSON.
+`auth-websocket-gateway` exposes a separate WebSocket API for external apps and
+local demos. It does not replace AS, TGS, or Service; it only translates
+WebSocket messages into the modular AS -> TGS -> Service path over TCP/JSON.
 
-No usa Spring Boot, no usa JWT, no usa RSA y no expone tickets, claves,
-ciphertexts ni secretos al frontend.
+It does not use Spring Boot, JWT, or RSA, and it does not expose tickets, keys,
+ciphertexts, or secrets to the frontend.
 
 ## Contract
 
-Entradas:
+Inputs:
 
 - `START_AUTH_FLOW`
 - `VERIFY_SESSION`
 - `LOGOUT_SESSION`
 - `PING`
 
-Salidas:
+Outputs:
 
 - `FLOW_EVENT`
 - `FLOW_RESULT`
@@ -26,13 +26,13 @@ Salidas:
 - `ERROR`
 - `PONG`
 
-`START_AUTH_FLOW` requiere:
+`START_AUTH_FLOW` requires:
 
 ```json
 {"type":"START_AUTH_FLOW","requestId":"app-1","clientId":"1","serviceId":"1"}
 ```
 
-Si el flujo es exitoso, `FLOW_RESULT` incluye una sesion opaca:
+If the flow succeeds, `FLOW_RESULT` includes an opaque session:
 
 ```json
 {
@@ -45,19 +45,19 @@ Si el flujo es exitoso, `FLOW_RESULT` incluye una sesion opaca:
 }
 ```
 
-La app no debe conceder acceso solo por `success=true`. Debe verificar:
+The app must not grant access only because `success=true`. It must verify:
 
 ```json
 {"type":"VERIFY_SESSION","requestId":"verify-1","sessionId":"opaque-session-id","clientId":"1","serviceId":"1"}
 ```
 
-Respuesta valida:
+Valid response:
 
 ```json
 {"type":"SESSION_VALID","requestId":"verify-1","valid":true,"clientId":"1","serviceId":"1","expiresAt":"2026-05-23T17:00:00Z"}
 ```
 
-Respuesta invalida:
+Invalid response:
 
 ```json
 {"type":"SESSION_INVALID","requestId":"verify-1","valid":false,"reason":"EXPIRED"}
@@ -71,7 +71,7 @@ Logout:
 
 ## Errors
 
-Errores tipados:
+Typed errors:
 
 - `INVALID_JSON`
 - `UNKNOWN_MESSAGE_TYPE`
@@ -89,7 +89,7 @@ Errores tipados:
 - `SESSION_REQUIRED`
 - `INVALID_SESSION_REQUEST`
 
-`SESSION_INVALID.reason` usa:
+`SESSION_INVALID.reason` uses:
 
 - `NOT_FOUND`
 - `EXPIRED`
@@ -99,21 +99,21 @@ Errores tipados:
 
 ## Security Controls
 
-- `AUTH_ALLOWED_ORIGINS` limita origenes WebSocket cuando se configura.
-- Hay rate limit simple por conexion.
-- Hay timeout de flujo.
-- La sesion opaca vive en memoria o SQLite del sistema de autenticacion.
-- `ws://` es solo para desarrollo local; en cloud se debe usar `wss://`.
+- `AUTH_ALLOWED_ORIGINS` limits WebSocket origins when configured.
+- There is a simple per-connection rate limit.
+- There is a flow timeout.
+- The opaque session lives in memory, SQLite, or PostgreSQL inside the authentication system.
+- `ws://` is only for local development; use `wss://` in cloud.
 
 ## Configuration
 
 - `AUTH_WS_HOST`: default `127.0.0.1`.
 - `AUTH_WS_PORT`: default `2800`.
-- `AUTH_ALLOWED_ORIGINS`: lista separada por comas.
-- `AUTH_SESSION_TTL_SECONDS`: TTL operativo de sesion.
-- `AUTH_SESSION_MAX_TTL_SECONDS`: maximo defensivo de sesion.
-- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
-- `AUTH_REQUIRE_SESSION_VERIFY`: default efectivo `true` en strict.
+- `AUTH_ALLOWED_ORIGINS`: comma-separated list.
+- `AUTH_SESSION_TTL_SECONDS`: operational session TTL.
+- `AUTH_SESSION_MAX_TTL_SECONDS`: defensive maximum session TTL.
+- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite`, or `postgres`.
+- `AUTH_REQUIRE_SESSION_VERIFY`: effective default `true` in strict mode.
 
 ## Tests
 
@@ -121,6 +121,6 @@ Errores tipados:
 mvn -pl auth-websocket-gateway -am test
 ```
 
-La suite cubre JSON invalido, tipos desconocidos, campos faltantes, origen
-permitido/rechazado, rate limit, timeout, flujo exitoso, sesion creada, sesion
-verificada, logout y errores controlados.
+The suite covers invalid JSON, unknown types, missing fields, allowed/rejected
+origin, rate limit, timeout, successful flow, created session, verified session,
+logout, and controlled errors.

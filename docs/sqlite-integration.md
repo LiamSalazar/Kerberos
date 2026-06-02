@@ -1,17 +1,17 @@
 # SQLite Integration
 
-Fase 15 convierte SQLite en una capa local mas seria: migraciones versionadas,
-repositorios de clientes/servicios, auditoria persistente y administracion por
-CLI. Sigue siendo una integracion local sin servidor externo y sin ORM. Docker
-local es opcional para reproducibilidad, pero SQLite sigue siendo interno del
-sistema de autenticacion.
+Phase 15 turns SQLite into a more serious local layer: versioned migrations,
+client/service repositories, persistent audit, and CLI administration. It
+remains a local integration without an external server and without an ORM. Local
+Docker is optional for reproducibility, but SQLite remains internal to the
+authentication system.
 
-SQLite no es una base productiva para despliegue critico. PostgreSQL, replicas,
-vaults y migraciones avanzadas quedan fuera de esta fase.
+SQLite is not a production database for critical deployment. PostgreSQL,
+replicas, vaults, and advanced migrations are outside this phase.
 
-## Modulo
+## Module
 
-`auth-storage-sqlite` implementa:
+`auth-storage-sqlite` implements:
 
 - `SQLitePrincipalRepository`
 - `SQLiteServiceRegistry`
@@ -22,14 +22,14 @@ vaults y migraciones avanzadas quedan fuera de esta fase.
 - `SQLiteAdminCli`
 - `SQLiteAdminRepository`
 
-Las interfaces de runtime viven en `auth-core`:
+Runtime interfaces live in `auth-core`:
 
 - `PrincipalRepository`
 - `ServiceRegistry`
 - `AuditRepository`
 - `AuthEventRepository`
 
-## Configuracion
+## Configuration
 
 ```text
 AUTH_STORAGE_MODE=memory
@@ -38,35 +38,35 @@ AUTH_SQLITE_PATH=data/auth-demo.sqlite
 AUTH_SESSION_STORAGE_MODE=sqlite
 ```
 
-`memory` sigue siendo el default demo. `sqlite` activa lectura de clientes,
-TGS, servicios, auditoria persistente del Gateway y sesiones opacas cuando
+`memory` remains the default demo mode. `sqlite` enables client, TGS, service,
+persistent Gateway audit, and opaque session reads when
 `AUTH_SESSION_STORAGE_MODE=sqlite`.
 
-## Migraciones
+## Migrations
 
-Las migraciones versionadas viven en:
+Versioned migrations live in:
 
 ```text
 scripts/sqlite/migrations/
 ```
 
-Versiones actuales:
+Current versions:
 
-- `V1__schema.sql`: tablas `principals` y `services`.
-- `V2__seed_demo.sql`: datos demo locales.
-- `V3__audit_events.sql`: tabla `auth_audit_events` e indices.
-- `V4__audit_query_indexes.sql`: indices de consulta de auditoria.
-- `V5__auth_sessions.sql`: tabla `auth_sessions` e indices de sesion.
+- `V1__schema.sql`: `principals` and `services` tables.
+- `V2__seed_demo.sql`: local demo data.
+- `V3__audit_events.sql`: `auth_audit_events` table and indexes.
+- `V4__audit_query_indexes.sql`: audit query indexes.
+- `V5__auth_sessions.sql`: `auth_sessions` table and session indexes.
 
-El migrador crea `schema_version` y registra version, descripcion, script,
-checksum y fecha de aplicacion. Reaplicar migraciones no duplica versiones ni
-datos demo.
+The migrator creates `schema_version` and records version, description, script,
+checksum, and application date. Reapplying migrations does not duplicate
+versions or demo data.
 
-Los scripts historicos `scripts/sqlite/schema.sql` y
-`scripts/sqlite/seed-demo.sql` se mantienen como referencia plana, pero la ruta
-recomendada es el migrador.
+Historical scripts `scripts/sqlite/schema.sql` and
+`scripts/sqlite/seed-demo.sql` are kept as flat reference, but the recommended
+path is the migrator.
 
-## Inicializar Base Demo
+## Initialize Demo Database
 
 Windows:
 
@@ -80,13 +80,13 @@ Linux/macOS:
 scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
 ```
 
-Opcionalmente:
+Optionally:
 
 ```cmd
 scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite --migrations scripts\sqlite\migrations
 ```
 
-## Ejecutar En Modo SQLite
+## Run In SQLite Mode
 
 Windows:
 
@@ -110,28 +110,28 @@ scripts/run-service.sh
 scripts/run-websocket-gateway.sh
 ```
 
-## Administracion Local
+## Local Administration
 
-Registrar cliente:
+Register client:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
 ```
 
-Registrar servicio:
+Register service:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfinder --display-name "MelodyFinder" --secret "<secret>" --endpoint local://melodyfinder
 ```
 
-Listar:
+List:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
 ```
 
-Habilitar/deshabilitar:
+Enable/disable:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients disable --id app-client
@@ -140,12 +140,12 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite services disable --id melody
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite services enable --id melodyfinder
 ```
 
-Los listados no imprimen secretos.
+Listings do not print secrets.
 
-## Auditoria Persistente
+## Persistent Audit
 
-Cuando `auth-websocket-gateway` corre con `AUTH_STORAGE_MODE=sqlite`, registra
-eventos seguros en `auth_audit_events`:
+When `auth-websocket-gateway` runs with `AUTH_STORAGE_MODE=sqlite`, it records
+safe events in `auth_audit_events`:
 
 - `request_id`
 - `client_id`
@@ -156,7 +156,7 @@ eventos seguros en `auth_audit_events`:
 - `latency_ms`
 - `created_at`
 
-Consultar:
+Query:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
@@ -165,13 +165,13 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-client --client-id 
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-service --service-id 1
 ```
 
-No se registran secretos, claves, tickets descifrados completos, ciphertexts ni
-payloads internos.
+Secrets, keys, full decrypted tickets, ciphertexts, and internal payloads are
+not recorded.
 
-## Sesiones Opacas
+## Opaque Sessions
 
-Cuando el Gateway corre con `AUTH_SESSION_STORAGE_MODE=sqlite`, guarda sesiones
-en `auth_sessions`:
+When the Gateway runs with `AUTH_SESSION_STORAGE_MODE=sqlite`, it stores
+sessions in `auth_sessions`:
 
 - `session_id`
 - `request_id`
@@ -183,10 +183,10 @@ en `auth_sessions`:
 - `revoked_at`
 - `created_at`
 
-No se guardan secretos, tickets, ciphertexts ni claves. La app externa no debe
-consultar esta tabla; debe usar `VERIFY_SESSION` contra el Gateway.
+Secrets, tickets, ciphertexts, and keys are not stored. The external app must
+not query this table; it must use `VERIFY_SESSION` against the Gateway.
 
-## Pruebas
+## Tests
 
 ```bash
 mvn -pl auth-storage-sqlite -am test
@@ -194,38 +194,38 @@ mvn -pl auth-client-sdk -am test
 mvn -pl auth-websocket-gateway -am test
 ```
 
-Cobertura agregada:
+Added coverage:
 
-- aplicacion de migraciones en base temporal;
-- no duplicar migraciones;
-- seed demo verificable;
-- persistencia y consulta de auditoria;
-- persistencia, expiracion, revocacion y mismatch de sesiones;
-- administracion de clientes y servicios;
-- flujo AS -> TGS -> Service respaldado por SQLite.
+- applying migrations to a temporary database;
+- not duplicating migrations;
+- verifiable demo seed;
+- audit persistence and queries;
+- session persistence, expiration, revocation, and mismatch;
+- client and service administration;
+- AS -> TGS -> Service flow backed by SQLite.
 
 ## Docker
 
-`docker-compose.yml` usa el volumen `auth-sqlite-data` y la ruta
-`/data/auth-demo.sqlite`. El servicio `auth-storage-init` aplica migraciones
-antes de levantar AS/TGS/Service/Gateway.
+`docker-compose.yml` uses the `auth-sqlite-data` volume and the
+`/data/auth-demo.sqlite` path. The `auth-storage-init` service applies
+migrations before starting AS/TGS/Service/Gateway.
 
-Limpiar el volumen:
+Clear the volume:
 
 ```bash
 docker compose down -v
 ```
 
-## Dependencia
+## Dependency
 
-`org.xerial:sqlite-jdbc` es la unica dependencia externa nueva para SQLite. No
-se agrego ORM.
+`org.xerial:sqlite-jdbc` is the only new external dependency for SQLite. No ORM
+was added.
 
-## Limites
+## Limits
 
-- SQLite es local y ligera.
-- No hay cifrado de secretos en repositorio.
-- No hay rotacion de secretos.
-- No hay API HTTP de administracion.
-- PostgreSQL/RDS vive en `auth-storage-postgres`; SQLite se mantiene como
-  integracion local/demo.
+- SQLite is local and lightweight.
+- There is no repository-level secret encryption.
+- There is no secret rotation.
+- There is no administration HTTP API.
+- PostgreSQL/RDS lives in `auth-storage-postgres`; SQLite remains a local/demo
+  integration.

@@ -1,9 +1,9 @@
 # auth-tgs
 
-Aplicacion contenedora del Ticket Granting Server.
+Container application for the Ticket Granting Server.
 
-Este modulo quedara encargado de:
+This module is responsible for:
 
-- recibir solicitudes al TGS
-- coordinar validacion de TGT y autenticadores
-- emitir tickets de servicio
+- receiving TGS requests
+- coordinating TGT and authenticator validation
+- issuing service tickets

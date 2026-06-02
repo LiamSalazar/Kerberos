@@ -1,10 +1,10 @@
 # auth-core
 
-Contendra el modelo de dominio compartido del sistema:
+Contains the shared domain model for the system:
 
 - tickets
-- autenticadores
-- ids y tipos de mensaje
-- validaciones y politicas de expiracion
+- authenticators
+- IDs and message types
+- validation and expiration policies
 
-No incluye transporte ni implementaciones criptograficas.
+It does not include transport or cryptographic implementations.

@@ -1,25 +1,25 @@
 # Sample Login App
 
-`sample-login-app` es una mini app HTML/CSS/JS vanilla para integradores. No usa
-React, Vite, TypeScript, npm ni dependencias externas.
+`sample-login-app` is a vanilla HTML/CSS/JS mini app for integrators. It does
+not use React, Vite, TypeScript, npm, or external dependencies.
 
-Nombre visual de Fase 23A: **MelodyFinder**.
+Visual name from Phase 23A: **MelodyFinder**.
 
-La app solo habla con `auth-websocket-gateway`. No abre SQLite, no importa
-codigo backend y no administra clientes o servicios.
+The app only talks to `auth-websocket-gateway`. It does not open SQLite, import
+backend code, or administer clients or services.
 
 ## Flow
 
-1. La app envia `START_AUTH_FLOW`.
-2. Si recibe `FLOW_RESULT success=true` con `sessionId`, guarda la sesion solo en
-   memoria del navegador.
-3. La app envia `VERIFY_SESSION`.
-4. Solo si recibe `SESSION_VALID`, muestra el dashboard protegido.
-5. Si recibe `SESSION_INVALID` o `ERROR`, mantiene el acceso cerrado.
-6. En logout, envia `LOGOUT_SESSION` y limpia estado local.
+1. The app sends `START_AUTH_FLOW`.
+2. If it receives `FLOW_RESULT success=true` with `sessionId`, it stores the
+   session only in browser memory.
+3. The app sends `VERIFY_SESSION`.
+4. Only if it receives `SESSION_VALID` does it show the protected dashboard.
+5. If it receives `SESSION_INVALID` or `ERROR`, it keeps access closed.
+6. On logout, it sends `LOGOUT_SESSION` and clears local state.
 
-Esto evita que una manipulacion local de `success=true` desbloquee la UI sin una
-validacion server-side del Gateway.
+This prevents local manipulation of `success=true` from unlocking the UI without
+server-side validation from the Gateway.
 
 ## Run Backend
 
@@ -55,7 +55,7 @@ Linux/macOS:
 scripts/run-sample-login-app.sh
 ```
 
-Abrir:
+Open:
 
 ```text
 http://127.0.0.1:5174
@@ -63,7 +63,7 @@ http://127.0.0.1:5174
 
 ## Expected Success
 
-Usar:
+Use:
 
 ```text
 Gateway URL: ws://127.0.0.1:2800
@@ -71,28 +71,28 @@ clientId: 1
 serviceId: 1
 ```
 
-Resultado:
+Result:
 
 - `FLOW_RESULT success=true`;
-- `sessionId` enmascarado en UI;
-- `VERIFY_SESSION` enviado automaticamente;
-- dashboard solo visible despues de `SESSION_VALID`;
-- `LOGOUT_SESSION` enviado en logout;
-- sin secretos, tickets, claves ni ciphertexts.
+- masked `sessionId` in the UI;
+- `VERIFY_SESSION` sent automatically;
+- dashboard visible only after `SESSION_VALID`;
+- `LOGOUT_SESSION` sent on logout;
+- no secrets, tickets, keys, or ciphertexts.
 
-La UI tambien muestra un panel tecnico "What is happening behind the scenes?"
-con el estado Gateway, Authentication, Session y Access.
+The UI also shows a technical panel, "What is happening behind the scenes?",
+with Gateway, Authentication, Session, and Access status.
 
 ## Expected Failure
 
-Usar `serviceId=missing-service`.
+Use `serviceId=missing-service`.
 
-Resultado:
+Result:
 
-- `FLOW_RESULT success=false` o `ERROR`;
-- dashboard oculto;
-- sin `sessionId` valido;
-- sin desbloqueo por estado local.
+- `FLOW_RESULT success=false` or `ERROR`;
+- dashboard hidden;
+- no valid `sessionId`;
+- no unlock through local state.
 
 ## Docker
 
@@ -101,4 +101,4 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Abrir `http://localhost:5174`. La app consume `ws://localhost:2800` en local.
+Open `http://localhost:5174`. The app consumes `ws://localhost:2800` locally.

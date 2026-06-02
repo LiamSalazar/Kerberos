@@ -1,10 +1,10 @@
 # auth-as
 
-Aplicacion contenedora del Authentication Server.
+Container application for the Authentication Server.
 
-Aqui viviran:
+This module contains:
 
-- bootstrap del proceso
-- configuracion del AS
-- adaptadores de entrada y salida
-- composicion de servicios del dominio
+- process bootstrap
+- AS configuration
+- input and output adapters
+- domain service composition

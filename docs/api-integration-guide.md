@@ -1,7 +1,8 @@
 # API Integration Guide
 
-Esta guia explica como una app externa integra el sistema. La app no se conecta
-a PostgreSQL, AS, TGS ni Service. Solo se conecta al WebSocket Gateway.
+This guide explains how an external app integrates with the system. The app
+does not connect to PostgreSQL, AS, TGS, or Service. It only connects to the
+WebSocket Gateway.
 
 ## Endpoints
 
@@ -11,13 +12,13 @@ Local:
 ws://localhost:2800
 ```
 
-Cloud futuro:
+Future cloud:
 
 ```text
-wss://auth.dominio.com
+wss://auth.example.com
 ```
 
-## Mensajes
+## Messages
 
 ### START_AUTH_FLOW
 
@@ -27,7 +28,7 @@ wss://auth.dominio.com
 
 ### FLOW_RESULT
 
-Exitoso:
+Successful:
 
 ```json
 {
@@ -44,7 +45,7 @@ Exitoso:
 }
 ```
 
-Fallido:
+Failed:
 
 ```json
 {"type":"FLOW_RESULT","requestId":"app-2","success":false,"errorType":"SERVICE_NOT_FOUND","serviceMessage":"TGS_UNKNOWN_SERVICE"}
@@ -86,15 +87,15 @@ Fallido:
 {"type":"ERROR","errorType":"MISSING_REQUIRED_FIELD","message":"Campo requerido faltante: serviceId","success":false}
 ```
 
-## Regla De Acceso
+## Access Rule
 
-- Conceder acceso solo con `SESSION_VALID`.
-- Negar acceso con `SESSION_INVALID`.
-- Negar acceso con `ERROR`.
-- Negar acceso con `FLOW_RESULT.success=false`.
-- No conceder acceso solo por `FLOW_RESULT.success=true`.
+- Grant access only with `SESSION_VALID`.
+- Deny access with `SESSION_INVALID`.
+- Deny access with `ERROR`.
+- Deny access with `FLOW_RESULT.success=false`.
+- Do not grant access only because `FLOW_RESULT.success=true`.
 
-## JavaScript Vanilla
+## Vanilla JavaScript
 
 ```js
 const socket = new WebSocket("ws://localhost:2800");
@@ -136,7 +137,7 @@ socket.addEventListener("message", (event) => {
 });
 ```
 
-## Backend Node Conceptual
+## Conceptual Node Backend
 
 ```js
 import WebSocket from "ws";
@@ -174,7 +175,7 @@ export function authenticateWithGateway(clientId, serviceId) {
 }
 ```
 
-## Backend Java Conceptual
+## Conceptual Java Backend
 
 ```java
 // Use any standard Java WebSocket client.
@@ -182,7 +183,7 @@ export function authenticateWithGateway(clientId, serviceId) {
 // Only map the user/app request to "authenticated" when SESSION_VALID arrives.
 ```
 
-## Registrar clientId Y serviceId
+## Register clientId And serviceId
 
 SQLite demo:
 
@@ -200,23 +201,23 @@ scripts/sqlite-admin.sh --db data/auth-demo.sqlite clients add --id app-client -
 scripts/sqlite-admin.sh --db data/auth-demo.sqlite services add --id app-service --display-name "App Service" --secret "<demo-secret>" --endpoint local://app-service
 ```
 
-No use secretos reales en ejemplos versionados. En cloud, use Secrets Manager.
+Do not use real secrets in versioned examples. In cloud, use Secrets Manager.
 
-## Errores Comunes
+## Common Errors
 
-| Error | Manejo recomendado |
+| Error | Recommended handling |
 | --- | --- |
-| `CLIENT_NOT_FOUND` | Negar acceso y revisar registro del clientId. |
-| `SERVICE_NOT_FOUND` | Negar acceso y revisar registro del serviceId. |
-| `SESSION_REQUIRED` | Negar acceso; falta `sessionId`. |
-| `SESSION_EXPIRED` | Pedir nuevo login. |
-| `SESSION_REVOKED` | Mantener logout. |
-| `SESSION_CLIENT_MISMATCH` | Negar acceso y revisar integracion. |
-| `SESSION_SERVICE_MISMATCH` | Negar acceso y revisar integracion. |
-| `RATE_LIMITED` | Reintentar con backoff. |
+| `CLIENT_NOT_FOUND` | Deny access and review the clientId registration. |
+| `SERVICE_NOT_FOUND` | Deny access and review the serviceId registration. |
+| `SESSION_REQUIRED` | Deny access; `sessionId` is missing. |
+| `SESSION_EXPIRED` | Request a new login. |
+| `SESSION_REVOKED` | Keep logout state. |
+| `SESSION_CLIENT_MISMATCH` | Deny access and review the integration. |
+| `SESSION_SERVICE_MISMATCH` | Deny access and review the integration. |
+| `RATE_LIMITED` | Retry with backoff. |
 
 ## MelodyFinder
 
-`sample-login-app` demuestra la integracion visual: MelodyFinder se conecta solo
-al Gateway, muestra eventos resumidos y abre su dashboard protegido solo despues
-de `SESSION_VALID`.
+`sample-login-app` demonstrates the visual integration: MelodyFinder connects
+only to the Gateway, shows summarized events, and opens its protected dashboard
+only after `SESSION_VALID`.

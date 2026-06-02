@@ -1,66 +1,66 @@
 # AWS Deployment Readiness
 
-Fase 20 prepara el camino para un production-like deployment en AWS, sin
-desplegar recursos reales y sin usar credenciales. Esta documentacion describe
-la arquitectura recomendada para validar despues de que Docker funcione en
-Linux y antes de operar una cuenta AWS real.
+Phase 20 prepares the path for a production-like deployment on AWS, without
+deploying real resources and without using credentials. This documentation
+describes the recommended architecture to validate after Docker works on Linux
+and before operating a real AWS account.
 
-## Arquitectura Recomendada
+## Recommended Architecture
 
-Entrada publica:
+Public entry:
 
-- Application Load Balancer publico.
-- Listener HTTPS `443` con certificado ACM.
-- WSS hacia `auth-websocket-gateway` en ECS Fargate.
-- `auth-web-demo` y `sample-login-app` como contenedores publicos detras del
-  mismo ALB, idealmente por hostnames separados.
+- Public Application Load Balancer.
+- HTTPS `443` listener with ACM certificate.
+- WSS to `auth-websocket-gateway` on ECS Fargate.
+- `auth-web-demo` and `sample-login-app` as public containers behind the same
+  ALB, ideally through separate hostnames.
 
-Zona privada:
+Private zone:
 
-- `auth-as` en ECS Fargate sin puerto publicado.
-- `auth-tgs` en ECS Fargate sin puerto publicado.
-- `auth-service` en ECS Fargate sin puerto publicado.
-- Base de datos privada, preferentemente RDS PostgreSQL.
-- Secrets Manager para secretos operativos.
-- CloudWatch Logs para todos los contenedores.
-- Health HTTP privado para AS/TGS/Service y `/health` del Gateway para ALB.
+- `auth-as` on ECS Fargate without a published port.
+- `auth-tgs` on ECS Fargate without a published port.
+- `auth-service` on ECS Fargate without a published port.
+- Private database, preferably RDS PostgreSQL.
+- Secrets Manager for operational secrets.
+- CloudWatch Logs for every container.
+- Private HTTP health for AS/TGS/Service and Gateway `/health` for the ALB.
 
-## Que Va Publico
+## What Is Public
 
 - ALB.
 - Gateway WSS.
 - Frontend demo.
 - Sample login app.
 
-El Gateway es el unico punto que debe hablar con AS/TGS/Service. Las apps de
-browser no deben abrir conexiones a la base ni a los servicios privados.
+The Gateway is the only point that should talk to AS/TGS/Service. Browser apps
+must not open connections to the database or private services.
 
-## Que Va Privado
+## What Is Private
 
 - AS.
 - TGS.
 - Service.
-- Base de datos.
-- Secretos.
-- Trafico interno entre Gateway y servicios de autenticacion.
+- Database.
+- Secrets.
+- Internal traffic between Gateway and authentication services.
 
-## WSS Con ACM Y ALB
+## WSS With ACM And ALB
 
-En AWS se usa `wss://` terminando TLS en el ALB con ACM. El ALB enruta al target group del
-Gateway en el puerto `2800`; el contenedor sigue escuchando `AUTH_WS_HOST=0.0.0.0`
-y `AUTH_WS_PORT=2800`.
+AWS uses `wss://` with TLS terminated at the ALB through ACM. The ALB routes to
+the Gateway target group on port `2800`; the container keeps listening with
+`AUTH_WS_HOST=0.0.0.0` and `AUTH_WS_PORT=2800`.
 
-Antes del despliegue real, validar que el ALB use `path=/health` y `port=2801`.
-El trafico WSS de usuarios sigue entrando por `443` y se enruta al puerto
-`2800` del Gateway.
+Before real deployment, validate that the ALB uses `path=/health` and
+`port=2801`. User WSS traffic still enters through `443` and routes to Gateway
+port `2800`.
 
-`acm_certificate_arn` debe apuntar a un certificado real en ACM. El dominio se
-configura con los host headers del blueprint. Route 53 es opcional: si se usa,
-crear registros hacia el DNS del ALB para Gateway, demo y login.
+`acm_certificate_arn` must point to a real ACM certificate. The domain is
+configured with blueprint host headers. Route 53 is optional: if used, create
+records toward the ALB DNS for Gateway, demo, and login.
 
 ## Variables
 
-Variables esperadas para Gateway:
+Expected Gateway variables:
 
 ```text
 AUTH_MODE=strict
@@ -85,44 +85,44 @@ AUTH_HEALTH_PORT=2801
 AUTH_ALLOWED_ORIGINS=https://demo.example.com,https://login.example.com
 ```
 
-AS/TGS/Service deben recibir hosts y puertos internos por Cloud Map o variables
-equivalentes. Los secretos deben venir desde Secrets Manager, no desde archivos
-commiteados.
+AS/TGS/Service must receive internal hosts and ports through Cloud Map or
+equivalent variables. Secrets must come from Secrets Manager, not from committed
+files.
 
-## SQLite No Es Produccion
+## SQLite Is Not Production
 
-SQLite sirve para validacion local reproducible y auditoria persistente en un
-solo nodo. No es la opcion adecuada para una topologia distribuida en ECS porque:
+SQLite serves reproducible local validation and persistent audit on a single
+node. It is not the right option for a distributed ECS topology because:
 
-- no ofrece concurrencia multi-instancia adecuada para escritura compartida;
-- no resuelve alta disponibilidad ni replicas administradas;
-- complica backups, cifrado administrado y rotacion operativa;
-- no encaja bien con Gateway escalado horizontalmente.
+- it does not provide suitable multi-instance concurrency for shared writes;
+- it does not solve high availability or managed replicas;
+- it complicates backups, managed encryption, and operational rotation;
+- it does not fit well with a horizontally scaled Gateway.
 
-## Migracion A RDS PostgreSQL
+## Migration To RDS PostgreSQL
 
-La ruta recomendada usa `auth-storage-postgres`, mantiene los contratos de
-repositorio de `auth-core`, ejecuta migraciones versionadas y activa
-`AUTH_STORAGE_MODE=postgres`. RDS debe vivir en subnets privadas, con Security
-Group que permita `5432` solo desde ECS.
+The recommended path uses `auth-storage-postgres`, keeps the `auth-core`
+repository contracts, runs versioned migrations, and enables
+`AUTH_STORAGE_MODE=postgres`. RDS must live in private subnets, with a Security
+Group that allows `5432` only from ECS.
 
 ## Secrets Manager
 
-Secrets Manager debe guardar:
+Secrets Manager must store:
 
-- secreto de cliente demo o clientes reales;
-- secreto TGS;
-- secreto Service;
-- password o partes sensibles de conexion PostgreSQL;
-- cualquier valor futuro de cifrado operativo.
+- demo client secret or real client secrets;
+- TGS secret;
+- Service secret;
+- PostgreSQL password or sensitive connection parts;
+- any future operational encryption value.
 
-No crear versiones de secreto con valores reales en este repositorio. En AWS,
-las tareas ECS deben resolver secretos por ARN con el task role y permisos
-minimos.
+Do not create secret versions with real values in this repository. In AWS, ECS
+tasks must resolve secrets by ARN with the task role and least-privilege
+permissions.
 
 ## Logs
 
-Cada servicio debe escribir a CloudWatch Logs:
+Each service must write to CloudWatch Logs:
 
 - `/ecs/<prefix>/auth-as`
 - `/ecs/<prefix>/auth-tgs`
@@ -131,17 +131,17 @@ Cada servicio debe escribir a CloudWatch Logs:
 - `/ecs/<prefix>/auth-web-demo`
 - `/ecs/<prefix>/sample-login-app`
 
-Revisar errores de arranque, rechazos de sesion, fallos de origen permitido y
-latencia del flujo AS -> TGS -> Service.
+Review startup errors, session rejections, allowed-origin failures, and AS ->
+TGS -> Service flow latency.
 
-## Escalar Gateway
+## Scaling Gateway
 
-El Gateway puede escalar horizontalmente solo si las sesiones opacas se guardan
-en una capa distribuida. Con SQLite local, dos tareas Gateway no comparten
-estado. Para AWS se requiere PostgreSQL, Redis u otra capa server-side
-compartida con expiracion y logout coherente.
+The Gateway can scale horizontally only if opaque sessions are stored in a
+distributed layer. With local SQLite, two Gateway tasks do not share state. AWS
+requires PostgreSQL, Redis, or another server-side shared layer with coherent
+expiration and logout.
 
-## Estado
+## Status
 
-La fase deja el proyecto cloud-production readiness after validation. No lo
-deja production-ready real ni aplica infraestructura.
+This phase leaves the project at cloud-production readiness after validation.
+It does not make it truly production-ready or apply infrastructure.

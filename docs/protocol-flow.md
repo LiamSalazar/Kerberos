@@ -1,7 +1,8 @@
 # Protocol Flow
 
-El protocolo modular viaja por JSON/TCP entre AS, TGS y Service. El Gateway
-WebSocket es una capa externa de integracion y no cambia el contrato interno.
+The modular protocol travels over JSON/TCP between AS, TGS, and Service. The
+WebSocket Gateway is an external integration layer and does not change the
+internal contract.
 
 ## AS -> TGS -> Service
 
@@ -115,14 +116,14 @@ flowchart TB
 
 ## WebSocket Contract
 
-Entrada:
+Input:
 
 - `START_AUTH_FLOW`
 - `VERIFY_SESSION`
 - `LOGOUT_SESSION`
 - `PING`
 
-Salida:
+Output:
 
 - `FLOW_EVENT`
 - `FLOW_RESULT`
@@ -132,14 +133,14 @@ Salida:
 - `ERROR`
 - `PONG`
 
-`FLOW_RESULT.success=true` no es autorizacion final. La app debe esperar
+`FLOW_RESULT.success=true` is not final authorization. The app must wait for
 `SESSION_VALID`.
 
 ## Security Notes
 
-- No mostrar tickets crudos.
-- No mostrar claves.
-- No mostrar ciphertexts.
-- No mostrar payloads sensibles.
-- Enmascarar `sessionId`.
-- Usar `wss://` para cloud.
+- Do not show raw tickets.
+- Do not show keys.
+- Do not show ciphertexts.
+- Do not show sensitive payloads.
+- Mask `sessionId`.
+- Use `wss://` for cloud.

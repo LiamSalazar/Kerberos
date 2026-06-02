@@ -1,27 +1,27 @@
 # Execution Guide
 
-Guia para compilar, probar, ejecutar y auditar localmente. La ejecucion sin
-Docker sigue soportada; Docker Compose es opcional para demo reproducible.
+Guide to compile, test, run, and audit locally. Execution without Docker remains
+supported; Docker Compose is optional for a reproducible demo.
 
-## Requisitos
+## Requirements
 
-- Java 17 o superior.
+- Java 17 or higher.
 - Maven 3.9+.
-- Node.js 18+ y npm para `auth-web-demo`.
-- Python 3 para servir `sample-login-app` con los scripts locales.
+- Node.js 18+ and npm for `auth-web-demo`.
+- Python 3 to serve `sample-login-app` with the local scripts.
 - Git.
-- Docker Desktop es opcional para `docker-compose.yml`.
+- Docker Desktop is optional for `docker-compose.yml`.
 
 ## Maven
 
-Desde la raiz del repositorio:
+From the repository root:
 
 ```bash
 mvn -q -DskipTests compile
 mvn test
 ```
 
-Comandos principales de verificacion:
+Main verification commands:
 
 ```bash
 mvn -q -DskipTests compile
@@ -30,8 +30,8 @@ mvn -pl auth-storage-sqlite -am test
 mvn -pl auth-websocket-gateway -am test
 ```
 
-Fase 20 mantiene esas verificaciones como cierre minimo cuando se toca runtime,
-SQLite, PostgreSQL o Gateway.
+Phase 20 keeps these checks as the minimum closure when runtime, SQLite,
+PostgreSQL, or Gateway is touched.
 
 ## Dependency Audit
 
@@ -39,13 +39,13 @@ SQLite, PostgreSQL o Gateway.
 mvn dependency:tree
 ```
 
-Resumen versionado:
+Versioned summary:
 
 - `docs/audits/maven-dependency-audit.md`
 
-## Ejecutar Runtime Modular Con Scripts
+## Run Modular Runtime With Scripts
 
-En Windows, abre tres terminales para servidores y una para cliente:
+On Windows, open three terminals for servers and one for the client:
 
 ```cmd
 scripts\run-as.bat
@@ -63,12 +63,12 @@ scripts\run-service.bat
 scripts\run-client.bat
 ```
 
-Los scripts compilan con Maven y preparan el classpath runtime antes de lanzar
-la clase Java. Esto permite usar `AUTH_STORAGE_MODE=memory`,
-`AUTH_STORAGE_MODE=sqlite` o `AUTH_STORAGE_MODE=postgres` cuando el classpath
-incluye el modulo de almacenamiento correspondiente.
+The scripts compile with Maven and prepare the runtime classpath before
+launching the Java class. This allows `AUTH_STORAGE_MODE=memory`,
+`AUTH_STORAGE_MODE=sqlite`, or `AUTH_STORAGE_MODE=postgres` when the classpath
+includes the corresponding storage module.
 
-En Linux/macOS:
+On Linux/macOS:
 
 ```bash
 scripts/run-as.sh
@@ -77,15 +77,15 @@ scripts/run-service.sh
 scripts/run-client.sh
 ```
 
-## Ejecutar Runtime Modular Manualmente
+## Run Modular Runtime Manually
 
-Compila con Maven:
+Compile with Maven:
 
 ```bash
 mvn -q -DskipTests compile
 ```
 
-En Windows:
+On Windows:
 
 ```cmd
 java -cp auth-as\target\classes;auth-core\target\classes;auth-crypto\target\classes;auth-transport\target\classes com.portfolio.auth.as.AuthenticationServerApp
@@ -103,25 +103,25 @@ java -cp auth-service\target\classes;auth-core\target\classes;auth-crypto\target
 java -cp auth-client-sdk\target\classes;auth-core\target\classes;auth-crypto\target\classes;auth-transport\target\classes com.portfolio.auth.client.ClientCli
 ```
 
-Para ejecucion manual con SQLite, usa preferentemente los scripts porque
-incluyen `sqlite-jdbc` en el classpath.
+For manual execution with SQLite, prefer the scripts because they include
+`sqlite-jdbc` in the classpath.
 
-## Auditoria Modular
+## Modular Audit
 
-Con AS, TGS y Service modulares levantados:
+With modular AS, TGS, and Service running:
 
 ```cmd
 scripts\run-audit.bat --iterations 5
 ```
 
-El runner genera:
+The runner generates:
 
 - `docs/audits/latest-run.md`
 - `docs/audits/latest-run.json`
 
-## Auditoria De Concurrencia
+## Concurrency Audit
 
-Con AS, TGS y Service modulares levantados:
+With modular AS, TGS, and Service running:
 
 ```cmd
 scripts\run-concurrency-audit.bat --clients 25 --flows 100
@@ -133,20 +133,20 @@ Linux/macOS:
 scripts/run-concurrency-audit.sh --clients 25 --flows 100
 ```
 
-El runner genera:
+The runner generates:
 
 - `docs/audits/concurrency-latest-run.md`
 - `docs/audits/concurrency-latest-run.json`
 
-Tambien existe una prueba Maven que levanta servidores en puertos dinamicos:
+There is also a Maven test that starts servers on dynamic ports:
 
 ```bash
 mvn -pl auth-client-sdk -am test
 ```
 
-## SQLite Local
+## Local SQLite
 
-Crear o migrar base demo:
+Create or migrate the demo database:
 
 ```cmd
 scripts\init-sqlite-demo.bat --db data\auth-demo.sqlite
@@ -158,10 +158,10 @@ Linux/macOS:
 scripts/init-sqlite-demo.sh --db data/auth-demo.sqlite
 ```
 
-Las migraciones viven en `scripts/sqlite/migrations/` y se registran en
+Migrations live in `scripts/sqlite/migrations/` and are recorded in
 `schema_version`.
 
-Ejecutar servidores en modo SQLite:
+Run servers in SQLite mode:
 
 ```cmd
 set AUTH_STORAGE_MODE=sqlite
@@ -169,20 +169,20 @@ set AUTH_SQLITE_PATH=data\auth-demo.sqlite
 scripts\run-as.bat
 ```
 
-Repite las mismas variables para:
+Repeat the same variables for:
 
 ```cmd
 scripts\run-tgs.bat
 scripts\run-service.bat
 ```
 
-Modo memoria por defecto:
+Default memory mode:
 
 ```text
 AUTH_STORAGE_MODE=memory
 ```
 
-Administracion local:
+Local administration:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients list
@@ -190,7 +190,7 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite services list
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
 ```
 
-Registrar cliente/servicio:
+Register client/service:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<secret>"
@@ -199,49 +199,49 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id melodyfind
 
 ## WebSocket Gateway
 
-El gateway no levanta AS, TGS ni Service por su cuenta. Primero ejecuta los tres
-servidores modulares y luego:
+The Gateway does not start AS, TGS, or Service by itself. First run the three
+modular servers, then:
 
 ```cmd
 scripts\run-websocket-gateway.bat
 ```
 
-En Linux/macOS:
+On Linux/macOS:
 
 ```bash
 scripts/run-websocket-gateway.sh
 ```
 
-Por defecto escucha en `127.0.0.1:2800`. Puedes ajustar:
+By default it listens on `127.0.0.1:2800`. You can adjust:
 
 - `AUTH_WS_HOST`
 - `AUTH_WS_PORT`
 
-Prueba manual con una herramienta externa compatible con WebSocket, por ejemplo
-`websocat`:
+Manual test with an external WebSocket-compatible tool, for example `websocat`:
 
 ```bash
 websocat ws://127.0.0.1:2800
 ```
 
-Mensaje de entrada:
+Input message:
 
 ```json
 {"type":"START_AUTH_FLOW","requestId":"manual-1","clientId":"1","serviceId":"1"}
 ```
 
-Tambien responde:
+It also responds to:
 
 ```json
 {"type":"PING","requestId":"ping-1"}
 ```
 
-## Frontend Demo Local
+## Local Frontend Demo
 
-La demo web vive en `auth-web-demo/` y usa HTML, CSS y JavaScript vanilla. No
-usa React, Vite, TypeScript, bundler ni dependencias npm externas.
+The web demo lives in `auth-web-demo/` and uses vanilla HTML, CSS, and
+JavaScript. It does not use React, Vite, TypeScript, a bundler, or external npm
+dependencies.
 
-Instalar/validar:
+Install/validate:
 
 ```bash
 cd auth-web-demo
@@ -249,7 +249,7 @@ npm install
 npm run build
 ```
 
-Ejecutar:
+Run:
 
 ```cmd
 scripts\run-web-demo.bat
@@ -267,7 +267,7 @@ Default:
 http://127.0.0.1:5173
 ```
 
-Orden recomendado:
+Recommended order:
 
 ```text
 Terminal 1: scripts\run-as.bat
@@ -277,20 +277,20 @@ Terminal 4: scripts\run-websocket-gateway.bat
 Terminal 5: scripts\run-web-demo.bat
 ```
 
-Checklist manual:
+Manual checklist:
 
-- backend modular levantado;
-- gateway conectado en `ws://127.0.0.1:2800`;
-- frontend conectado;
-- boton `Start Auth Flow`;
-- eventos `FLOW_*` visibles;
-- `FLOW_RESULT success=true` con `sessionId` y `sessionExpiresAt`;
-- `VERIFY_SESSION` responde `SESSION_VALID`;
-- servicio concedido visible.
+- modular backend running;
+- gateway connected at `ws://127.0.0.1:2800`;
+- frontend connected;
+- `Start Auth Flow` button;
+- visible `FLOW_*` events;
+- `FLOW_RESULT success=true` with `sessionId` and `sessionExpiresAt`;
+- `VERIFY_SESSION` responds with `SESSION_VALID`;
+- granted service visible.
 
 ## Sample Login App
 
-`sample-login-app` no usa npm. Con AS, TGS, Service y Gateway levantados:
+`sample-login-app` does not use npm. With AS, TGS, Service, and Gateway running:
 
 ```cmd
 scripts\run-sample-login-app.bat
@@ -308,16 +308,16 @@ Default:
 http://127.0.0.1:5174
 ```
 
-Validar flujo exitoso con `clientId=1` y `serviceId=1`. Validar fallo con un
-`serviceId` inexistente. La app solo desbloquea el dashboard despues de
-`SESSION_VALID`, no solo por `FLOW_RESULT.success=true`. Ver
+Validate a successful flow with `clientId=1` and `serviceId=1`. Validate failure
+with a nonexistent `serviceId`. The app unlocks the dashboard only after
+`SESSION_VALID`, not only because `FLOW_RESULT.success=true`. See
 `docs/sample-login-app.md`.
 
-## Configuracion
+## Configuration
 
-Variables comunes:
+Common variables:
 
-- `AUTH_MODE`: `demo` o `strict`.
+- `AUTH_MODE`: `demo` or `strict`.
 - `AUTH_AS_PORT`
 - `AUTH_TGS_PORT`
 - `AUTH_SERVICE_PORT`
@@ -327,8 +327,8 @@ Variables comunes:
 - `AUTH_TICKET_TTL_MINUTES`
 - `AUTH_ALLOWED_SKEW_SECONDS`
 - `AUTH_REPLAY_WINDOW_SECONDS`
-- `AUTH_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
-- `AUTH_SQLITE_PATH`: ruta SQLite local.
+- `AUTH_STORAGE_MODE`: `memory`, `sqlite`, or `postgres`.
+- `AUTH_SQLITE_PATH`: local SQLite path.
 - `AUTH_POSTGRES_URL`
 - `AUTH_POSTGRES_USER`
 - `AUTH_POSTGRES_PASSWORD`
@@ -340,7 +340,7 @@ Variables comunes:
 - `AUTH_ALLOWED_ORIGINS`
 - `AUTH_SESSION_TTL_SECONDS`
 - `AUTH_SESSION_MAX_TTL_SECONDS`
-- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite` o `postgres`.
+- `AUTH_SESSION_STORAGE_MODE`: `memory`, `sqlite`, or `postgres`.
 - `AUTH_REQUIRE_SESSION_VERIFY`
 - `AUTH_SECRET_PROVIDER`
 - `AUTH_AWS_REGION`
@@ -349,15 +349,15 @@ Variables comunes:
 - `AUTH_SECRET_SERVICE_SECRET_ID`
 - `AUTH_SECRET_POSTGRES_PASSWORD_ID`
 
-`AUTH_MODE=demo` permite defaults de demo local y muestra una advertencia.
-`AUTH_MODE=strict` exige `AUTH_DEMO_CLIENT_SECRET`,
-`AUTH_DEMO_TGS_SECRET` y `AUTH_DEMO_SERVICE_SECRET` explicitos y rechaza
-defaults. `AUTH_DEMO_PBKDF2_SALT` es un parametro local de derivacion, no un
-secreto de la app externa.
+`AUTH_MODE=demo` allows local demo defaults and shows a warning.
+`AUTH_MODE=strict` requires explicit `AUTH_DEMO_CLIENT_SECRET`,
+`AUTH_DEMO_TGS_SECRET`, and `AUTH_DEMO_SERVICE_SECRET` and rejects defaults.
+`AUTH_DEMO_PBKDF2_SALT` is a local derivation parameter, not an external app
+secret.
 
 ## Docker Compose
 
-Preparar:
+Prepare:
 
 ```cmd
 copy .env.example .env
@@ -371,7 +371,7 @@ cp .env.example .env
 scripts/docker-up.sh
 ```
 
-Abrir:
+Open:
 
 ```text
 http://localhost:5173
@@ -379,29 +379,28 @@ http://localhost:5174
 ws://localhost:2800
 ```
 
-Ver logs:
+View logs:
 
 ```cmd
 scripts\docker-logs.bat
 ```
 
-Bajar:
+Stop:
 
 ```cmd
 scripts\docker-down.bat
 ```
 
-AS/TGS/Service no publican puertos al host en Compose. El volumen
-`auth-sqlite-data` conserva `/data/auth-demo.sqlite` hasta ejecutar
-`docker compose down -v`.
+AS/TGS/Service do not publish ports to the host in Compose. The
+`auth-sqlite-data` volume keeps `/data/auth-demo.sqlite` until
+`docker compose down -v` is executed.
 
-## Estado Legacy
+## Legacy Status
 
-La ruta historica fue retirada del proyecto principal. No hay comandos actuales
-para ejecutarla. Ver `docs/legacy-summary.md` para contexto historico.
+The historical path was removed from the main project. There are no current
+commands to run it. See `docs/legacy-summary.md` for historical context.
 
-## Futuro
+## Future
 
-TLS/mTLS, vault de secretos y despliegue cloud quedan fuera de esta fase.
-Para pruebas cloud futuras, usar `wss://`; `ws://` queda limitado a desarrollo
-local.
+TLS/mTLS, secrets vault, and cloud deployment are outside this phase. For future
+cloud tests, use `wss://`; `ws://` remains limited to local development.

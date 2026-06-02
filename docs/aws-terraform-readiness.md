@@ -1,9 +1,9 @@
 # AWS Terraform Readiness
 
-La carpeta `infra/aws/terraform/` es un AWS deployment blueprint. Esta preparada
-para revision y plan, no para apply automatico.
+The `infra/aws/terraform/` folder is an AWS deployment blueprint. It is prepared
+for review and plan, not for automatic apply.
 
-## Validaciones Permitidas
+## Allowed Validations
 
 ```bash
 cd infra/aws/terraform
@@ -14,51 +14,51 @@ terraform plan -var-file=terraform.tfvars
 terraform plan -var-file=terraform.tfvars.wss-test
 ```
 
-Si solo existe el ejemplo HTTPS:
+If only the HTTPS example exists:
 
 ```bash
 terraform plan -var-file=terraform.tfvars.https.example
 ```
 
-No ejecutar:
+Do not run:
 
 ```bash
 terraform apply
 ```
 
-## Componentes Del Blueprint
+## Blueprint Components
 
-- VPC con subnets publicas y privadas.
-- ALB publico.
-- Listener HTTP temporal.
-- Listener HTTPS/WSS 443 cuando `enable_https_listener=true`.
-- Redirect HTTP -> HTTPS cuando `redirect_http_to_https=true`.
-- ECS/Fargate para AS, TGS, Service, Gateway y frontends.
-- ECR para imagenes.
-- RDS PostgreSQL preparado.
-- Secrets Manager para secretos cloud.
+- VPC with public and private subnets.
+- Public ALB.
+- Temporary HTTP listener.
+- HTTPS/WSS 443 listener when `enable_https_listener=true`.
+- HTTP -> HTTPS redirect when `redirect_http_to_https=true`.
+- ECS/Fargate for AS, TGS, Service, Gateway, and frontends.
+- ECR for images.
+- Prepared RDS PostgreSQL.
+- Secrets Manager for cloud secrets.
 - CloudWatch Logs.
-- Service Discovery interno.
+- Internal Service Discovery.
 
-## Estado WSS
+## WSS Status
 
-El plan WSS/HTTPS valida que:
+The WSS/HTTPS plan validates that:
 
-- Existe listener HTTPS 443.
-- El ACM ARN es configurable.
-- HTTP puede redirigir a HTTPS.
-- El health check del Gateway usa `2801` y `/health`.
+- HTTPS listener 443 exists.
+- The ACM ARN is configurable.
+- HTTP can redirect to HTTPS.
+- The Gateway health check uses `2801` and `/health`.
 
-El ACM usado en evidencia es placeholder. Para despliegue real se requiere un
-certificado ACM valido.
+The ACM used in evidence is a placeholder. A valid ACM certificate is required
+for real deployment.
 
-## Que Falta Para AWS Real
+## What Is Missing For Real AWS
 
-1. Dominio real.
-2. Certificado ACM real.
-3. Secretos reales en Secrets Manager.
-4. Imagenes publicadas en ECR.
-5. Revision de costos.
-6. Ventana explicita para `terraform apply`.
+1. Real domain.
+2. Real ACM certificate.
+3. Real secrets in Secrets Manager.
+4. Images published to ECR.
+5. Cost review.
+6. Explicit window for `terraform apply`.
 
-No se ejecuto `terraform apply` y no se crearon recursos AWS.
+`terraform apply` was not executed and no AWS resources were created.

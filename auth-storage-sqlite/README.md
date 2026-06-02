@@ -1,14 +1,14 @@
 # auth-storage-sqlite
 
-Modulo de persistencia local SQLite para la ruta modular.
+Local SQLite persistence module for the modular path.
 
-Incluye:
+Includes:
 
-- repositorios `SQLitePrincipalRepository` y `SQLiteServiceRegistry`;
-- `SQLiteAuditRepository` para eventos de flujo del Gateway;
-- migraciones versionadas en `scripts/sqlite/migrations/`;
+- `SQLitePrincipalRepository` and `SQLiteServiceRegistry` repositories;
+- `SQLiteAuditRepository` for Gateway flow events;
+- versioned migrations in `scripts/sqlite/migrations/`;
 - `SQLiteDemoDatabaseInitializer`;
-- `SQLiteAdminCli` para clientes, servicios y consulta de auditoria.
+- `SQLiteAdminCli` for clients, services, and audit queries.
 
-No introduce ORM, Docker ni base externa. Las bases generadas `*.db`,
-`*.sqlite` y `*.sqlite3` no deben versionarse.
+It does not introduce an ORM, Docker, or an external database. Generated
+databases `*.db`, `*.sqlite`, and `*.sqlite3` must not be versioned.

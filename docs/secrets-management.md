@@ -1,13 +1,13 @@
 # Secrets Management
 
-Fase 20 agrega `SecretsProvider` en `auth-core` para preparar cloud sin subir
-secretos reales.
+Phase 20 adds `SecretsProvider` in `auth-core` to prepare cloud usage without
+committing real secrets.
 
-## Proveedores
+## Providers
 
-- `AUTH_SECRET_PROVIDER=env`: resuelve secretos desde variables de entorno.
-- `AUTH_SECRET_PROVIDER=aws-secrets-manager`: resuelve secretos desde AWS
-  Secrets Manager usando AWS SDK v2 y `AUTH_AWS_REGION`.
+- `AUTH_SECRET_PROVIDER=env`: resolves secrets from environment variables.
+- `AUTH_SECRET_PROVIDER=aws-secrets-manager`: resolves secrets from AWS
+  Secrets Manager using AWS SDK v2 and `AUTH_AWS_REGION`.
 
 ## Variables
 
@@ -20,30 +20,30 @@ AUTH_SECRET_SERVICE_SECRET_ID=<env-var-or-secret-arn>
 AUTH_SECRET_POSTGRES_PASSWORD_ID=<env-var-or-secret-arn>
 ```
 
-Con `env`, los IDs apuntan a nombres de variables. Con
-`aws-secrets-manager`, los IDs pueden ser nombres o ARNs de Secrets Manager.
+With `env`, IDs point to variable names. With `aws-secrets-manager`, IDs can be
+Secrets Manager names or ARNs.
 
 ## Strict Mode
 
-`AUTH_MODE=strict` exige secretos explicitos. Para validacion local se aceptan
+`AUTH_MODE=strict` requires explicit secrets. For local validation,
 `AUTH_DEMO_CLIENT_SECRET`, `AUTH_DEMO_TGS_SECRET`,
-`AUTH_DEMO_SERVICE_SECRET` y `AUTH_POSTGRES_PASSWORD`. Para cloud se recomienda
-usar los IDs anteriores y no inyectar valores secretos como texto plano.
+`AUTH_DEMO_SERVICE_SECRET`, and `AUTH_POSTGRES_PASSWORD` are accepted. For
+cloud, use the IDs above and do not inject secret values as plain text.
 
-Si falta un secreto requerido, el runtime falla al arrancar con un mensaje que
-nombra la variable o referencia faltante. El mensaje no imprime el valor del
-secreto.
+If a required secret is missing, the runtime fails at startup with a message
+that names the missing variable or reference. The message does not print the
+secret value.
 
 ## AWS
 
-Antes de un despliegue real:
+Before a real deployment:
 
-1. Crear secretos en Secrets Manager.
-2. Cargar versiones de secreto fuera del repositorio.
-3. Pasar los ARNs como variables de entorno o mediante Terraform.
-4. Dar al task role ECS permiso `secretsmanager:GetSecretValue` solo sobre esos
-   secretos.
-5. Verificar logs de arranque sin imprimir passwords, claves, tickets ni
+1. Create secrets in Secrets Manager.
+2. Load secret versions outside the repository.
+3. Pass ARNs as environment variables or through Terraform.
+4. Give the ECS task role `secretsmanager:GetSecretValue` permission only for
+   those secrets.
+5. Verify startup logs without printing passwords, keys, tickets, or
    ciphertexts.
 
-No se ejecuta AWS real en esta fase.
+No real AWS execution occurs in this phase.

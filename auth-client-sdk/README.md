@@ -1,11 +1,11 @@
 # auth-client-sdk
 
-SDK cliente del sistema de autenticacion.
+Client SDK for the authentication system.
 
-Su objetivo sera exponer:
+Its goal is to expose:
 
-- APIs para solicitar TGT y tickets de servicio
-- contratos de cliente reutilizables
-- configuracion y helpers de integracion
+- APIs to request TGTs and service tickets
+- reusable client contracts
+- configuration and integration helpers
 
-Este modulo no debe contener el codigo de los servidores.
+This module must not contain server code.

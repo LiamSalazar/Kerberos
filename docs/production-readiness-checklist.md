@@ -1,44 +1,42 @@
 # Production Readiness Checklist
 
-Checklist para una fase posterior. No marca el sistema como production-ready.
+Checklist for a later phase. It does not mark the system as production-ready.
 
-## Codigo Y Build
+## Code And Build
 
-- [x] Maven corre desde la raiz.
-- [x] CI apunta a la raiz.
-- [x] Docker Compose apunta a la raiz.
-- [x] `auth-storage-postgres` existe en el reactor Maven.
-- [x] Docker validado en Linux.
+- [x] Maven runs from the repository root.
+- [x] CI points to the root.
+- [x] Docker Compose points to the root.
+- [x] `auth-storage-postgres` exists in the Maven reactor.
+- [x] Docker validated on Linux.
 
-## Seguridad
+## Security
 
-- [x] `AUTH_MODE=strict` existe para rechazar secretos demo.
-- [x] `VERIFY_SESSION` existe antes de conceder acceso.
-- [x] `SecretsProvider` soporta env y AWS Secrets Manager sin llamar AWS en tests normales.
-- [x] Terraform referencia Secrets Manager para tareas ECS.
+- [x] `AUTH_MODE=strict` exists to reject demo secrets.
+- [x] `VERIFY_SESSION` exists before granting access.
+- [x] `SecretsProvider` supports env and AWS Secrets Manager without calling AWS in normal tests.
+- [x] Terraform references Secrets Manager for ECS tasks.
 
-## Persistencia
+## Persistence
 
-- [x] SQLite local con migraciones.
-- [x] Auditoria persistente local.
-- [x] PostgreSQL implementado como modulo real.
-- [x] Migraciones PostgreSQL versionadas.
-- [x] Sesiones opacas soportan repositorio PostgreSQL compartido.
+- [x] Local SQLite with migrations.
+- [x] Local persistent audit.
+- [x] PostgreSQL implemented as a real module.
+- [x] Versioned PostgreSQL migrations.
+- [x] Opaque sessions support a shared PostgreSQL repository.
 
-## Operacion
+## Operation
 
-- [x] CloudWatch Logs previsto en Terraform.
-- [x] Health endpoints reales para procesos Java y ALB Gateway.
-- [x] Metricas basicas en memoria y `/metrics`.
+- [x] CloudWatch Logs planned in Terraform.
+- [x] Real health endpoints for Java processes and the Gateway ALB target.
+- [x] Basic in-memory metrics and `/metrics`.
 
 ## AWS
 
-- [x] Skeleton Terraform creado.
-- [x] Blueprint actualizado para ALB/WSS, Gateway `/health`, Secrets Manager y RDS.
-- [x] `terraform fmt` y `terraform validate` ejecutados en entorno con Terraform.
-- [x] `terraform plan` revisado con variables reales no secretas.
-- [ ] DNS y ACM configurados.
-- [ ] ECR push validado.
-- [ ] ECS deployment validado en cuenta sandbox.
-
-
+- [x] Terraform skeleton created.
+- [x] Blueprint updated for ALB/WSS, Gateway `/health`, Secrets Manager, and RDS.
+- [x] `terraform fmt` and `terraform validate` executed in an environment with Terraform.
+- [x] `terraform plan` reviewed with real non-secret variables.
+- [ ] DNS and ACM configured.
+- [ ] ECR push validated.
+- [ ] ECS deployment validated in a sandbox account.

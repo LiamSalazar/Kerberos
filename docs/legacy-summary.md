@@ -1,23 +1,23 @@
 # Legacy Summary
 
-Antes de la ruta modular, el proyecto tuvo una implementacion historica de demo
-con servidores y cliente escritos como clases Java directas, comunicacion por
-serializacion de objetos y contratos basados en mapas.
+Before the modular path, the project had a historical demo implementation with
+servers and client written as direct Java classes, object-serialization
+communication, and map-based contracts.
 
-Esa implementacion fue util para demostrar el flujo conceptual inicial:
+That implementation was useful to demonstrate the initial conceptual flow:
 
 - Authentication Server;
 - Ticket Granting Server;
 - Service Server;
 - Client.
 
-En Fase 8.1 fue reemplazada como ruta principal por los modulos `auth-*`, que
-usan DTOs, JSON/TCP, AES-GCM con `CryptoEnvelope`, replay cache, configuracion
-demo/strict, pruebas Maven y auditoria reproducible.
+In Phase 8.1 it was replaced as the main path by the `auth-*` modules, which
+use DTOs, JSON/TCP, AES-GCM with `CryptoEnvelope`, replay cache,
+demo/strict configuration, Maven tests, and reproducible audit evidence.
 
-En Fase 9 se retiraron tambien los adaptadores internos de transporte que
-existian para Java serialization y mappers historicos.
+In Phase 9, the internal transport adapters that preserved Java serialization
+and historical mappers were also removed.
 
-El codigo legacy fisico ya no forma parte del proyecto principal. Este documento
-se conserva solo como referencia historica; no describe una ruta ejecutable
-actual.
+The physical legacy code is no longer part of the main project. This document
+is kept only as historical reference; it does not describe a currently
+executable path.

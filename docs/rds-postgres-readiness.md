@@ -1,19 +1,19 @@
 # RDS PostgreSQL Readiness
 
-Fase 20 implementa `auth-storage-postgres` como modo cloud recomendado para
-persistencia compartida. SQLite se mantiene para demo/local y `memory` se
-mantiene para desarrollo.
+Phase 20 implements `auth-storage-postgres` as the recommended cloud mode for
+shared persistence. SQLite remains for demo/local use, and `memory` remains for
+development.
 
-## Modos
+## Modes
 
 ```text
 AUTH_STORAGE_MODE=memory|sqlite|postgres
 AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres
 ```
 
-Si `AUTH_SESSION_STORAGE_MODE` no se define, usa `AUTH_STORAGE_MODE`.
+If `AUTH_SESSION_STORAGE_MODE` is not defined, it uses `AUTH_STORAGE_MODE`.
 
-## Variables PostgreSQL
+## PostgreSQL Variables
 
 ```text
 AUTH_POSTGRES_URL=jdbc:postgresql://<host>:5432/kerberos_auth
@@ -22,22 +22,22 @@ AUTH_POSTGRES_PASSWORD=<local-only-password>
 AUTH_POSTGRES_SSL_MODE=require
 ```
 
-En AWS, resolver el password con:
+In AWS, resolve the password with:
 
 ```text
 AUTH_SECRET_PROVIDER=aws-secrets-manager
 AUTH_SECRET_POSTGRES_PASSWORD_ID=<secret-name-or-arn>
 ```
 
-## Migraciones
+## Migrations
 
-Las migraciones viven en:
+Migrations live in:
 
 ```text
 scripts/postgres/migrations/
 ```
 
-Incluyen:
+They include:
 
 - `principals`
 - `services`
@@ -45,17 +45,18 @@ Incluyen:
 - `auth_sessions`
 - `schema_version`
 
-Las pruebas normales validan la presencia y compatibilidad conceptual de los
-scripts sin requerir un PostgreSQL externo.
+Normal tests validate the presence and conceptual compatibility of the scripts
+without requiring external PostgreSQL.
 
 ## RDS
 
-RDS debe vivir en subnets privadas, sin IP publica, con Security Group que
-permita `5432` solo desde ECS. Antes de AWS real faltan validar backups,
-retention, cifrado, parametros, rotacion de secreto y pruebas de restauracion.
+RDS must live in private subnets, without a public IP, with a Security Group
+that allows `5432` only from ECS. Before real AWS usage, backups, retention,
+encryption, parameters, secret rotation, and restore tests still need
+validation.
 
-## Sesiones Opacas
+## Opaque Sessions
 
-Para multiples instancias del Gateway, usar `AUTH_SESSION_STORAGE_MODE=postgres`.
-`memory` no comparte sesiones entre replicas y SQLite no es recomendado para
-escalado cloud.
+For multiple Gateway instances, use `AUTH_SESSION_STORAGE_MODE=postgres`.
+`memory` does not share sessions between replicas, and SQLite is not
+recommended for cloud scaling.

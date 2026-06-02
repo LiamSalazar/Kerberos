@@ -1,38 +1,37 @@
 # Security Validation Lab
 
-`auth-web-demo` incluye una seccion visual llamada Security Validation Lab. Su
-objetivo es mostrar escenarios validados y escenarios de demo sin inventar
-pruebas.
+`auth-web-demo` includes a visual section called Security Validation Lab. Its
+goal is to show validated scenarios and demo scenarios without inventing tests.
 
-## Escenarios
+## Scenarios
 
-| Escenario | Resultado esperado | Tipo |
+| Scenario | Expected result | Type |
 | --- | --- | --- |
-| Valid client and service | `ACCESS GRANTED`, luego `SESSION_VALID` | live/manual flow |
-| Unknown client | `ACCESS DENIED`, `CLIENT_NOT_FOUND` o evidencia `UNKNOWN_CLIENT` | demo security scenario |
-| Unknown service | `ACCESS DENIED`, `SERVICE_NOT_FOUND` o `TGS_UNKNOWN_SERVICE` | demo security scenario |
+| Valid client and service | `ACCESS GRANTED`, then `SESSION_VALID` | live/manual flow |
+| Unknown client | `ACCESS DENIED`, `CLIENT_NOT_FOUND` or evidence `UNKNOWN_CLIENT` | demo security scenario |
+| Unknown service | `ACCESS DENIED`, `SERVICE_NOT_FOUND` or `TGS_UNKNOWN_SERVICE` | demo security scenario |
 | Invalid session verification | `SESSION_INVALID` | demo security scenario |
-| Replay protection | replay rechazado por replay cache | validated by automated tests |
-| Expired session | `SESSION_INVALID` con `EXPIRED` | validated by automated tests |
-| Sensitive data exposure | tickets/keys/ciphertexts ocultos y `sessionId` enmascarado | validated by UI contract |
+| Replay protection | replay rejected by replay cache | validated by automated tests |
+| Expired session | `SESSION_INVALID` with `EXPIRED` | validated by automated tests |
+| Sensitive data exposure | tickets/keys/ciphertexts hidden and `sessionId` masked | validated by UI contract |
 
-## Botones Live
+## Live Buttons
 
-Si el Gateway esta conectado, la UI puede disparar:
+If the Gateway is connected, the UI can trigger:
 
 - Test Unknown Client.
 - Test Unknown Service.
 - Test Invalid Session.
 
-Estos botones usan el mismo contrato WebSocket existente. No agregan endpoints
-ni cambian el backend.
+These buttons use the same existing WebSocket contract. They do not add
+endpoints or change the backend.
 
-## Evidencia Automatizada
+## Automated Evidence
 
-- Replay: `InMemoryReplayCacheTest` y pruebas de flujo modular.
-- Expired session: `GatewaySessionServiceTest` y repositorios de sesion.
-- Unknown client/service: pruebas de Gateway y flujo modular.
-- Docker/PostgreSQL/Terraform: evidencia documentada en `validation-results/`
-  y `docs/project-validation-results.md`.
+- Replay: `InMemoryReplayCacheTest` and modular flow tests.
+- Expired session: `GatewaySessionServiceTest` and session repositories.
+- Unknown client/service: Gateway and modular flow tests.
+- Docker/PostgreSQL/Terraform: evidence documented in `validation-results/`
+  and `docs/project-validation-results.md`.
 
-La seccion visual no sustituye `mvn test`.
+The visual section does not replace `mvn test`.

@@ -1,10 +1,9 @@
 # SQLite Audit Sample
 
-Ejemplo seguro de eventos persistidos en `auth_audit_events`.
+Safe example of events persisted in `auth_audit_events`.
 
-No contiene secretos, claves, tickets completos, ciphertexts ni payloads
-internos. Los valores son representativos de un flujo iniciado por
-`sample-login-app`.
+It contains no secrets, keys, full tickets, ciphertexts, or internal payloads.
+The values are representative of a flow started by `sample-login-app`.
 
 | requestId | clientId | serviceId | eventType | status | errorType | latencyMs |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -13,7 +12,7 @@ internos. Los valores son representativos de un flujo iniciado por
 | sample-login-2 | 1 | missing-service | AUTH_FLOW_STARTED | STARTED | - | 0 |
 | sample-login-2 | 1 | missing-service | AUTH_FLOW_FAILED | FAILURE | TGS_UNKNOWN_SERVICE | 17 |
 
-Consulta local:
+Local query:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20

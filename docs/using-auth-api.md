@@ -1,41 +1,41 @@
 # Using Auth API
 
-Esta guia muestra como una app propia puede usar el Gateway como capa local de
-autenticacion modular. No es MIT Kerberos oficial y no esta listo para
-produccion critica.
+This guide shows how your own app can use the Gateway as a local modular
+authentication layer. It is not official MIT Kerberos and is not ready for
+critical production use.
 
 ## Integration Model
 
-La app externa no se conecta a SQLite. SQLite guarda clientes, servicios,
-secretos demo, auditoria y sesiones del sistema de autenticacion. La app debe
-hablar con el Gateway o con `auth-client-sdk`.
+The external app does not connect to SQLite. SQLite stores clients, services,
+demo secrets, audit events, and sessions for the authentication system. The app
+must talk to the Gateway or to `auth-client-sdk`.
 
-En cloud, la misma regla aplica para PostgreSQL/RDS: la app externa no consulta
-la base compartida. Debe validar sesiones opacas con `VERIFY_SESSION` y aceptar
-acceso solo con `SESSION_VALID`.
+In cloud, the same rule applies to PostgreSQL/RDS: the external app does not
+query the shared database. It must validate opaque sessions with
+`VERIFY_SESSION` and accept access only with `SESSION_VALID`.
 
 ## How To Secure Your Own App With This Project
 
-1. Registrar cliente:
+1. Register the client:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite clients add --id app-client --display-name "App Client" --secret "<demo-secret>"
 ```
 
-2. Registrar servicio:
+2. Register the service:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite services add --id app-service --display-name "App Service" --secret "<demo-secret>" --endpoint local://app-service
 ```
 
-3. Configurar SQLite:
+3. Configure SQLite:
 
 ```cmd
 set AUTH_STORAGE_MODE=sqlite
 set AUTH_SQLITE_PATH=data\auth-demo.sqlite
 ```
 
-4. Levantar sistema:
+4. Start the system:
 
 ```cmd
 scripts\run-as.bat
@@ -44,13 +44,13 @@ scripts\run-service.bat
 scripts\run-websocket-gateway.bat
 ```
 
-5. Enviar `START_AUTH_FLOW`:
+5. Send `START_AUTH_FLOW`:
 
 ```json
 {"type":"START_AUTH_FLOW","requestId":"app-req-1","clientId":"app-client","serviceId":"app-service"}
 ```
 
-6. Leer `FLOW_RESULT`:
+6. Read `FLOW_RESULT`:
 
 ```js
 if (message.type === "FLOW_RESULT" && message.success === true && message.sessionId) {
@@ -59,13 +59,13 @@ if (message.type === "FLOW_RESULT" && message.success === true && message.sessio
 }
 ```
 
-7. Validar con `VERIFY_SESSION`:
+7. Validate with `VERIFY_SESSION`:
 
 ```json
 {"type":"VERIFY_SESSION","requestId":"verify-1","sessionId":"opaque-session-id","clientId":"app-client","serviceId":"app-service"}
 ```
 
-8. Conceder acceso solo con `SESSION_VALID`:
+8. Grant access only with `SESSION_VALID`:
 
 ```js
 if (message.type === "SESSION_VALID" && message.valid === true) {
@@ -73,13 +73,13 @@ if (message.type === "SESSION_VALID" && message.valid === true) {
 }
 ```
 
-9. Cerrar sesion:
+9. Close the session:
 
 ```json
 {"type":"LOGOUT_SESSION","requestId":"logout-1","sessionId":"opaque-session-id"}
 ```
 
-10. Consultar auditoria:
+10. Query audit events:
 
 ```cmd
 scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit list --limit 20
@@ -88,10 +88,10 @@ scripts\sqlite-admin.bat --db data\auth-demo.sqlite audit by-request --request-i
 
 ## Security Limits
 
-- `FLOW_RESULT.success=true` no es autorizacion final.
-- La autoridad practica de sesion es el Gateway.
-- La sesion opaca no debe guardarse en `localStorage` para esta demo.
-- `ws://` es solo local; en cloud usar `wss://`.
-- Para multiples instancias del Gateway, usar `AUTH_SESSION_STORAGE_MODE=postgres`.
-- No hay RSA, JWT ni CA en esta fase.
-- La app externa sigue a cargo de roles, permisos, cookies, CSRF, TLS y negocio.
+- `FLOW_RESULT.success=true` is not final authorization.
+- The practical session authority is the Gateway.
+- The opaque session should not be stored in `localStorage` for this demo.
+- `ws://` is local only; use `wss://` in cloud.
+- For multiple Gateway instances, use `AUTH_SESSION_STORAGE_MODE=postgres`.
+- There is no RSA, JWT, or CA in this phase.
+- The external app remains responsible for roles, permissions, cookies, CSRF, TLS, and business logic.

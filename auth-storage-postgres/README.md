@@ -1,18 +1,18 @@
 # auth-storage-postgres
 
-Modulo PostgreSQL para Fase 20. Implementa los contratos de `auth-core` sin
-ORM pesado y prepara el uso de RDS como almacenamiento cloud compartido.
+PostgreSQL module for Phase 20. It implements the `auth-core` contracts without
+a heavy ORM and prepares RDS usage as shared cloud storage.
 
-## Incluye
+## Includes
 
 - `PostgresPrincipalRepository`
 - `PostgresServiceRegistry`
 - `PostgresAuditRepository`
 - `PostgresSessionRepository`
 - `PostgresMigrationRunner`
-- migraciones en `scripts/postgres/migrations/`
+- migrations in `scripts/postgres/migrations/`
 
-## Configuracion
+## Configuration
 
 ```text
 AUTH_STORAGE_MODE=postgres
@@ -23,18 +23,18 @@ AUTH_POSTGRES_PASSWORD=<local-only-password>
 AUTH_POSTGRES_SSL_MODE=require
 ```
 
-En cloud, usar `AUTH_SECRET_PROVIDER=aws-secrets-manager` y
-`AUTH_SECRET_POSTGRES_PASSWORD_ID` en lugar de versionar passwords.
+In cloud environments, use `AUTH_SECRET_PROVIDER=aws-secrets-manager` and
+`AUTH_SECRET_POSTGRES_PASSWORD_ID` instead of versioning passwords.
 
-## Pruebas
+## Tests
 
-Las pruebas normales no requieren un PostgreSQL real:
+Normal tests do not require a real PostgreSQL instance:
 
 ```bash
 mvn -pl auth-storage-postgres -am test
 ```
 
-La prueba real futura queda deshabilitada por defecto:
+The future real integration test remains disabled by default:
 
 ```bash
 AUTH_POSTGRES_URL=jdbc:postgresql://localhost:5432/kerberos_auth \
@@ -43,4 +43,4 @@ AUTH_POSTGRES_PASSWORD=<password> \
 mvn -pl auth-storage-postgres -am -Ppostgres-it -Dpostgres.it=true test
 ```
 
-No ejecutar esta prueba con credenciales reales versionadas.
+Do not run this test with versioned real credentials.

@@ -1,39 +1,39 @@
 # Opaque Session Model
 
-Fase 18 cierra una brecha importante del Gateway: una app externa no debe
-tratar `FLOW_RESULT.success=true` como autorizacion final. Ese campo es una
-senal de que el flujo AS -> TGS -> Service termino bien, pero puede ser
-manipulado si la app lo usa como estado local definitivo.
+Phase 18 closes an important Gateway gap: an external app must not treat
+`FLOW_RESULT.success=true` as final authorization. That field signals that the
+AS -> TGS -> Service flow completed successfully, but it can be manipulated if
+the app uses it as definitive local state.
 
 ## Decision
 
-El Gateway emite una sesion opaca, aleatoria y verificable del lado servidor.
-No se usa RSA, JWT ni autoridad certificadora en esta fase.
+The Gateway issues an opaque, random, server-side verifiable session. This phase
+does not use RSA, JWT, or a certificate authority.
 
-La sesion opaca:
+The opaque session:
 
-- no contiene secretos;
-- no contiene tickets;
-- no contiene ciphertexts;
-- no contiene material criptografico sensible;
-- vive en memoria, SQLite o PostgreSQL del sistema de autenticacion;
-- se asocia a `requestId`, `clientId` y `serviceId`;
-- expira;
-- puede revocarse con `LOGOUT_SESSION`.
+- contains no secrets;
+- contains no tickets;
+- contains no ciphertexts;
+- contains no sensitive cryptographic material;
+- lives in memory, SQLite, or PostgreSQL inside the authentication system;
+- is associated with `requestId`, `clientId`, and `serviceId`;
+- expires;
+- can be revoked with `LOGOUT_SESSION`.
 
 ## Flow
 
-1. La app envia `START_AUTH_FLOW`.
-2. El Gateway ejecuta AS -> TGS -> Service.
-3. Si el servicio concede acceso, el Gateway guarda una sesion server-side.
-4. `FLOW_RESULT` devuelve `sessionId` y `sessionExpiresAt`.
-5. La app envia `VERIFY_SESSION`.
-6. Solo `SESSION_VALID` permite abrir el recurso propio.
-7. En logout, la app envia `LOGOUT_SESSION`.
+1. The app sends `START_AUTH_FLOW`.
+2. The Gateway runs AS -> TGS -> Service.
+3. If the service grants access, the Gateway stores a server-side session.
+4. `FLOW_RESULT` returns `sessionId` and `sessionExpiresAt`.
+5. The app sends `VERIFY_SESSION`.
+6. Only `SESSION_VALID` allows the app's own resource to open.
+7. On logout, the app sends `LOGOUT_SESSION`.
 
 ## Verification
 
-`VERIFY_SESSION` requiere:
+`VERIFY_SESSION` requires:
 
 ```json
 {
@@ -45,9 +45,9 @@ La sesion opaca:
 }
 ```
 
-El Gateway responde `SESSION_VALID` si la sesion existe, sigue activa, no
-expiró y corresponde al mismo cliente y servicio. Si no, responde
-`SESSION_INVALID` con una razon:
+The Gateway responds with `SESSION_VALID` if the session exists, is still
+active, has not expired, and matches the same client and service. Otherwise, it
+responds with `SESSION_INVALID` and a reason:
 
 - `NOT_FOUND`
 - `EXPIRED`
@@ -57,34 +57,34 @@ expiró y corresponde al mismo cliente y servicio. Si no, responde
 
 ## Expiration
 
-La expiracion respeta el principio temporal del flujo: la sesion del Gateway no
-debe durar mas que la respuesta del servicio. Cuando `ServiceResponse.expiresAt`
-esta disponible, el Gateway usa el menor valor entre:
+Expiration follows the temporal principle of the flow: the Gateway session must
+not last longer than the service response. When `ServiceResponse.expiresAt` is
+available, the Gateway uses the lowest value among:
 
 - `ServiceResponse.expiresAt`;
 - `AUTH_SESSION_TTL_SECONDS`;
 - `AUTH_SESSION_MAX_TTL_SECONDS`.
 
-Si en una evolucion futura no pudiera propagarse `expiresAt`, el limite
-operativo quedaria en `AUTH_SESSION_MAX_TTL_SECONDS` y debe documentarse.
+If a future evolution could not propagate `expiresAt`, the operational limit
+would be `AUTH_SESSION_MAX_TTL_SECONDS` and must be documented.
 
 ## Storage
 
-`AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres` controla donde vive la
-sesion. Si no se configura, sigue el valor de `AUTH_STORAGE_MODE`; por eso
-`sqlite` persiste sesiones en `auth_sessions` cuando el stack local usa SQLite
-y `postgres` las guarda en una base compartida apta para multiples instancias
-del Gateway.
+`AUTH_SESSION_STORAGE_MODE=memory|sqlite|postgres` controls where the session
+lives. If it is not configured, it follows `AUTH_STORAGE_MODE`; therefore
+`sqlite` persists sessions in `auth_sessions` when the local stack uses SQLite,
+and `postgres` stores them in a shared database suitable for multiple Gateway
+instances.
 
-SQLite sigue siendo interno al sistema de autenticacion. Una app externa no debe
-abrir esa base para validar sesiones; debe usar `VERIFY_SESSION`.
+SQLite remains internal to the authentication system. An external app must not
+open that database to validate sessions; it must use `VERIFY_SESSION`.
 
-En cloud, `memory` no sirve para multiples replicas y SQLite no es recomendado
-como almacenamiento compartido. Usar PostgreSQL/RDS para que `VERIFY_SESSION` y
-`LOGOUT_SESSION` sean coherentes entre instancias del Gateway.
+In cloud, `memory` does not work for multiple replicas and SQLite is not
+recommended as shared storage. Use PostgreSQL/RDS so `VERIFY_SESSION` and
+`LOGOUT_SESSION` are coherent across Gateway instances.
 
 ## Limits
 
-Este modelo no reemplaza TLS, WSS, politica de roles, permisos de negocio,
-proteccion CSRF/cookies ni gestion productiva de secretos. `ws://` es solo para
-desarrollo local; en cloud se debe usar `wss://` delante del Gateway.
+This model does not replace TLS, WSS, role policy, business permissions,
+CSRF/cookie protection, or production secrets management. `ws://` is only for
+local development; in cloud, use `wss://` in front of the Gateway.

@@ -1,43 +1,40 @@
 # Cloud Production Readiness
 
-Este proyecto no debe presentarse como production-ready empresarial. Fase 20
-prepara un camino cloud-production readiness y documenta lo que falta para
-endurecerlo.
+This project must not be presented as enterprise production-ready. Phase 20
+prepares a cloud-production readiness path and documents what is still missing
+to harden it.
 
-## Ya Preparado
+## Already Prepared
 
-- Monorepo real en la raiz.
-- Maven ejecutable desde la raiz.
-- Docker Compose listo para validacion Linux.
-- Gateway WebSocket con sesiones opacas verificables.
-- Auditoria persistente SQLite local.
-- Modulo `auth-storage-postgres` con repositorios JDBC y migraciones SQL.
-- `SecretsProvider` con `env` y AWS Secrets Manager preparado.
-- Health HTTP ligero y endpoint `/metrics` para procesos Java.
-- Logs JSON sanitizados en el Gateway para flujo y sesiones.
-- Skeleton Terraform para ECS Fargate, ECR, ALB, VPC, Security Groups,
-  Secrets Manager, CloudWatch, IAM y RDS PostgreSQL opcional.
-- Documentacion de despliegue y validacion.
+- Real monorepo at the root.
+- Maven executable from the root.
+- Docker Compose ready for Linux validation.
+- WebSocket Gateway with verifiable opaque sessions.
+- Local persistent SQLite audit.
+- `auth-storage-postgres` module with JDBC repositories and SQL migrations.
+- `SecretsProvider` with `env` and prepared AWS Secrets Manager support.
+- Lightweight HTTP health and `/metrics` endpoint for Java processes.
+- Sanitized JSON logs in the Gateway for flow and sessions.
+- Terraform skeleton for ECS Fargate, ECR, ALB, VPC, Security Groups,
+  Secrets Manager, CloudWatch, IAM, and optional RDS PostgreSQL.
+- Deployment and validation documentation.
 
-## Pendiente Para Production-Ready Real
+## Pending For Real Production-Ready Status
 
-- Publicar imagenes reales en ECR.
-- Crear certificados ACM y DNS reales.
-- Validar `auth-storage-postgres` contra PostgreSQL/RDS real.
-- Cargar secretos reales en Secrets Manager fuera del repositorio.
-- Agregar TLS/mTLS o proteccion equivalente para trafico interno.
-- Definir backup, restore, retention y rotacion.
-- Agregar observabilidad operacional completa: alarmas, dashboards y trazas.
-- Hacer revision de amenazas y pruebas de carga.
+- Publish real images to ECR.
+- Create real ACM certificates and DNS.
+- Validate `auth-storage-postgres` against real PostgreSQL/RDS.
+- Load real secrets in Secrets Manager outside the repository.
+- Add TLS/mTLS or equivalent protection for internal traffic.
+- Define backup, restore, retention, and rotation.
+- Add complete operational observability: alarms, dashboards, and traces.
+- Perform threat review and load testing.
 
-## Riesgos Restantes
+## Remaining Risks
 
-- El replay cache sigue siendo local por proceso.
-- El modo SQLite no escala horizontalmente.
-- El Gateway ya tiene health HTTP, pero falta validarlo detras de ALB real.
-- El protocolo interno TCP/JSON no tiene mTLS.
-- `AUTH_MODE=strict` puede resolver Secrets Manager, pero falta cargar secretos
-  reales
-- La autorizacion de negocio sigue fuera del sistema demo.
-
-
+- The replay cache is still local per process.
+- SQLite mode does not scale horizontally.
+- The Gateway already has HTTP health, but still needs validation behind a real ALB.
+- The internal TCP/JSON protocol has no mTLS.
+- `AUTH_MODE=strict` can resolve Secrets Manager, but real secrets still need to be loaded.
+- Business authorization remains outside the demo system.

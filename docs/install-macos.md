@@ -1,44 +1,44 @@
 # macOS Installation Guide
 
-Guia para ejecutar el proyecto en macOS con Homebrew, Maven y Docker Desktop.
+Guide to run the project on macOS with Homebrew, Maven, and Docker Desktop.
 
-## 1. Instalar Homebrew
+## 1. Install Homebrew
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-## 2. Instalar Dependencias
+## 2. Install Dependencies
 
 ```bash
 brew install git openjdk maven
 brew install --cask docker
 ```
 
-Abra Docker Desktop y espere a que Docker este iniciado:
+Open Docker Desktop and wait until Docker has started:
 
 ```bash
 docker version
 docker compose version
 ```
 
-## 3. Clonar
+## 3. Clone
 
 ```bash
 git clone <repo-url> Kerberos
 cd Kerberos
 ```
 
-## 4. Validar Maven
+## 4. Validate Maven
 
 ```bash
 mvn validate
 mvn test
 ```
 
-## 5. Ejecutar Sin Docker
+## 5. Run Without Docker
 
-Use terminales separadas:
+Use separate terminals:
 
 ```bash
 scripts/run-as.sh
@@ -49,14 +49,14 @@ scripts/run-web-demo.sh
 scripts/run-sample-login-app.sh
 ```
 
-Abrir:
+Open:
 
 ```text
 http://localhost:5173
 http://localhost:5174
 ```
 
-## 6. Ejecutar Con Docker Compose
+## 6. Run With Docker Compose
 
 SQLite:
 
@@ -67,7 +67,7 @@ docker compose up -d
 curl http://localhost:2801/health
 ```
 
-PostgreSQL local:
+Local PostgreSQL:
 
 ```bash
 docker compose --env-file .env.postgres --profile postgres-local build
@@ -76,7 +76,7 @@ docker compose --env-file .env.postgres --profile postgres-local ps
 curl http://localhost:2801/health
 ```
 
-Apagar:
+Stop:
 
 ```bash
 docker compose --env-file .env.postgres --profile postgres-local down

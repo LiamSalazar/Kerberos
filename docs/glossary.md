@@ -1,38 +1,38 @@
 # Glossary
 
-| Termino | Significado |
+| Term | Meaning |
 | --- | --- |
-| AS | Authentication Server. Valida identidad inicial del cliente. |
-| TGS | Ticket Granting Server. Entrega acceso conceptual al servicio solicitado. |
-| Service | Servicio protegido que devuelve o niega el recurso. |
-| Gateway | Capa WebSocket para apps externas. |
-| AuthClient | Cliente interno que ejecuta AS -> TGS -> Service. |
-| Ticket | Prueba temporal para otro servidor; no se expone cruda al browser. |
-| Authenticator | Mensaje temporal usado para demostrar frescura. |
-| Timestamp | Marca temporal usada para vencimiento y replay protection. |
-| Replay attack | Reutilizar un mensaje valido anterior. |
-| Replay cache | Registro temporal que rechaza reutilizaciones. |
-| AES | Cifrado simetrico usado por la ruta modular. |
-| AES-GCM | AES autenticado con proteccion de integridad. |
-| Session | Estado temporal de acceso. |
-| Opaque session | Sesion guardada server-side y representada por un ID opaco. |
-| `FLOW_RESULT` | Resultado del flujo de autenticacion. |
-| `VERIFY_SESSION` | Mensaje que valida la sesion opaca. |
-| `SESSION_VALID` | Respuesta que permite conceder acceso. |
-| `SESSION_INVALID` | Respuesta que exige negar acceso. |
-| Docker | Runtime local de contenedores. |
-| Docker Compose | Orquestacion local de contenedores. |
-| SQLite | Base local ligera para demo/verificacion. |
-| PostgreSQL | Base preparada para sesiones compartidas y RDS. |
-| RDS | PostgreSQL administrado en AWS. |
-| Terraform | Infraestructura como codigo. |
-| ECS/Fargate | Ejecucion cloud de contenedores. |
-| ECR | Registry de imagenes Docker. |
-| ALB | Balanceador de carga publico. |
-| ACM | Certificados TLS administrados. |
-| WSS | WebSocket seguro sobre TLS. |
-| Secrets Manager | Servicio cloud recomendado para secretos. |
-| CloudWatch | Logs y metricas en AWS. |
-| Service Discovery | Resolucion interna entre servicios. |
-| Public subnet | Subnet apta para ALB publico. |
-| Private subnet | Subnet para servicios internos y RDS. |
+| AS | Authentication Server. Validates the client's initial identity. |
+| TGS | Ticket Granting Server. Provides conceptual access to the requested service. |
+| Service | Protected service that returns or denies the resource. |
+| Gateway | WebSocket layer for external apps. |
+| AuthClient | Internal client that runs AS -> TGS -> Service. |
+| Ticket | Temporary proof for another server; it is not exposed raw to the browser. |
+| Authenticator | Temporary message used to prove freshness. |
+| Timestamp | Time mark used for expiration and replay protection. |
+| Replay attack | Reusing a previously valid message. |
+| Replay cache | Temporary registry that rejects reuse. |
+| AES | Symmetric encryption used by the modular path. |
+| AES-GCM | Authenticated AES with integrity protection. |
+| Session | Temporary access state. |
+| Opaque session | Session stored server-side and represented by an opaque ID. |
+| `FLOW_RESULT` | Authentication flow result. |
+| `VERIFY_SESSION` | Message that validates the opaque session. |
+| `SESSION_VALID` | Response that allows access to be granted. |
+| `SESSION_INVALID` | Response that requires access to be denied. |
+| Docker | Local container runtime. |
+| Docker Compose | Local container orchestration. |
+| SQLite | Lightweight local database for demo/verification. |
+| PostgreSQL | Database prepared for shared sessions and RDS. |
+| RDS | Managed PostgreSQL on AWS. |
+| Terraform | Infrastructure as code. |
+| ECS/Fargate | Cloud container execution. |
+| ECR | Docker image registry. |
+| ALB | Public load balancer. |
+| ACM | Managed TLS certificates. |
+| WSS | Secure WebSocket over TLS. |
+| Secrets Manager | Recommended cloud service for secrets. |
+| CloudWatch | Logs and metrics on AWS. |
+| Service Discovery | Internal service resolution. |
+| Public subnet | Subnet suitable for a public ALB. |
+| Private subnet | Subnet for internal services and RDS. |

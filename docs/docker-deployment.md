@@ -1,17 +1,17 @@
 # Docker Deployment
 
-Fase 20 mantiene Docker Compose listo para validacion en Linux desde la raiz del
-repositorio. No es un despliegue productivo ni reemplaza la ejecucion local sin
-Docker.
+Phase 20 keeps Docker Compose ready for validation on Linux from the repository
+root. It is not a production deployment and does not replace local execution
+without Docker.
 
-## Requisitos
+## Requirements
 
-- Docker Desktop con Docker Compose v2.
-- Java y Maven solo si tambien se quiere ejecutar sin Docker.
+- Docker Desktop with Docker Compose v2.
+- Java and Maven only if you also want to run without Docker.
 
-## Preparar Variables
+## Prepare Variables
 
-Copiar el ejemplo:
+Copy the example:
 
 ```cmd
 copy .env.example .env
@@ -23,10 +23,10 @@ Linux/macOS:
 cp .env.example .env
 ```
 
-`.env.example` usa `AUTH_MODE=demo`, `AUTH_STORAGE_MODE=sqlite` y no contiene
-secretos reales.
+`.env.example` uses `AUTH_MODE=demo`, `AUTH_STORAGE_MODE=sqlite`, and contains
+no real secrets.
 
-Tambien define sesiones opacas del Gateway:
+It also defines Gateway opaque sessions:
 
 ```text
 AUTH_SESSION_TTL_SECONDS=300
@@ -37,7 +37,7 @@ AUTH_SECRET_PROVIDER=env
 AUTH_POSTGRES_URL=jdbc:postgresql://auth-postgres:5432/kerberos_auth
 ```
 
-## Levantar Todo
+## Start Everything
 
 Windows:
 
@@ -51,34 +51,34 @@ Linux/macOS:
 scripts/docker-up.sh
 ```
 
-Equivalente:
+Equivalent:
 
 ```bash
 docker compose up -d --build
 ```
 
-Compose levanta:
+Compose starts:
 
-- `auth-storage-init`: aplica migraciones SQLite en el volumen.
-- `auth-as`: interno, puerto 2000 no publicado.
-- `auth-tgs`: interno, puerto 2001 no publicado.
-- `auth-service`: interno, puerto 2002 no publicado.
-- `auth-websocket-gateway`: publico en `ws://localhost:2800`.
-- `auth-web-demo`: publico en `http://localhost:5173`.
-- `sample-login-app`: publico en `http://localhost:5174`.
+- `auth-storage-init`: applies SQLite migrations in the volume.
+- `auth-as`: internal, port 2000 not published.
+- `auth-tgs`: internal, port 2001 not published.
+- `auth-service`: internal, port 2002 not published.
+- `auth-websocket-gateway`: public on `ws://localhost:2800`.
+- `auth-web-demo`: public on `http://localhost:5173`.
+- `sample-login-app`: public on `http://localhost:5174`.
 
-Opcionalmente se puede habilitar un PostgreSQL local no publico:
+Optionally, a non-public local PostgreSQL can be enabled:
 
 ```bash
 AUTH_STORAGE_MODE=postgres AUTH_SESSION_STORAGE_MODE=postgres docker compose --profile postgres-local up -d --build
 ```
 
-Ese modo usa credenciales demo de `.env` y existe solo para validacion
-cloud-like local. La base no expone puertos al host.
+That mode uses demo credentials from `.env` and exists only for local
+cloud-like validation. The database does not expose ports to the host.
 
-## Abrir Frontends
+## Open Frontends
 
-Demo tecnica:
+Technical demo:
 
 ```text
 http://localhost:5173
@@ -96,30 +96,30 @@ Gateway:
 ws://localhost:2800
 ```
 
-## Probar START_AUTH_FLOW
+## Test START_AUTH_FLOW
 
-Desde una herramienta WebSocket, enviar:
+From a WebSocket tool, send:
 
 ```json
 {"type":"START_AUTH_FLOW","requestId":"docker-smoke-1","clientId":"1","serviceId":"1"}
 ```
 
-Resultado esperado:
+Expected result:
 
-- eventos `FLOW_EVENT`;
-- `FLOW_RESULT` con `success=true`, `sessionId` y `sessionExpiresAt`;
-- sin secretos, tickets, claves ni ciphertexts.
+- `FLOW_EVENT` events;
+- `FLOW_RESULT` with `success=true`, `sessionId`, and `sessionExpiresAt`;
+- no secrets, tickets, keys, or ciphertexts.
 
-Luego verificar la sesion:
+Then verify the session:
 
 ```json
 {"type":"VERIFY_SESSION","requestId":"docker-smoke-verify","sessionId":"<sessionId>","clientId":"1","serviceId":"1"}
 ```
 
-Resultado esperado:
+Expected result:
 
-- `SESSION_VALID` con `valid=true`;
-- `expiresAt` no mayor que la vigencia del flujo de servicio.
+- `SESSION_VALID` with `valid=true`;
+- `expiresAt` no later than the service flow lifetime.
 
 ## Logs
 
@@ -137,7 +137,7 @@ scripts/docker-logs.sh
 scripts/docker-logs.sh auth-websocket-gateway
 ```
 
-## Bajar Servicios
+## Stop Services
 
 ```cmd
 scripts\docker-down.bat
@@ -149,9 +149,9 @@ Linux/macOS:
 scripts/docker-down.sh
 ```
 
-## Limpiar Volumen SQLite
+## Clear SQLite Volume
 
-Esto borra la base demo persistida por Docker:
+This deletes the demo database persisted by Docker:
 
 ```bash
 docker compose down -v
@@ -159,29 +159,28 @@ docker compose down -v
 
 ## Health Checks
 
-AS, TGS, Service y Gateway usan health checks HTTP reales:
+AS, TGS, Service, and Gateway use real HTTP health checks:
 
 - Gateway: `http://127.0.0.1:2801/health`
 - AS: `http://127.0.0.1:2900/health`
 - TGS: `http://127.0.0.1:2901/health`
 - Service: `http://127.0.0.1:2902/health`
 
-Los frontends usan una solicitud HTTP local. Los health checks no imprimen
-secretos ni exponen tickets o payloads sensibles.
+The frontends use a local HTTP request. Health checks do not print secrets or
+expose tickets or sensitive payloads.
 
-## Limitaciones
+## Limitations
 
-- No hay TLS/mTLS.
-- No hay gestion de secretos con vault.
-- PostgreSQL local es opcional y no reemplaza RDS.
-- No hay escalado ni alta disponibilidad.
-- No se debe presentar como production-ready.
+- No TLS/mTLS.
+- No vault-based secrets management.
+- Local PostgreSQL is optional and does not replace RDS.
+- No scaling or high availability.
+- It must not be presented as production-ready.
 
-## Validacion Requerida
+## Required Validation
 
-Si `docker compose` no esta disponible en el entorno actual, no se debe inventar
-resultado. La validacion queda pendiente para una maquina Linux o Docker
-Desktop:
+If `docker compose` is not available in the current environment, do not invent
+a result. Validation remains pending for a Linux machine or Docker Desktop:
 
 ```bash
 docker compose config
@@ -189,7 +188,7 @@ docker compose build
 docker compose up
 ```
 
-En Linux, la validacion recomendada para Fase 20 es:
+On Linux, the recommended validation for Phase 20 is:
 
 ```bash
 cp .env.example .env

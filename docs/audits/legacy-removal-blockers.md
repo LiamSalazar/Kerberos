@@ -1,30 +1,29 @@
 # Legacy Removal Blockers
 
-Fecha: 2026-05-19
+Date: 2026-05-19
 
-Estado final: sin bloqueadores actuales. El retiro fisico legacy quedo resuelto
-y el seguimiento tecnico de Fase 9 tambien quedo cerrado.
+Final status: no current blockers. Physical legacy removal was resolved, and
+the technical Phase 9 follow-up was also closed.
 
-## Bloqueadores Previos
+## Previous Blockers
 
-- La eliminacion fisica estaba condicionada a compile, tests Maven y auditoria
-  textual sin dependencias de paquetes historicos.
-- El seguimiento tecnico posterior exigia retirar `auth-transport/javaio` y
+- Physical removal was conditional on compile, Maven tests, and textual audit
+  without dependencies on historical packages.
+- The later technical follow-up required removing `auth-transport/javaio` and
   `auth-transport/legacy`.
 
-## Resolucion
+## Resolution
 
-- `mvn -q -DskipTests compile` paso.
-- `mvn test` paso con 52 tests, 0 failures, 0 errors, 0 skipped.
-- La auditoria textual no encontro imports desde `auth-*` hacia los paquetes
-  historicos.
-- El codigo legacy fisico fue retirado del proyecto principal.
-- `auth-transport/javaio` y `auth-transport/legacy` fueron retirados.
-- `auth-websocket-gateway` compila y forma parte del reactor Maven.
+- `mvn -q -DskipTests compile` passed.
+- `mvn test` passed with 52 tests, 0 failures, 0 errors, 0 skipped.
+- The textual audit found no imports from `auth-*` toward historical packages.
+- The physical legacy code was removed from the main project.
+- `auth-transport/javaio` and `auth-transport/legacy` were removed.
+- `auth-websocket-gateway` compiles and is part of the Maven reactor.
 
-## Seguimiento
+## Follow-Up
 
-Este archivo queda como registro historico. En Fase 9 se retiraron los
-adaptadores `auth-transport/javaio` y `auth-transport/legacy`. En Fase 11 se
-retiraron los alias historicos de configuracion; no hay bloqueadores actuales de
-legacy.
+This file remains as a historical record. In Phase 9,
+`auth-transport/javaio` and `auth-transport/legacy` adapters were removed. In
+Phase 11, historical configuration aliases were removed; there are no current
+legacy blockers.

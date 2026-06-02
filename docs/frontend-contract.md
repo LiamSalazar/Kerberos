@@ -1,18 +1,18 @@
 # Frontend Contract
 
-Este contrato describe como `auth-web-demo`, `sample-login-app` y futuras UIs
-deben comunicarse con `auth-websocket-gateway`.
+This contract describes how `auth-web-demo`, `sample-login-app`, and future UIs
+must communicate with `auth-websocket-gateway`.
 
-El Gateway no reemplaza AS, TGS ni Service. No expone secretos, claves, tickets,
-ciphertexts ni payloads internos al cliente.
+The Gateway does not replace AS, TGS, or Service. It does not expose secrets,
+keys, tickets, ciphertexts, or internal payloads to the client.
 
-## URL Local
+## Local URL
 
 ```text
 ws://127.0.0.1:2800
 ```
 
-`ws://` es solo para desarrollo local. En cloud se debe publicar `wss://`.
+`ws://` is only for local development. In cloud, publish `wss://`.
 
 ## Input Messages
 
@@ -50,7 +50,7 @@ ws://127.0.0.1:2800
 
 ### FLOW_RESULT
 
-Resultado exitoso:
+Successful result:
 
 ```json
 {
@@ -67,14 +67,14 @@ Resultado exitoso:
 }
 ```
 
-Resultado fallido:
+Failed result:
 
 ```json
 {"type":"FLOW_RESULT","requestId":"front-req-2","success":false,"errorType":"SERVICE_NOT_FOUND","serviceMessage":"TGS_UNKNOWN_SERVICE"}
 ```
 
-`FLOW_RESULT.success=true` no es autorizacion final. Solo indica que el Gateway
-creo una sesion opaca server-side despues de un flujo exitoso.
+`FLOW_RESULT.success=true` is not final authorization. It only means the Gateway
+created a server-side opaque session after a successful flow.
 
 ### SESSION_VALID
 
@@ -102,13 +102,13 @@ creo una sesion opaca server-side despues de un flujo exitoso.
 
 ## Recommended Frontend Flow
 
-1. Abrir WebSocket al Gateway.
-2. Enviar `START_AUTH_FLOW`.
-3. Renderizar `FLOW_EVENT` como progreso.
-4. Si `FLOW_RESULT.success === true`, guardar `sessionId` solo en memoria.
-5. Enviar `VERIFY_SESSION`.
-6. Abrir la zona protegida solo si llega `SESSION_VALID`.
-7. En logout, enviar `LOGOUT_SESSION` y limpiar estado local.
+1. Open a WebSocket to the Gateway.
+2. Send `START_AUTH_FLOW`.
+3. Render `FLOW_EVENT` as progress.
+4. If `FLOW_RESULT.success === true`, store `sessionId` only in memory.
+5. Send `VERIFY_SESSION`.
+6. Open the protected area only if `SESSION_VALID` arrives.
+7. On logout, send `LOGOUT_SESSION` and clear local state.
 
 ## Error Types
 
@@ -128,12 +128,12 @@ creo una sesion opaca server-side despues de un flujo exitoso.
 - `SESSION_REQUIRED`
 - `INVALID_SESSION_REQUEST`
 
-`SESSION_INVALID.reason` usa `NOT_FOUND`, `EXPIRED`, `REVOKED`,
-`CLIENT_MISMATCH` o `SERVICE_MISMATCH`.
+`SESSION_INVALID.reason` uses `NOT_FOUND`, `EXPIRED`, `REVOKED`,
+`CLIENT_MISMATCH`, or `SERVICE_MISMATCH`.
 
 ## Security
 
-El frontend no debe recibir ni pedir secretos demo, claves de sesion, tickets
-completos, `CryptoEnvelope`, ciphertexts ni payloads internos. La sesion opaca
-puede mostrarse parcialmente enmascarada para depuracion local, pero no debe
-tratarse como un token auto-verificable: la autoridad es el Gateway.
+The frontend must not receive or request demo secrets, session keys, full
+tickets, `CryptoEnvelope`, ciphertexts, or internal payloads. The opaque session
+can be shown partially masked for local debugging, but it must not be treated as
+a self-verifiable token: the authority is the Gateway.

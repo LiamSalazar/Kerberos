@@ -1,10 +1,10 @@
 # auth-crypto
 
-Contendra las primitivas y servicios criptograficos del proyecto:
+Contains the project's cryptographic primitives and services:
 
-- derivacion de claves
-- cifrado y descifrado
-- integridad de mensajes
-- manejo de secretos y material criptografico
+- key derivation
+- encryption and decryption
+- message integrity
+- secret and cryptographic material handling
 
-Depende de `auth-core` para trabajar con tipos del dominio.
+It depends on `auth-core` to work with domain types.

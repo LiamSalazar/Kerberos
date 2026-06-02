@@ -1,15 +1,15 @@
 # auth-service
 
-Aplicacion contenedora del servidor de servicio.
+Container application for the service server.
 
-Aqui se ubicaran:
+This module contains:
 
-- validacion final de tickets de servicio
-- entrega del recurso protegido
-- adaptadores de servicio y configuracion local
+- final validation of service tickets
+- protected resource delivery
+- service adapters and local configuration
 
-Implementaciones actuales de `ProtectedResource`:
+Current `ProtectedResource` implementations:
 
-- `DemoProtectedResource`: respuesta local para demos.
-- `HttpProtectedResource`: ejemplo de adaptador HTTP local simple para pruebas
-  de integracion sin consumir APIs externas reales.
+- `DemoProtectedResource`: local response for demos.
+- `HttpProtectedResource`: simple local HTTP adapter example for integration
+  tests without calling real external APIs.

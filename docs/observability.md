@@ -1,17 +1,17 @@
 # Observability
 
-Fase 20 agrega observabilidad basica para operar el stack en Docker y preparar
+Phase 20 adds basic observability to operate the stack in Docker and prepare
 CloudWatch.
 
-## Logs Estructurados
+## Structured Logs
 
-`auth-core` incluye:
+`auth-core` includes:
 
 - `StructuredLog`
 - `JsonLogFormatter`
 - `RequestContext`
 
-El Gateway registra eventos JSON con:
+The Gateway records JSON events with:
 
 - `timestamp`
 - `level`
@@ -24,12 +24,12 @@ El Gateway registra eventos JSON con:
 - `latencyMs`
 - `errorType`
 
-No deben registrarse secretos, passwords, tickets, ciphertexts, claves ni
-`sessionId` completo. `JsonLogFormatter` redacta campos sensibles conocidos.
+Secrets, passwords, tickets, ciphertexts, keys, and full `sessionId` must not be
+logged. `JsonLogFormatter` redacts known sensitive fields.
 
-## Metricas
+## Metrics
 
-`MetricsRegistry` mantiene contadores y latencias en memoria del proceso:
+`MetricsRegistry` keeps process-local counters and latencies:
 
 - `flow_success_total`
 - `flow_failure_total`
@@ -41,17 +41,17 @@ No deben registrarse secretos, passwords, tickets, ciphertexts, claves ni
 - `request_latency_ms_max`
 - `active_sessions_count`
 
-El endpoint `/metrics` se expone en el servidor HTTP de health de cada proceso
-Java. En Fase 20 es una base simple para inspeccion local y CloudWatch; no es
-un stack completo de Prometheus, alarmas ni tracing.
+The `/metrics` endpoint is exposed on each Java process health HTTP server. In
+Phase 20 this is a simple base for local inspection and CloudWatch; it is not a
+complete Prometheus, alarms, or tracing stack.
 
 ## CloudWatch
 
-Terraform prepara log groups por servicio bajo:
+Terraform prepares log groups per service under:
 
 ```text
 /ecs/<prefix>/<service>
 ```
 
-Antes de AWS real quedan pendientes alarmas por errores, latencia, reinicios,
-capacidad de RDS y fallos de health check.
+Before real AWS usage, alarms for errors, latency, restarts, RDS capacity, and
+health check failures remain pending.

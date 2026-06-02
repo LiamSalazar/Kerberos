@@ -1,49 +1,49 @@
 # Project Validation Results
 
-Resumen de evidencia documentada para el cierre de Fase 23A. Las pruebas
-visuales no sustituyen la suite automatizada.
+Summary of documented evidence for the Phase 23A closure. Visual tests do not
+replace the automated suite.
 
-| Validacion | Resultado | Evidencia esperada | Estado |
+| Validation | Result | Expected evidence | Status |
 | --- | --- | --- | --- |
-| Maven validate | `mvn validate` | build Maven desde raiz | PASS |
-| Maven test | `mvn test` | suite completa | PASS |
-| auth-websocket-gateway tests | `mvn -pl auth-websocket-gateway -am test` | contrato WS, sesiones y E2E | PASS |
-| auth-storage-sqlite tests | `mvn -pl auth-storage-sqlite -am test` | repositorios, migraciones, auditoria | PASS |
-| auth-storage-postgres tests | `mvn -pl auth-storage-postgres -am test` | migraciones y repositorios PostgreSQL | PASS |
-| Docker Compose SQLite | `docker compose up -d` | servicios healthy | PASS |
-| Docker Compose PostgreSQL local | `docker compose --env-file .env.postgres --profile postgres-local up -d` | servicios healthy con Postgres | PASS |
+| Maven validate | `mvn validate` | Maven build from root | PASS |
+| Maven test | `mvn test` | full suite | PASS |
+| auth-websocket-gateway tests | `mvn -pl auth-websocket-gateway -am test` | WS contract, sessions, and E2E | PASS |
+| auth-storage-sqlite tests | `mvn -pl auth-storage-sqlite -am test` | repositories, migrations, audit | PASS |
+| auth-storage-postgres tests | `mvn -pl auth-storage-postgres -am test` | PostgreSQL migrations and repositories | PASS |
+| Docker Compose SQLite | `docker compose up -d` | healthy services | PASS |
+| Docker Compose PostgreSQL local | `docker compose --env-file .env.postgres --profile postgres-local up -d` | healthy services with Postgres | PASS |
 | Gateway `/health` | `curl http://localhost:2801/health` | `status=UP` | PASS |
-| auth-web-demo | `http://localhost:5173` | frontend healthy | PASS |
-| sample-login-app | `http://localhost:5174` | frontend healthy | PASS |
-| PostgreSQL `auth_sessions` | migraciones Postgres | tabla preparada para sesiones | PASS |
-| PostgreSQL `auth_audit_events` | migraciones Postgres | tabla preparada para auditoria | PASS |
-| Terraform init | `terraform init` | inicializacion | PASS |
-| Terraform validate | `terraform validate` | configuracion valida | PASS |
-| Terraform plan HTTP | `terraform plan` | plan HTTP temporal | PASS |
-| Terraform plan WSS/HTTPS | plan con ACM placeholder | listener 443 y redirect | PASS |
-| Terraform apply | no ejecutar | no se crearon recursos AWS | NOT RUN |
+| auth-web-demo | `http://localhost:5173` | healthy frontend | PASS |
+| sample-login-app | `http://localhost:5174` | healthy frontend | PASS |
+| PostgreSQL `auth_sessions` | Postgres migrations | table prepared for sessions | PASS |
+| PostgreSQL `auth_audit_events` | Postgres migrations | table prepared for audit | PASS |
+| Terraform init | `terraform init` | initialization | PASS |
+| Terraform validate | `terraform validate` | valid configuration | PASS |
+| Terraform plan HTTP | `terraform plan` | temporary HTTP plan | PASS |
+| Terraform plan WSS/HTTPS | plan with ACM placeholder | listener 443 and redirect | PASS |
+| Terraform apply | do not run | no AWS resources created | NOT RUN |
 
-## Aclaraciones
+## Clarifications
 
-- AWS no se desplego por control de costos.
-- El proyecto puede correr localmente para apps propias.
-- AWS queda como blueprint cloud-ready para despliegue futuro controlado.
-- El Security Validation Lab visualiza resultados y escenarios; no sustituye
-  Maven, Docker ni Terraform plan.
+- AWS was not deployed for cost control.
+- The project can run locally for your own apps.
+- AWS remains a cloud-ready blueprint for a future controlled deployment.
+- The Security Validation Lab visualizes results and scenarios; it does not
+  replace Maven, Docker, or Terraform plan.
 
-## Fase 23A Local Rerun
+## Phase 23A Local Rerun
 
-En la corrida local de Fase 23A sobre Windows/PowerShell:
+In the local Phase 23A run on Windows/PowerShell:
 
-| Comando | Resultado real |
+| Command | Real result |
 | --- | --- |
 | `mvn validate` | PASS |
 | `mvn test` | PASS |
 | `mvn -pl auth-websocket-gateway -am test` | PASS |
 | `mvn -pl auth-storage-sqlite -am test` | PASS |
 | `mvn -pl auth-storage-postgres -am test` | PASS |
-| `auth-web-demo` build con Node empaquetado | PASS |
-| `sample-login-app` JS syntax check con Node empaquetado | PASS |
+| `auth-web-demo` build with bundled Node | PASS |
+| `sample-login-app` JS syntax check with bundled Node | PASS |
 | Docker Compose | PASS |
 | Terraform fmt/validate/plan | PASS |
 | Browser auth-web-demo | PASS |

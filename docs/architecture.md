@@ -1,7 +1,7 @@
 # Architecture
 
-La ruta principal es modular y vive en `auth-*`. No es MIT Kerberos oficial y
-no debe presentarse como listo para produccion critica.
+The main path is modular and lives in `auth-*`. It is not official MIT Kerberos
+and must not be presented as ready for critical production use.
 
 ## Local Architecture
 
@@ -80,8 +80,8 @@ flowchart TB
     Discovery --- Service
 ```
 
-AS/TGS/Service no deben ser publicos. El Gateway puede publicarse por ALB/WSS
-como frontera de integracion.
+AS/TGS/Service must not be public. The Gateway can be published through ALB/WSS
+as the integration boundary.
 
 ## Maven Modules
 
@@ -151,11 +151,11 @@ classDiagram
 
 ## Storage Modes
 
-| Mode | Uso |
+| Mode | Use |
 | --- | --- |
-| `AUTH_STORAGE_MODE=memory` | demo por defecto sin persistencia. |
-| `AUTH_STORAGE_MODE=sqlite` | integracion local verificable. |
-| `AUTH_STORAGE_MODE=postgres` | cloud/RDS-ready y multiples instancias del Gateway. |
+| `AUTH_STORAGE_MODE=memory` | default demo mode without persistence. |
+| `AUTH_STORAGE_MODE=sqlite` | verifiable local integration. |
+| `AUTH_STORAGE_MODE=postgres` | cloud/RDS-ready mode and multiple Gateway instances. |
 
-`AUTH_SESSION_STORAGE_MODE` puede seguir al storage mode o configurarse
-explicitamente como `memory`, `sqlite` o `postgres`.
+`AUTH_SESSION_STORAGE_MODE` can follow the storage mode or be configured
+explicitly as `memory`, `sqlite`, or `postgres`.

@@ -1,24 +1,24 @@
 # Frontend Demo
 
-`auth-web-demo` es la demo tecnica local para observar el flujo modular
-AS -> TGS -> Service a traves de `auth-websocket-gateway`.
+`auth-web-demo` is the local technical demo for observing the modular
+AS -> TGS -> Service flow through `auth-websocket-gateway`.
 
-No es la app de login. Para el ejemplo de integracion con zona protegida, usar
+It is not the login app. For the integration example with a protected area, use
 `sample-login-app`.
 
 ## What It Shows
 
 - header `Kerberos Auth Control Center`;
-- chips de Gateway, storage/mode si estan disponibles, latencia y sesion;
-- panel de conexion con `START_AUTH_FLOW`, `VERIFY_SESSION`, `LOGOUT_SESSION`
-  y `Clear Trace`;
-- mapa Client App -> WebSocket Gateway -> AS -> TGS -> Service -> Opaque Session;
-- tarjetas de mensajes conceptuales;
+- Gateway, storage/mode when available, latency, and session chips;
+- connection panel with `START_AUTH_FLOW`, `VERIFY_SESSION`, `LOGOUT_SESSION`,
+  and `Clear Trace`;
+- map Client App -> WebSocket Gateway -> AS -> TGS -> Service -> Opaque Session;
+- conceptual message cards;
 - Live Protocol Trace;
 - Access Decision;
 - Security Explanation;
 - Security Validation Lab;
-- errores de protocolo sin mostrar secretos.
+- protocol errors without showing secrets.
 
 ## Run
 
@@ -42,7 +42,7 @@ scripts/run-websocket-gateway.sh
 scripts/run-web-demo.sh
 ```
 
-Abrir:
+Open:
 
 ```text
 http://127.0.0.1:5173
@@ -56,13 +56,13 @@ npm install
 npm run build
 ```
 
-`auth-web-demo/dist/` es generado y no debe versionarse.
+`auth-web-demo/dist/` is generated and must not be versioned.
 
 ## Security Display
 
-La UI muestra solo estado, etapas, mensajes de alto nivel, latencias y sesion
-opaca enmascarada. No renderiza secretos, tickets completos, claves,
-ciphertexts, `CryptoEnvelope` ni payloads internos.
+The UI shows only state, stages, high-level messages, latencies, and masked
+opaque session. It does not render secrets, full tickets, keys, ciphertexts,
+`CryptoEnvelope`, or internal payloads.
 
-`FLOW_RESULT.success=true` no debe interpretarse como autorizacion final en una
-app real. La autorizacion practica requiere `VERIFY_SESSION` y `SESSION_VALID`.
+`FLOW_RESULT.success=true` must not be interpreted as final authorization in a
+real app. Practical authorization requires `VERIFY_SESSION` and `SESSION_VALID`.

@@ -1,19 +1,19 @@
 # Legacy Dependency Audit
 
-Fecha de ejecucion: 2026-05-19
+Execution date: 2026-05-19
 
-Objetivo: confirmar si los modulos `auth-*`, incluido
-`auth-websocket-gateway`, dependen de paquetes historicos, Java serialization o
-adaptadores conceptuales legacy despues de Fase 9 + Fase 10.
+Objective: confirm whether the `auth-*` modules, including
+`auth-websocket-gateway`, depend on historical packages, Java serialization, or
+legacy conceptual adapters after Phase 9 + Phase 10.
 
-## Comandos Ejecutados
+## Executed Commands
 
 ```powershell
 & 'C:\Program Files\NetBeans-19\netbeans\java\maven\bin\mvn.cmd' -q -DskipTests compile
 & 'C:\Program Files\NetBeans-19\netbeans\java\maven\bin\mvn.cmd' test
 ```
 
-Busqueda de dependencias:
+Dependency search:
 
 ```powershell
 rg -n "import Kerberos|import Seguridad|Kerberos\.|Seguridad\." auth-as\src auth-tgs\src auth-service\src auth-client-sdk\src auth-core\src auth-crypto\src auth-transport\src auth-websocket-gateway\src
@@ -23,49 +23,49 @@ rg -n "import Kerberos|import Seguridad|Kerberos\.|Seguridad\." auth-as\src auth
 rg -n "\bKerberos[.]|\bSeguridad[.]|AESUtils|SealedObject|ObjectInputStream|ObjectOutputStream" auth-as\src auth-tgs\src auth-service\src auth-client-sdk\src auth-core\src auth-crypto\src auth-transport\src auth-websocket-gateway\src
 ```
 
-Busqueda adicional de cierre Fase 9:
+Additional Phase 9 closure search:
 
 ```powershell
 rg -n "legacy[A-Z]|ObjectInputStream|ObjectOutputStream|SealedObject|AESUtils|com\.portfolio\.auth\.transport\.legacy|Legacy.*Mapper|transport\.legacy" auth-as auth-tgs auth-service auth-client-sdk auth-core auth-crypto auth-transport auth-websocket-gateway README.md requirements.txt docs AGENTS.md
 ```
 
-## Resultado Maven
+## Maven Result
 
-- Compile: paso.
-- Test: paso.
-- Resultado actual de `mvn test`: 60 tests, 0 failures, 0 errors, 0 skipped.
-- `auth-websocket-gateway` forma parte del reactor Maven y sus 20 pruebas pasan,
-  incluyendo E2E real con cliente WebSocket.
+- Compile: passed.
+- Test: passed.
+- Current `mvn test` result: 60 tests, 0 failures, 0 errors, 0 skipped.
+- `auth-websocket-gateway` is part of the Maven reactor and its 20 tests pass,
+  including real E2E with a WebSocket client.
 
-## Referencias Encontradas
+## References Found
 
-- No se encontraron imports ni referencias directas desde `auth-*` hacia los
-  paquetes historicos.
-- No quedan `ObjectInputStream`, `ObjectOutputStream`, `SealedObject` ni
-  `AESUtils` en la ruta modular.
-- `auth-transport/javaio` y `auth-transport/legacy` no existen en el arbol
-  fuente actual.
-- No quedan alias historicos de configuracion en `AuthConfig`.
-- Los nombres principales de secretos son `AUTH_DEMO_*`.
+- No imports or direct references from `auth-*` to historical packages were
+  found.
+- No `ObjectInputStream`, `ObjectOutputStream`, `SealedObject`, or `AESUtils`
+  remain in the modular path.
+- `auth-transport/javaio` and `auth-transport/legacy` do not exist in the
+  current source tree.
+- No historical configuration aliases remain in `AuthConfig`.
+- The main secret names are `AUTH_DEMO_*`.
 
-## Referencias Eliminadas
+## References Removed
 
-Se retiraron fisicamente del proyecto principal:
+Physically removed from the main project:
 
 - `Kerberos/`
 - `Seguridad/`
 - `Chat/`
 - `DistribucionClaves/`
 
-Tambien se retiraron artefactos generados versionables:
+Also removed versionable generated artifacts:
 
 - `build/`
 - `target/`
 - `*.class`
 - `*.ser`
-- `sources.txt`, si existia
+- `sources.txt`, if it existed
 
-En Fase 9 se retiraron tambien:
+Phase 9 also removed:
 
 - `auth-transport/src/main/java/com/portfolio/auth/transport/javaio/`
 - `auth-transport/src/test/java/com/portfolio/auth/transport/javaio/`
@@ -76,7 +76,8 @@ En Fase 9 se retiraron tambien:
 
 `modular runtime is legacy-independent`.
 
-El legacy fisico fue eliminado del proyecto principal despues de pasar compile,
-tests Maven y auditoria textual. Fase 9 retiro tambien los adaptadores internos
-que conservaban Java serialization o mappers historicos. Fase 11 retiro los
-alias historicos de configuracion y valido el gateway con E2E WebSocket real.
+The physical legacy code was removed from the main project after compile, Maven
+tests, and textual audit passed. Phase 9 also removed the internal adapters that
+preserved Java serialization or historical mappers. Phase 11 removed the
+historical configuration aliases and validated the Gateway with real WebSocket
+E2E.

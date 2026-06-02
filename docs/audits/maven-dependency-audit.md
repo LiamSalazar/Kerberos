@@ -1,14 +1,14 @@
 # Maven Dependency Audit
 
-Fecha: 2026-05-24
+Date: 2026-05-24
 
-Comando ejecutado para esta revision:
+Command executed for this review:
 
 - `mvn dependency:tree`
 
-Resultado: `BUILD SUCCESS`.
+Result: `BUILD SUCCESS`.
 
-## Modulos Revisados
+## Reviewed Modules
 
 - `auth-core`
 - `auth-crypto`
@@ -22,9 +22,9 @@ Resultado: `BUILD SUCCESS`.
 - `auth-websocket-gateway`
 - `docs`
 
-## Dependencias Internas
+## Internal Dependencies
 
-- `auth-core`: sin dependencias internas.
+- `auth-core`: no internal dependencies.
 - `auth-crypto`: `auth-core`.
 - `auth-transport`: `auth-core`, `auth-crypto`.
 - `auth-storage-sqlite`: `auth-core`.
@@ -32,60 +32,59 @@ Resultado: `BUILD SUCCESS`.
 - `auth-as`: `auth-core`, `auth-crypto`, `auth-transport`, `auth-storage-sqlite`, `auth-storage-postgres`.
 - `auth-tgs`: `auth-core`, `auth-crypto`, `auth-transport`, `auth-storage-sqlite`, `auth-storage-postgres`.
 - `auth-service`: `auth-core`, `auth-crypto`, `auth-transport`, `auth-storage-sqlite`, `auth-storage-postgres`.
-- `auth-client-sdk`: `auth-core`, `auth-crypto`, `auth-transport`; AS/TGS/Service/SQLite solo en test.
-- `auth-websocket-gateway`: `auth-core`, `auth-crypto`, `auth-transport`, `auth-client-sdk`, `auth-storage-sqlite`, `auth-storage-postgres`; AS/TGS/Service solo en test.
+- `auth-client-sdk`: `auth-core`, `auth-crypto`, `auth-transport`; AS/TGS/Service/SQLite only in tests.
+- `auth-websocket-gateway`: `auth-core`, `auth-crypto`, `auth-transport`, `auth-client-sdk`, `auth-storage-sqlite`, `auth-storage-postgres`; AS/TGS/Service only in tests.
 
-No se detectaron ciclos Maven entre modulos.
+No Maven cycles were detected between modules.
 
-## Dependencias Externas
+## External Dependencies
 
-- `org.junit.jupiter:junit-jupiter:5.10.2` en scope `test`.
-- `org.xerial:sqlite-jdbc:3.45.3.0` en `auth-storage-sqlite`.
-- `org.postgresql:postgresql:42.7.3` en `auth-storage-postgres`.
-- `software.amazon.awssdk:secretsmanager:2.25.60` en `auth-core` via AWS SDK v2 BOM.
-- `org.java-websocket:Java-WebSocket:1.5.6` en `auth-websocket-gateway`.
-- `org.slf4j:slf4j-simple:1.7.36` en `auth-storage-sqlite` con scope `runtime`.
-- `org.slf4j:slf4j-simple:2.0.6` en `auth-websocket-gateway` con scope `runtime`.
+- `org.junit.jupiter:junit-jupiter:5.10.2` in `test` scope.
+- `org.xerial:sqlite-jdbc:3.45.3.0` in `auth-storage-sqlite`.
+- `org.postgresql:postgresql:42.7.3` in `auth-storage-postgres`.
+- `software.amazon.awssdk:secretsmanager:2.25.60` in `auth-core` through AWS SDK v2 BOM.
+- `org.java-websocket:Java-WebSocket:1.5.6` in `auth-websocket-gateway`.
+- `org.slf4j:slf4j-simple:1.7.36` in `auth-storage-sqlite` with `runtime` scope.
+- `org.slf4j:slf4j-simple:2.0.6` in `auth-websocket-gateway` with `runtime` scope.
 
-## Dependencias Agregadas
+## Added Dependencies
 
-- `slf4j-simple:1.7.36` se agrego para cubrir el `slf4j-api:1.7.36`
-  transitivo de `sqlite-jdbc` y limpiar warnings en storage, AS, TGS, Service y
-  pruebas que usan SQLite.
-- `slf4j-simple:2.0.6` se agrego al Gateway para cubrir el `slf4j-api:2.0.6`
-  transitivo de `Java-WebSocket`.
-- `auth-websocket-gateway` excluye el binding SLF4J 1.7 transitivo desde
-  `auth-storage-sqlite` para evitar mezclar providers SLF4J en el runtime del
-  Gateway.
-- `postgresql:42.7.3` se agrego para implementar repositorios JDBC PostgreSQL
-  sin ORM pesado en `auth-storage-postgres`.
-- AWS SDK v2 `secretsmanager` se agrego para `AwsSecretsManagerProvider`; los
-  tests normales usan un resolver fake y no llaman AWS real.
+- `slf4j-simple:1.7.36` was added to cover the transitive
+  `slf4j-api:1.7.36` from `sqlite-jdbc` and clean warnings in storage, AS, TGS,
+  Service, and tests that use SQLite.
+- `slf4j-simple:2.0.6` was added to the Gateway to cover the transitive
+  `slf4j-api:2.0.6` from `Java-WebSocket`.
+- `auth-websocket-gateway` excludes the transitive SLF4J 1.7 binding from
+  `auth-storage-sqlite` to avoid mixing SLF4J providers in the Gateway runtime.
+- `postgresql:42.7.3` was added to implement PostgreSQL JDBC repositories
+  without a heavy ORM in `auth-storage-postgres`.
+- AWS SDK v2 `secretsmanager` was added for `AwsSecretsManagerProvider`; normal
+  tests use a fake resolver and do not call real AWS.
 
-## Validacion De Scope
+## Scope Validation
 
-- Dependencias JUnit permanecen en `test`.
-- `sqlite-jdbc` es compile/runtime solo donde se necesita modo SQLite.
-- Los bindings SLF4J se mantienen en `runtime`; no cambian codigo de negocio ni
-  imprimen secretos.
-- No se agrego Spring Boot ni ORM.
+- JUnit dependencies remain in `test`.
+- `sqlite-jdbc` is compile/runtime only where SQLite mode is needed.
+- SLF4J bindings remain in `runtime`; they do not change business code or print
+  secrets.
+- Spring Boot and ORM were not added.
 
-## Riesgos Detectados
+## Detected Risks
 
-- El proyecto usa dos lineas SLF4J porque `sqlite-jdbc` trae API 1.7 y
-  `Java-WebSocket` trae API 2.0. El Gateway excluye el binding 1.7 para que su
-  runtime use el provider 2.0.
-- AS/TGS/Service dependen de `auth-storage-sqlite` para soportar
-  `AUTH_STORAGE_MODE=sqlite` y de `auth-storage-postgres` para
-  `AUTH_STORAGE_MODE=postgres`; `AUTH_STORAGE_MODE=memory` sigue siendo default.
-- `auth-websocket-gateway` depende de `auth-storage-sqlite` y
-  `auth-storage-postgres` para auditoria/sesiones persistentes opcionales. No
-  acopla WebSockets dentro de AS/TGS/Service.
+- The project uses two SLF4J lines because `sqlite-jdbc` brings API 1.7 and
+  `Java-WebSocket` brings API 2.0. The Gateway excludes the 1.7 binding so its
+  runtime uses the 2.0 provider.
+- AS/TGS/Service depend on `auth-storage-sqlite` to support
+  `AUTH_STORAGE_MODE=sqlite` and on `auth-storage-postgres` for
+  `AUTH_STORAGE_MODE=postgres`; `AUTH_STORAGE_MODE=memory` remains the default.
+- `auth-websocket-gateway` depends on `auth-storage-sqlite` and
+  `auth-storage-postgres` for optional persistent audit/sessions. It does not
+  couple WebSockets inside AS/TGS/Service.
 
 ## Conclusion
 
-El estado Maven queda consistente para Fase 20. Las nuevas dependencias se
-limitan a PostgreSQL JDBC y AWS SDK v2 Secrets Manager. Las referencias internas
-usan `groupId=com.portfolio.auth`, `artifactId` correcto y `${project.version}`.
-Las dependencias de test permanecen en scope `test`. No hay ciclos Maven
-observados.
+The Maven state is consistent for Phase 20. New dependencies are limited to
+PostgreSQL JDBC and AWS SDK v2 Secrets Manager. Internal references use
+`groupId=com.portfolio.auth`, the correct `artifactId`, and
+`${project.version}`. Test dependencies remain in `test` scope. No Maven cycles
+were observed.
